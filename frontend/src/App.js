@@ -106,7 +106,6 @@ const Navigation = () => {
     { path: "/about", label: "Σχετικά", icon: Info },
     { path: "/team", label: "Ομάδα", icon: Users },
     { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
-    { path: "/fixtures", label: "Αγώνες", icon: Calendar },
     { path: "/news", label: "Νέα", icon: Newspaper },
     { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
@@ -209,7 +208,7 @@ const Footer = () => (
             {[
               { name: "Πρώτη Ομάδα", path: "/team" },
               { name: "Ακαδημία", path: "/academy" },
-              { name: "Αγώνες", path: "/fixtures" },
+              { name: "Αποτελέσματα", path: "/team?tab=results" },
               { name: "Πρόγραμμα", path: "/team?tab=schedule" },
               { name: "Γήπεδα", path: "/team?tab=venues" },
               { name: "Νέα", path: "/news" },
@@ -1457,7 +1456,7 @@ function App() {
             <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
             <Route path="/team" element={<PublicLayout><TeamHubPage /></PublicLayout>} />
             <Route path="/academy" element={<PublicLayout><AcademyPage /></PublicLayout>} />
-            <Route path="/fixtures" element={<PublicLayout><FixturesPage /></PublicLayout>} />
+            <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
