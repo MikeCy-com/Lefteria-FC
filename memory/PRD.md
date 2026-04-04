@@ -20,58 +20,48 @@ Create a website for Lefteria FC (ΛΕΥΤΕΡΙΑ) football club with an academ
 ```
 /app/
 ├── backend/
-│   ├── server.py          # FastAPI - 1240 lines, full CMS endpoints
+│   ├── server.py          # FastAPI - CMS endpoints + auto-standings + live score
 │   ├── .env               # MONGO_URL, DB_NAME, JWT_SECRET, ADMIN creds
-│   └── tests/             # pytest tests (34 tests, 100% pass)
+│   └── tests/             # 42 passing tests
 ├── frontend/
 │   └── src/
-│       ├── App.js          # Public pages + auth + routing
+│       ├── App.js          # Public pages + auth + routing (PublicLayout wraps nav/footer)
 │       ├── pages/
-│       │   └── AdminPanel.jsx  # Full CMS admin (11 tabs)
-│       ├── index.css       # SportsPress-style CSS
+│       │   └── AdminPanel.jsx  # Standalone CMS (12 tabs, own header/sidebar)
+│       ├── index.css       # SportsPress + admin CMS styles
 │       └── App.css
 └── memory/
     ├── PRD.md
     └── test_credentials.md
 ```
 
-## What's Been Implemented (Feb 2026)
+## What's Been Implemented
 
-### Backend (FastAPI + MongoDB)
-- JWT Authentication (PyJWT + bcrypt)
-- Full CRUD for: Players, Academy Groups, Staff, Fixtures, Standings, News, Venues, Seasons
-- Club Profile management
-- Contact Messages (public submit + admin view/delete)
-- Dashboard stats endpoint
-- Calendar events endpoint
-- Transfers endpoint
-- Data seeding with real Lefteria FC data
-- 34 passing API tests
+### Phase 1 (Initial Build)
+- SportsPress-style public website with 7 pages
+- JWT-protected admin panel at /admin/login
+- Real data scraping from lefteriafc.cy
+- Full Greek translation
+- MongoDB data seeding
 
-### Frontend - Public Pages
-- Home: Hero, stats bar, fixtures, standings table, news, academy CTA
-- About: Club history, values, stadium info
-- Team: Player cards with position filters (20 players)
-- Academy: Age group cards (U12-U18) with coach info
-- Fixtures: Match cards with status filters
-- News: Featured article + grid layout
-- Contact: Form with subject selection
+### Phase 2 (CMS Expansion)
+- Expanded backend with full CRUD for all entities
+- Re-seeded database with new schema (team_type, is_active, etc.)
+- Comprehensive Admin CMS with 11 tabs (Dashboard, Club Profile, Players, Academy Groups, Staff, Fixtures, Standings, News, Venues, Seasons, Messages)
+- Frontend-backend API sync
 
-### Frontend - Admin CMS (11 tabs)
-- Dashboard: Stats overview (players, fixtures, news, messages)
-- Club Profile: Edit name, logo, description, social media, colors
-- Players: Full CRUD with team type (First Team/Academy), position, image URL
-- Academy Groups: Create/Edit/Delete groups with coach, schedule, age range
-- Staff: CRUD with roles (Coach, Physio, Manager, etc.)
-- Fixtures: CRUD with scores, status, venue, competition
-- Standings: CRUD with full stats (played, won, drawn, lost, GF, GA, points)
-- News: CRUD with categories, featured flag, images
-- Venues: CRUD with address, capacity, surface, home ground flag
-- Seasons: CRUD with competitions, achievements, current flag
-- Messages: View and delete contact messages
+### Phase 3 (Admin Redesign + Live Score) - Latest
+- **Standalone Admin Layout**: Removed public nav/footer from admin panel, custom CMS header with "LEFTERIA FC CMS" branding
+- **Redesigned Admin UI**: Professional dark theme, new CSS classes (.admin-card, .admin-table, .admin-badge, etc.)
+- **Live Score Tab**: Inline score editing, "Έναρξη Live"/"Τέλος Αγώνα" buttons
+- **Auto-update Standings**: When fixture transitions to Completed, standings auto-recalculate (points, W/D/L, GF/GA/GD)
+- **Score Correction**: Updating scores on completed fixtures reverses old result then applies new
+- **Recalculate All**: POST /admin/standings/recalculate drops and rebuilds from all completed fixtures
+- **PUT /admin/fixtures/{id}/live-score**: Quick score update endpoint for match day
+- Dashboard stat cards are clickable (navigate to corresponding tab)
 
-## Testing Results (Feb 2026)
-- Backend: 100% pass (34/34 tests)
+## Testing Results
+- Backend: 100% pass (42/42 tests)
 - Frontend: 100% pass
 - Overall: 100%
 
@@ -94,4 +84,4 @@ Create a website for Lefteria FC (ΛΕΥΤΕΡΙΑ) football club with an academ
 - Player Transfer history (Previous/Current clubs)
 - Ticket sales integration
 - Merchandise shop
-- Live match updates
+- Live match updates with real-time push
