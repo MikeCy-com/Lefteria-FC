@@ -1,17 +1,89 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import axios from "axios";
-import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart } from "lucide-react";
+import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
+// ==================== AUTH CONTEXT ====================
+const AuthContext = createContext(null);
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null); // null = checking, false = not auth, object = auth
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setUser(false);
+        setLoading(false);
+        return;
+      }
+      
+      const res = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(res.data);
+    } catch (e) {
+      localStorage.removeItem("token");
+      setUser(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (username, password) => {
+    const res = await axios.post(`${API}/auth/login`, { username, password });
+    localStorage.setItem("token", res.data.token);
+    setUser(res.data);
+    return res.data;
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post(`${API}/auth/logout`);
+    } catch (e) {}
+    localStorage.removeItem("token");
+    setUser(false);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => useContext(AuthContext);
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (!user) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
 // ==================== COMPONENTS ====================
 
-// Navigation
+// Navigation (Admin removed)
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -67,13 +139,6 @@ const Navigation = () => {
                 {link.label}
               </Link>
             ))}
-            <Link 
-              to="/admin" 
-              className="btn-primary text-sm"
-              data-testid="nav-admin"
-            >
-              Admin
-            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -108,13 +173,6 @@ const Navigation = () => {
               {link.label}
             </Link>
           ))}
-          <Link 
-            to="/admin" 
-            onClick={() => setIsOpen(false)}
-            className="btn-primary mt-4 text-center"
-          >
-            Admin Panel
-          </Link>
         </nav>
       </div>
     </header>
@@ -1254,23 +1312,142 @@ const ContactPage = () => {
   );
 };
 
-// Admin Page
+// Admin Login Page
+const AdminLoginPage = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/admin");
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    
+    try {
+      await login(username, password);
+      const from = location.state?.from?.pathname || "/admin";
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.detail || "Invalid username or password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6 py-24" data-testid="admin-login-page">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <img src={CLUB_LOGO} alt="Lefteria FC" className="h-20 w-20 mx-auto mb-4" />
+          <h1 className="font-['Bebas_Neue'] text-4xl text-white">Admin Login</h1>
+          <p className="text-zinc-400 mt-2">Enter your credentials to access the admin panel</p>
+        </div>
+
+        <div className="card p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-900/30 border border-red-500/50 text-red-400 px-4 py-3 text-sm" data-testid="login-error">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm text-zinc-400 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter username"
+                required
+                data-testid="login-username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-zinc-400 mb-2">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  required
+                  data-testid="login-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn-primary w-full"
+              disabled={loading}
+              data-testid="login-submit"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                  Logging in...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <Lock size={18} />
+                  Login
+                </span>
+              )}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-zinc-500 text-sm mt-6">
+          <Link to="/" className="hover:text-[#F5A623]">← Back to website</Link>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Admin Page (Protected)
 const AdminPage = () => {
   const [activeTab, setActiveTab] = useState("players");
   const [data, setData] = useState({ players: [], fixtures: [], news: [], standings: [], academy: [], messages: [] });
   const [loading, setLoading] = useState(true);
-  const [editItem, setEditItem] = useState(null);
-  const [showForm, setShowForm] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
   const fetchData = useCallback(async () => {
     try {
+      const headers = getAuthHeaders();
       const [players, fixtures, news, standings, academy, messages] = await Promise.all([
         axios.get(`${API}/players`),
         axios.get(`${API}/fixtures`),
         axios.get(`${API}/news`),
         axios.get(`${API}/standings`),
         axios.get(`${API}/academy`),
-        axios.get(`${API}/contact`),
+        axios.get(`${API}/admin/contact`, { headers }),
       ]);
       setData({
         players: players.data,
@@ -1291,6 +1468,11 @@ const AdminPage = () => {
     fetchData();
   }, [fetchData]);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/admin/login");
+  };
+
   const tabs = [
     { id: "players", label: "Players", icon: Users },
     { id: "fixtures", label: "Fixtures", icon: Calendar },
@@ -1303,10 +1485,12 @@ const AdminPage = () => {
   const handleDelete = async (type, id) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
-      await axios.delete(`${API}/${type}/${id}`);
+      const headers = getAuthHeaders();
+      await axios.delete(`${API}/admin/${type}/${id}`, { headers });
       fetchData();
     } catch (e) {
       console.error("Error deleting:", e);
+      alert("Error deleting item. Please try again.");
     }
   };
 
@@ -1319,7 +1503,7 @@ const AdminPage = () => {
         <aside className="w-64 admin-sidebar min-h-screen fixed left-0 top-24 hidden lg:block">
           <div className="p-6 border-b border-[#262626]">
             <h2 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Admin Panel</h2>
-            <p className="text-xs text-zinc-500">Manage your club content</p>
+            <p className="text-xs text-zinc-500">Welcome, {user?.username}</p>
           </div>
           <nav className="py-4">
             {tabs.map((tab) => (
@@ -1333,6 +1517,14 @@ const AdminPage = () => {
                 <span>{tab.label}</span>
               </button>
             ))}
+            <button
+              onClick={handleLogout}
+              className="admin-menu-item w-full text-red-400 hover:text-red-300 mt-4"
+              data-testid="admin-logout"
+            >
+              <LogOut size={18} />
+              <span>Logout</span>
+            </button>
           </nav>
         </aside>
 
@@ -1350,6 +1542,12 @@ const AdminPage = () => {
                 {tab.label}
               </button>
             ))}
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm whitespace-nowrap bg-red-900/50 text-red-400"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
@@ -1361,15 +1559,6 @@ const AdminPage = () => {
               <h1 className="font-['Bebas_Neue'] text-3xl text-white capitalize">
                 {activeTab}
               </h1>
-              {activeTab !== "messages" && (
-                <button 
-                  onClick={() => { setEditItem(null); setShowForm(true); }}
-                  className="btn-primary"
-                  data-testid="admin-add-new"
-                >
-                  Add New
-                </button>
-              )}
             </div>
 
             {/* Content Tables */}
@@ -1584,18 +1773,25 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/academy" element={<AcademyPage />} />
-          <Route path="/fixtures" element={<FixturesPage />} />
-          <Route path="/news" element={<NewsPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-        </Routes>
-        <Footer />
+        <AuthProvider>
+          <Navigation />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/academy" element={<AcademyPage />} />
+            <Route path="/fixtures" element={<FixturesPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+          </Routes>
+          <Footer />
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );

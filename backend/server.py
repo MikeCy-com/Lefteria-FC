@@ -1,23 +1,31 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query
 from dotenv import load_dotenv
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Response, Depends
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
-from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from enum import Enum
-
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+import bcrypt
+import jwt
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# JWT Config
+JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-secret-key')
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
 # Create the main app
 app = FastAPI(title="Lefteria FC API", description="Football Club & Academy Management")
@@ -47,7 +55,63 @@ class AgeGroup(str, Enum):
     U18 = "U18"
     SENIOR = "Senior"
 
+# ==================== AUTH HELPERS ====================
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+def create_access_token(user_id: str, username: str) -> str:
+    payload = {
+        "sub": user_id,
+        "username": username,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        "type": "access"
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_user(request: Request) -> dict:
+    # Check cookie first
+    token = request.cookies.get("access_token")
+    # Then check Authorization header
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        
+        user = await db.admin_users.find_one({"id": payload["sub"]}, {"_id": 0})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # Remove password hash from response
+        user.pop("password_hash", None)
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # ==================== MODELS ====================
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    id: str
+    username: str
+    token: str
+
 class PlayerBase(BaseModel):
     name: str
     number: int
@@ -164,7 +228,44 @@ class ClubInfo(BaseModel):
     primary_color: str = "#F5A623"
     secondary_color: str = "#000000"
 
-# ==================== ROUTES ====================
+# ==================== AUTH ROUTES ====================
+@api_router.post("/auth/login", response_model=LoginResponse)
+async def login(request: LoginRequest, response: Response):
+    # Find admin user
+    user = await db.admin_users.find_one({"username": request.username}, {"_id": 0})
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    if not verify_password(request.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    # Create token
+    token = create_access_token(user["id"], user["username"])
+    
+    # Set cookie
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/"
+    )
+    
+    return LoginResponse(id=user["id"], username=user["username"], token=token)
+
+@api_router.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie(key="access_token", path="/")
+    return {"message": "Logged out successfully"}
+
+@api_router.get("/auth/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return current_user
+
+# ==================== PUBLIC ROUTES ====================
 
 # Root
 @api_router.get("/")
@@ -181,13 +282,7 @@ async def get_club_info():
         return default_club
     return ClubInfo(**club)
 
-@api_router.put("/club", response_model=ClubInfo)
-async def update_club_info(club: ClubInfo):
-    club_dict = club.model_dump()
-    await db.club_info.update_one({"id": "club-info"}, {"$set": club_dict}, upsert=True)
-    return club
-
-# Players
+# Players (Public Read)
 @api_router.get("/players", response_model=List[Player])
 async def get_players(
     is_academy: Optional[bool] = None,
@@ -212,31 +307,7 @@ async def get_player(player_id: str):
         raise HTTPException(status_code=404, detail="Player not found")
     return Player(**player)
 
-@api_router.post("/players", response_model=Player)
-async def create_player(player: PlayerCreate):
-    player_obj = Player(**player.model_dump())
-    await db.players.insert_one(player_obj.model_dump())
-    return player_obj
-
-@api_router.put("/players/{player_id}", response_model=Player)
-async def update_player(player_id: str, player: PlayerCreate):
-    existing = await db.players.find_one({"id": player_id}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Player not found")
-    
-    update_data = player.model_dump()
-    await db.players.update_one({"id": player_id}, {"$set": update_data})
-    updated = await db.players.find_one({"id": player_id}, {"_id": 0})
-    return Player(**updated)
-
-@api_router.delete("/players/{player_id}")
-async def delete_player(player_id: str):
-    result = await db.players.delete_one({"id": player_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Player not found")
-    return {"message": "Player deleted"}
-
-# Fixtures
+# Fixtures (Public Read)
 @api_router.get("/fixtures", response_model=List[Fixture])
 async def get_fixtures(
     status: Optional[MatchStatus] = None,
@@ -259,31 +330,7 @@ async def get_fixture(fixture_id: str):
         raise HTTPException(status_code=404, detail="Fixture not found")
     return Fixture(**fixture)
 
-@api_router.post("/fixtures", response_model=Fixture)
-async def create_fixture(fixture: FixtureCreate):
-    fixture_obj = Fixture(**fixture.model_dump())
-    await db.fixtures.insert_one(fixture_obj.model_dump())
-    return fixture_obj
-
-@api_router.put("/fixtures/{fixture_id}", response_model=Fixture)
-async def update_fixture(fixture_id: str, fixture: FixtureCreate):
-    existing = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Fixture not found")
-    
-    update_data = fixture.model_dump()
-    await db.fixtures.update_one({"id": fixture_id}, {"$set": update_data})
-    updated = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
-    return Fixture(**updated)
-
-@api_router.delete("/fixtures/{fixture_id}")
-async def delete_fixture(fixture_id: str):
-    result = await db.fixtures.delete_one({"id": fixture_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Fixture not found")
-    return {"message": "Fixture deleted"}
-
-# Standings
+# Standings (Public Read)
 @api_router.get("/standings", response_model=List[Standing])
 async def get_standings(competition: Optional[str] = None):
     query = {}
@@ -293,34 +340,7 @@ async def get_standings(competition: Optional[str] = None):
     standings = await db.standings.find(query, {"_id": 0}).sort("points", -1).to_list(100)
     return [Standing(**s) for s in standings]
 
-@api_router.post("/standings", response_model=Standing)
-async def create_standing(standing: StandingCreate):
-    standing_dict = standing.model_dump()
-    standing_dict["goal_difference"] = standing_dict["goals_for"] - standing_dict["goals_against"]
-    standing_obj = Standing(**standing_dict)
-    await db.standings.insert_one(standing_obj.model_dump())
-    return standing_obj
-
-@api_router.put("/standings/{standing_id}", response_model=Standing)
-async def update_standing(standing_id: str, standing: StandingCreate):
-    existing = await db.standings.find_one({"id": standing_id}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Standing not found")
-    
-    update_data = standing.model_dump()
-    update_data["goal_difference"] = update_data["goals_for"] - update_data["goals_against"]
-    await db.standings.update_one({"id": standing_id}, {"$set": update_data})
-    updated = await db.standings.find_one({"id": standing_id}, {"_id": 0})
-    return Standing(**updated)
-
-@api_router.delete("/standings/{standing_id}")
-async def delete_standing(standing_id: str):
-    result = await db.standings.delete_one({"id": standing_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Standing not found")
-    return {"message": "Standing deleted"}
-
-# News
+# News (Public Read)
 @api_router.get("/news", response_model=List[News])
 async def get_news(
     category: Optional[str] = None,
@@ -343,31 +363,7 @@ async def get_news_item(news_id: str):
         raise HTTPException(status_code=404, detail="News not found")
     return News(**news)
 
-@api_router.post("/news", response_model=News)
-async def create_news(news: NewsCreate):
-    news_obj = News(**news.model_dump())
-    await db.news.insert_one(news_obj.model_dump())
-    return news_obj
-
-@api_router.put("/news/{news_id}", response_model=News)
-async def update_news(news_id: str, news: NewsCreate):
-    existing = await db.news.find_one({"id": news_id}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="News not found")
-    
-    update_data = news.model_dump()
-    await db.news.update_one({"id": news_id}, {"$set": update_data})
-    updated = await db.news.find_one({"id": news_id}, {"_id": 0})
-    return News(**updated)
-
-@api_router.delete("/news/{news_id}")
-async def delete_news(news_id: str):
-    result = await db.news.delete_one({"id": news_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="News not found")
-    return {"message": "News deleted"}
-
-# Academy
+# Academy (Public Read)
 @api_router.get("/academy", response_model=List[AcademyInfo])
 async def get_academy_info():
     academy = await db.academy.find({}, {"_id": 0}).to_list(100)
@@ -380,14 +376,127 @@ async def get_academy_by_age_group(age_group: AgeGroup):
         raise HTTPException(status_code=404, detail="Academy info not found")
     return AcademyInfo(**academy)
 
-@api_router.post("/academy", response_model=AcademyInfo)
-async def create_academy_info(academy: AcademyInfoCreate):
+# Contact (Public)
+@api_router.post("/contact", response_model=ContactMessage)
+async def submit_contact(contact: ContactMessageCreate):
+    contact_obj = ContactMessage(**contact.model_dump())
+    await db.contact_messages.insert_one(contact_obj.model_dump())
+    return contact_obj
+
+# ==================== PROTECTED ADMIN ROUTES ====================
+
+# Players Admin
+@api_router.post("/admin/players", response_model=Player)
+async def create_player(player: PlayerCreate, current_user: dict = Depends(get_current_user)):
+    player_obj = Player(**player.model_dump())
+    await db.players.insert_one(player_obj.model_dump())
+    return player_obj
+
+@api_router.put("/admin/players/{player_id}", response_model=Player)
+async def update_player(player_id: str, player: PlayerCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    update_data = player.model_dump()
+    await db.players.update_one({"id": player_id}, {"$set": update_data})
+    updated = await db.players.find_one({"id": player_id}, {"_id": 0})
+    return Player(**updated)
+
+@api_router.delete("/admin/players/{player_id}")
+async def delete_player(player_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.players.delete_one({"id": player_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return {"message": "Player deleted"}
+
+# Fixtures Admin
+@api_router.post("/admin/fixtures", response_model=Fixture)
+async def create_fixture(fixture: FixtureCreate, current_user: dict = Depends(get_current_user)):
+    fixture_obj = Fixture(**fixture.model_dump())
+    await db.fixtures.insert_one(fixture_obj.model_dump())
+    return fixture_obj
+
+@api_router.put("/admin/fixtures/{fixture_id}", response_model=Fixture)
+async def update_fixture(fixture_id: str, fixture: FixtureCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Fixture not found")
+    
+    update_data = fixture.model_dump()
+    await db.fixtures.update_one({"id": fixture_id}, {"$set": update_data})
+    updated = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    return Fixture(**updated)
+
+@api_router.delete("/admin/fixtures/{fixture_id}")
+async def delete_fixture(fixture_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.fixtures.delete_one({"id": fixture_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Fixture not found")
+    return {"message": "Fixture deleted"}
+
+# Standings Admin
+@api_router.post("/admin/standings", response_model=Standing)
+async def create_standing(standing: StandingCreate, current_user: dict = Depends(get_current_user)):
+    standing_dict = standing.model_dump()
+    standing_dict["goal_difference"] = standing_dict["goals_for"] - standing_dict["goals_against"]
+    standing_obj = Standing(**standing_dict)
+    await db.standings.insert_one(standing_obj.model_dump())
+    return standing_obj
+
+@api_router.put("/admin/standings/{standing_id}", response_model=Standing)
+async def update_standing(standing_id: str, standing: StandingCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.standings.find_one({"id": standing_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Standing not found")
+    
+    update_data = standing.model_dump()
+    update_data["goal_difference"] = update_data["goals_for"] - update_data["goals_against"]
+    await db.standings.update_one({"id": standing_id}, {"$set": update_data})
+    updated = await db.standings.find_one({"id": standing_id}, {"_id": 0})
+    return Standing(**updated)
+
+@api_router.delete("/admin/standings/{standing_id}")
+async def delete_standing(standing_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.standings.delete_one({"id": standing_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Standing not found")
+    return {"message": "Standing deleted"}
+
+# News Admin
+@api_router.post("/admin/news", response_model=News)
+async def create_news(news: NewsCreate, current_user: dict = Depends(get_current_user)):
+    news_obj = News(**news.model_dump())
+    await db.news.insert_one(news_obj.model_dump())
+    return news_obj
+
+@api_router.put("/admin/news/{news_id}", response_model=News)
+async def update_news(news_id: str, news: NewsCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.news.find_one({"id": news_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="News not found")
+    
+    update_data = news.model_dump()
+    await db.news.update_one({"id": news_id}, {"$set": update_data})
+    updated = await db.news.find_one({"id": news_id}, {"_id": 0})
+    return News(**updated)
+
+@api_router.delete("/admin/news/{news_id}")
+async def delete_news(news_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.news.delete_one({"id": news_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="News not found")
+    return {"message": "News deleted"}
+
+# Academy Admin
+@api_router.post("/admin/academy", response_model=AcademyInfo)
+async def create_academy_info(academy: AcademyInfoCreate, current_user: dict = Depends(get_current_user)):
     academy_obj = AcademyInfo(**academy.model_dump())
     await db.academy.insert_one(academy_obj.model_dump())
     return academy_obj
 
-@api_router.put("/academy/{academy_id}", response_model=AcademyInfo)
-async def update_academy_info(academy_id: str, academy: AcademyInfoCreate):
+@api_router.put("/admin/academy/{academy_id}", response_model=AcademyInfo)
+async def update_academy_info(academy_id: str, academy: AcademyInfoCreate, current_user: dict = Depends(get_current_user)):
     existing = await db.academy.find_one({"id": academy_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Academy info not found")
@@ -397,22 +506,16 @@ async def update_academy_info(academy_id: str, academy: AcademyInfoCreate):
     updated = await db.academy.find_one({"id": academy_id}, {"_id": 0})
     return AcademyInfo(**updated)
 
-@api_router.delete("/academy/{academy_id}")
-async def delete_academy_info(academy_id: str):
+@api_router.delete("/admin/academy/{academy_id}")
+async def delete_academy_info(academy_id: str, current_user: dict = Depends(get_current_user)):
     result = await db.academy.delete_one({"id": academy_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Academy info not found")
     return {"message": "Academy info deleted"}
 
-# Contact
-@api_router.post("/contact", response_model=ContactMessage)
-async def submit_contact(contact: ContactMessageCreate):
-    contact_obj = ContactMessage(**contact.model_dump())
-    await db.contact_messages.insert_one(contact_obj.model_dump())
-    return contact_obj
-
-@api_router.get("/contact", response_model=List[ContactMessage])
-async def get_contact_messages():
+# Contact Messages Admin (Read Only)
+@api_router.get("/admin/contact", response_model=List[ContactMessage])
+async def get_contact_messages(current_user: dict = Depends(get_current_user)):
     messages = await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return [ContactMessage(**m) for m in messages]
 
@@ -548,6 +651,32 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Seed admin user on startup
+@app.on_event("startup")
+async def seed_admin():
+    admin_username = os.environ.get("ADMIN_USERNAME", "admin")
+    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+    
+    existing = await db.admin_users.find_one({"username": admin_username}, {"_id": 0})
+    
+    if existing is None:
+        # Create admin user
+        admin_user = {
+            "id": str(uuid.uuid4()),
+            "username": admin_username,
+            "password_hash": hash_password(admin_password),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.admin_users.insert_one(admin_user)
+        logger.info(f"Admin user '{admin_username}' created")
+    elif not verify_password(admin_password, existing["password_hash"]):
+        # Update password if changed in env
+        await db.admin_users.update_one(
+            {"username": admin_username},
+            {"$set": {"password_hash": hash_password(admin_password)}}
+        )
+        logger.info(f"Admin user '{admin_username}' password updated")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
