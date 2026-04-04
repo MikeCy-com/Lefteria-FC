@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams
 import axios from "axios";
 import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
+import { CalendarPage, VenuePage, SeasonsPage, StaffPage } from "./pages/PublicPages";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -103,8 +104,12 @@ const Navigation = () => {
     { path: "/", label: "Αρχική", icon: HomeIcon },
     { path: "/about", label: "Σχετικά", icon: Info },
     { path: "/team", label: "Ομάδα", icon: Users },
+    { path: "/staff", label: "Staff", icon: Shield },
     { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
     { path: "/fixtures", label: "Αγώνες", icon: Calendar },
+    { path: "/calendar", label: "Ημερολόγιο", icon: Calendar },
+    { path: "/seasons", label: "Αρχείο", icon: Trophy },
+    { path: "/venues", label: "Γήπεδα", icon: MapPin },
     { path: "/news", label: "Νέα", icon: Newspaper },
     { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
@@ -206,8 +211,12 @@ const Footer = () => (
           <ul className="space-y-3">
             {[
               { name: "Πρώτη Ομάδα", path: "/team" },
+              { name: "Τεχνικό Επιτελείο", path: "/staff" },
               { name: "Ακαδημία", path: "/academy" },
               { name: "Αγώνες", path: "/fixtures" },
+              { name: "Ημερολόγιο", path: "/calendar" },
+              { name: "Αρχείο Σεζόν", path: "/seasons" },
+              { name: "Γήπεδα", path: "/venues" },
               { name: "Νέα", path: "/news" },
               { name: "Επικοινωνία", path: "/contact" },
             ].map((item) => (
@@ -1699,6 +1708,10 @@ function App() {
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
+            <Route path="/calendar" element={<PublicLayout><CalendarPage /></PublicLayout>} />
+            <Route path="/venues" element={<PublicLayout><VenuePage /></PublicLayout>} />
+            <Route path="/seasons" element={<PublicLayout><SeasonsPage /></PublicLayout>} />
+            <Route path="/staff" element={<PublicLayout><StaffPage /></PublicLayout>} />
             {/* Admin routes - NO nav/footer */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={
