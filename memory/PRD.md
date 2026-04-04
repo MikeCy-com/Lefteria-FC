@@ -61,15 +61,26 @@ Create a website for Lefteria FC football club with an academy section, styled l
 - **Sound Effects**: Web Audio API sounds (goal horn, whistle, card beep, sub chime)
 - **Homepage Widget**: Auto-refresh 30s, LIVE indicator, goal scorers, browser notifications
 
+### Web Push Notifications
+- VAPID key-based push notification infrastructure
+- Service Worker (sw-push.js) for offline notification delivery
+- Subscribe/unsubscribe via bell icon in navigation bar
+- Subscription storage in MongoDB (push_subscriptions collection)
+- **Auto-push triggers**: Match goes Live, goal scored, match completed
+- Admin: Test push button and subscriber stats
+
+### Player Transfer History
+- Transfer records: player, from/to team, date, type (In/Out/Loan In/Loan Out), fee, notes
+- Admin: Transfer button on each player with dedicated modal
+- Player Profile: Transfer history section in Biography tab with Greek labels
+
 ### Player Image Upload
 - Drag & drop or click-to-browse file upload (JPEG/PNG/WebP, max 5MB)
 - URL input alternative, stored at /api/uploads/players/
 
-## Testing: 100% across 9 iterations
+## Testing: 100% across 10 iterations
 
 ## Prioritized Backlog
 
 ### P3 (Future)
-- Full Web Push Notification Infrastructure
-- Player Transfer history
-- Ticket sales / Merchandise shop
+- Ticket sales / Merchandise shop (simple info page or Stripe integration)
