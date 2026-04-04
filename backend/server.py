@@ -585,6 +585,37 @@ class TransferCreate(BaseModel):
     fee: Optional[str] = None
     notes: Optional[str] = None
 
+# ==================== GALLERY MODELS ====================
+class GalleryCategory(str, Enum):
+    MATCH_DAY = "Match Day"
+    TRAINING = "Training"
+    TEAM_EVENTS = "Team Events"
+    ACADEMY = "Academy"
+    FANS = "Fans"
+    OTHER = "Other"
+
+class GalleryItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    image_url: str
+    category: str = "Other"
+    description: Optional[str] = None
+    match_id: Optional[str] = None
+    player_id: Optional[str] = None
+    tags: List[str] = []
+    is_featured: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class GalleryItemCreate(BaseModel):
+    title: str
+    image_url: str
+    category: str = "Other"
+    description: Optional[str] = None
+    match_id: Optional[str] = None
+    player_id: Optional[str] = None
+    tags: List[str] = []
+    is_featured: bool = False
+
 # ==================== AUTH ROUTES ====================
 @api_router.post("/auth/login", response_model=LoginResponse)
 async def login(request: LoginRequest, response: Response):
@@ -1444,6 +1475,7 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     news_count = await db.news.count_documents({})
     messages_count = await db.contact_messages.count_documents({})
     groups_count = await db.academy_groups.count_documents({})
+    gallery_count = await db.gallery.count_documents({})
     
     return {
         "first_team_players": first_team_count,
@@ -1452,7 +1484,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "total_fixtures": fixtures_count,
         "news_articles": news_count,
         "unread_messages": messages_count,
-        "academy_groups": groups_count
+        "academy_groups": groups_count,
+        "gallery_photos": gallery_count
     }
 
 
@@ -1486,6 +1519,72 @@ async def update_standings_columns(config: StandingsColumnConfig, current_user: 
         upsert=True
     )
     return config.model_dump()
+
+
+# ==================== GALLERY ====================
+# Public: Get gallery items
+@api_router.get("/gallery", response_model=List[GalleryItem])
+async def get_gallery(category: Optional[str] = None, player_id: Optional[str] = None, match_id: Optional[str] = None, featured: Optional[bool] = None, limit: int = 50):
+    query = {}
+    if category:
+        query["category"] = category
+    if player_id:
+        query["player_id"] = player_id
+    if match_id:
+        query["match_id"] = match_id
+    if featured is not None:
+        query["is_featured"] = featured
+    items = await db.gallery.find(query, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
+    return [GalleryItem(**item) for item in items]
+
+@api_router.get("/gallery/{item_id}", response_model=GalleryItem)
+async def get_gallery_item(item_id: str):
+    item = await db.gallery.find_one({"id": item_id}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε")
+    return GalleryItem(**item)
+
+# Admin: Create gallery item
+@api_router.post("/admin/gallery", response_model=GalleryItem)
+async def create_gallery_item(item: GalleryItemCreate, current_user: dict = Depends(get_current_user)):
+    gallery_item = GalleryItem(**item.model_dump())
+    await db.gallery.insert_one(gallery_item.model_dump())
+    return gallery_item
+
+# Admin: Upload gallery image
+@api_router.post("/admin/gallery/upload")
+async def upload_gallery_image(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Μόνο εικόνες επιτρέπονται")
+    gallery_dir = UPLOAD_DIR / "gallery"
+    gallery_dir.mkdir(exist_ok=True)
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    file_path = gallery_dir / filename
+    async with aiofiles.open(str(file_path), "wb") as f:
+        content = await file.read()
+        await f.write(content)
+    return {"image_url": f"/api/uploads/gallery/{filename}"}
+
+# Admin: Update gallery item
+@api_router.put("/admin/gallery/{item_id}", response_model=GalleryItem)
+async def update_gallery_item(item_id: str, item: GalleryItemCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.gallery.find_one({"id": item_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε")
+    update_data = item.model_dump()
+    await db.gallery.update_one({"id": item_id}, {"$set": update_data})
+    updated = await db.gallery.find_one({"id": item_id}, {"_id": 0})
+    return GalleryItem(**updated)
+
+# Admin: Delete gallery item
+@api_router.delete("/admin/gallery/{item_id}")
+async def delete_gallery_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.gallery.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε")
+    return {"message": "Διαγράφηκε"}
+
 
 
 # Seed Data

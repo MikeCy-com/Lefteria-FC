@@ -64,12 +64,17 @@ const PlayerProfilePage = () => {
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [gallery, setGallery] = useState([]);
 
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
-        const res = await axios.get(`${API}/players/${playerId}`);
-        setPlayer(res.data);
+        const [playerRes, galleryRes] = await Promise.all([
+          axios.get(`${API}/players/${playerId}`),
+          axios.get(`${API}/gallery?player_id=${playerId}`),
+        ]);
+        setPlayer(playerRes.data);
+        setGallery(galleryRes.data);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
@@ -292,6 +297,20 @@ const PlayerProfilePage = () => {
                     <div key={i} className="card p-4 flex justify-between items-center">
                       <span className="text-white font-medium text-sm">{club.club_name}</span>
                       <span className="text-zinc-500 text-xs">{club.from_year} - {club.to_year}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Player Gallery */}
+            {gallery.length > 0 && (
+              <div data-testid="player-gallery-section">
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Φωτογραφίες</h3>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {gallery.map(item => (
+                    <div key={item.id} className="aspect-square overflow-hidden bg-[#1a1a1a] rounded">
+                      <img src={resolveImg(item.image_url)} alt={item.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                     </div>
                   ))}
                 </div>

@@ -4,7 +4,7 @@ import {
   Users, Calendar, Newspaper, Trophy, GraduationCap, Mail,
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
-  Check, Clock, ChevronRight, Settings
+  Check, Clock, ChevronRight, Settings, Image
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -1202,6 +1202,138 @@ const MessagesTab = ({ messages, onRefresh }) => {
   );
 };
 
+// ==================== GALLERY TAB ====================
+const GalleryTab = ({ onRefresh: parentRefresh }) => {
+  const [items, setItems] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const categories = ["Match Day", "Training", "Team Events", "Academy", "Fans", "Other"];
+  const catLabels = { "Match Day": "Αγώνας", "Training": "Προπόνηση", "Team Events": "Εκδηλώσεις", "Academy": "Ακαδημία", "Fans": "Φίλαθλοι", "Other": "Άλλο" };
+  const emptyForm = { title: "", image_url: "", category: "Other", description: "", player_id: "", match_id: "", tags: [], is_featured: false };
+  const [form, setForm] = useState(emptyForm);
+
+  const fetchGallery = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/gallery`);
+      setItems(res.data);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { fetchGallery(); }, [fetchGallery]);
+
+  const openCreate = () => { setForm(emptyForm); setEditItem(null); setShowForm(true); };
+  const openEdit = (item) => {
+    setForm({ title: item.title, image_url: item.image_url, category: item.category, description: item.description || "", player_id: item.player_id || "", match_id: item.match_id || "", tags: item.tags || [], is_featured: item.is_featured });
+    setEditItem(item); setShowForm(true);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await axios.post(`${API}/admin/gallery/upload`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      setForm(prev => ({ ...prev, image_url: res.data.image_url }));
+    } catch (e) { alert("Σφάλμα μεταφόρτωσης"); }
+    finally { setUploading(false); }
+  };
+
+  const handleSave = async () => {
+    if (!form.title || !form.image_url) { alert("Τίτλος και εικόνα απαιτούνται"); return; }
+    setSaving(true);
+    try {
+      const headers = getAuthHeaders();
+      if (editItem) await axios.put(`${API}/admin/gallery/${editItem.id}`, form, { headers });
+      else await axios.post(`${API}/admin/gallery`, form, { headers });
+      setShowForm(false); fetchGallery();
+    } catch (e) { alert("Σφάλμα"); } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Διαγραφή φωτογραφίας;")) return;
+    try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  const filtered = filter === "all" ? items : items.filter(i => i.category === filter);
+  const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const resolveImg = (url) => url && (url.startsWith("http") ? url : `${BASE_URL}${url}`);
+
+  return (
+    <div data-testid="admin-gallery-tab">
+      <TabHeader title="Γκαλερί" count={items.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-gallery-btn"><Plus size={14} /> Νέα Φωτογραφία</button>
+      </TabHeader>
+
+      {/* Category filter */}
+      <div className="flex gap-2 flex-wrap mb-4">
+        <button onClick={() => setFilter("all")} className={`text-xs px-3 py-1.5 border transition-colors ${filter === "all" ? "bg-[#F5A623] text-black border-[#F5A623]" : "border-[#333] text-zinc-400 hover:text-white"}`} data-testid="gallery-filter-all">Όλα</button>
+        {categories.map(cat => (
+          <button key={cat} onClick={() => setFilter(cat)} className={`text-xs px-3 py-1.5 border transition-colors ${filter === cat ? "bg-[#F5A623] text-black border-[#F5A623]" : "border-[#333] text-zinc-400 hover:text-white"}`} data-testid={`gallery-filter-${cat.toLowerCase().replace(/\s/g, '-')}`}>
+            {catLabels[cat]}
+          </button>
+        ))}
+      </div>
+
+      {/* Gallery grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {filtered.map(item => (
+          <div key={item.id} className="bg-[#111] border border-[#1e1e1e] rounded overflow-hidden group" data-testid={`gallery-item-${item.id}`}>
+            <div className="aspect-square relative overflow-hidden">
+              <img src={resolveImg(item.image_url)} alt={item.title} className="w-full h-full object-cover" />
+              {item.is_featured && <span className="absolute top-2 left-2 text-[9px] bg-[#F5A623] text-black px-1.5 py-0.5 rounded">Featured</span>}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button onClick={() => openEdit(item)} className="admin-icon-btn bg-white/10"><Edit2 size={14} /></button>
+                <button onClick={() => handleDelete(item.id)} className="admin-icon-btn bg-white/10 text-red-400"><Trash2 size={14} /></button>
+              </div>
+            </div>
+            <div className="p-2">
+              <p className="text-white text-xs font-medium truncate">{item.title}</p>
+              <p className="text-[10px] text-[#F5A623]">{catLabels[item.category] || item.category}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      {filtered.length === 0 && <p className="text-zinc-600 text-center py-12">Δεν υπάρχουν φωτογραφίες</p>}
+
+      {/* Form Modal */}
+      {showForm && (
+        <FormModal title={editItem ? "Επεξεργασία Φωτογραφίας" : "Νέα Φωτογραφία"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <Field label="Τίτλος *"><AdminInput value={form.title} onChange={e => setForm({...form, title: e.target.value})} data-testid="gallery-title-input" /></Field>
+          <Field label="Εικόνα *">
+            <div className="space-y-2">
+              <AdminInput value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} placeholder="URL εικόνας ή μεταφόρτωση" data-testid="gallery-url-input" />
+              <label className={`inline-flex items-center gap-2 text-xs px-3 py-2 border border-dashed border-[#333] text-zinc-400 hover:text-white hover:border-zinc-500 cursor-pointer transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" data-testid="gallery-file-input" />
+                {uploading ? "Μεταφόρτωση..." : "Επιλογή αρχείου"}
+              </label>
+              {form.image_url && <img src={resolveImg(form.image_url)} alt="" className="w-20 h-20 object-cover rounded mt-1" />}
+            </div>
+          </Field>
+          <Field label="Κατηγορία">
+            <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="admin-input" data-testid="gallery-category-select">
+              {categories.map(c => <option key={c} value={c}>{catLabels[c]}</option>)}
+            </select>
+          </Field>
+          <Field label="Περιγραφή"><AdminInput value={form.description} onChange={e => setForm({...form, description: e.target.value})} data-testid="gallery-desc-input" /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="ID Παίκτη (προαιρ.)"><AdminInput value={form.player_id} onChange={e => setForm({...form, player_id: e.target.value})} placeholder="Σύνδεση με παίκτη" /></Field>
+            <Field label="ID Αγώνα (προαιρ.)"><AdminInput value={form.match_id} onChange={e => setForm({...form, match_id: e.target.value})} placeholder="Σύνδεση με αγώνα" /></Field>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.is_featured} onChange={e => setForm({...form, is_featured: e.target.checked})} className="accent-[#F5A623]" data-testid="gallery-featured-check" />
+            <span className="text-sm text-zinc-300">Featured φωτογραφία</span>
+          </label>
+        </FormModal>
+      )}
+    </div>
+  );
+};
+
 // ==================== MAIN ADMIN PANEL ====================
 const AdminPanel = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -1252,6 +1384,7 @@ const AdminPanel = ({ user, onLogout }) => {
     { id: "news", label: "Νέα", icon: Newspaper },
     { id: "venues", label: "Γήπεδα", icon: MapPin },
     { id: "seasons", label: "Σεζόν", icon: Archive },
+    { id: "gallery", label: "Γκαλερί", icon: Image },
     { id: "messages", label: "Μηνύματα", icon: Mail },
   ];
 
@@ -1277,6 +1410,7 @@ const AdminPanel = ({ user, onLogout }) => {
       case "news": return <NewsTab news={data.news} onRefresh={fetchAll} />;
       case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
       case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
+      case "gallery": return <GalleryTab onRefresh={fetchAll} />;
       case "messages": return <MessagesTab messages={data.messages} onRefresh={fetchAll} />;
       default: return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
     }

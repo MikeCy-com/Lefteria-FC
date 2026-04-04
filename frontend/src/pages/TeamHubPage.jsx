@@ -18,6 +18,7 @@ const TeamTabBar = ({ activeTab, setActiveTab }) => {
     { id: "roster", label: "Ρόστερ" },
     { id: "results", label: "Αποτελέσματα" },
     { id: "schedule", label: "Πρόγραμμα" },
+    { id: "gallery", label: "Γκαλερί" },
     { id: "venues", label: "Γήπεδα" },
   ];
 
@@ -606,6 +607,131 @@ const VenuesTab = () => {
   );
 };
 
+// ==================== GALLERY TAB ====================
+const GalleryTab = () => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [lightbox, setLightbox] = useState(null);
+
+  const categories = ["Match Day", "Training", "Team Events", "Academy", "Fans", "Other"];
+  const catLabels = { "Match Day": "Αγώνας", "Training": "Προπόνηση", "Team Events": "Εκδηλώσεις", "Academy": "Ακαδημία", "Fans": "Φίλαθλοι", "Other": "Άλλο" };
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const res = await axios.get(`${API}/gallery`);
+        setItems(res.data);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    };
+    fetchGallery();
+  }, []);
+
+  const filtered = filter === "all" ? items : items.filter(i => i.category === filter);
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-10" data-testid="gallery-tab">
+      {/* Category filter pills */}
+      <div className="flex gap-2 flex-wrap mb-8">
+        <button
+          onClick={() => setFilter("all")}
+          className={`text-xs px-4 py-2 border transition-colors ${filter === "all" ? "bg-[#F5A623] text-black border-[#F5A623]" : "border-[#333] text-zinc-400 hover:text-white hover:border-zinc-500"}`}
+          data-testid="gallery-filter-all"
+        >Όλα</button>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setFilter(cat)}
+            className={`text-xs px-4 py-2 border transition-colors ${filter === cat ? "bg-[#F5A623] text-black border-[#F5A623]" : "border-[#333] text-zinc-400 hover:text-white hover:border-zinc-500"}`}
+            data-testid={`gallery-filter-${cat.toLowerCase().replace(/\s/g, '-')}`}
+          >{catLabels[cat]}</button>
+        ))}
+      </div>
+
+      {/* Photo Grid */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {filtered.map((item, idx) => (
+            <div
+              key={item.id}
+              className="group cursor-pointer overflow-hidden"
+              onClick={() => setLightbox(idx)}
+              data-testid={`gallery-photo-${item.id}`}
+            >
+              <div className="aspect-square overflow-hidden bg-[#1a1a1a] relative">
+                <img
+                  src={resolveImg(item.image_url)}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                {item.is_featured && (
+                  <span className="absolute top-2 left-2 text-[9px] bg-[#F5A623] text-black px-2 py-0.5 font-medium">FEATURED</span>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                  <div className="p-3 w-full">
+                    <p className="text-white text-xs font-medium truncate">{item.title}</p>
+                    <p className="text-[10px] text-[#F5A623]">{catLabels[item.category] || item.category}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20">
+          <p className="text-zinc-500 text-sm">{loading ? "" : "Δεν υπάρχουν φωτογραφίες σε αυτή την κατηγορία"}</p>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox !== null && filtered[lightbox] && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+          data-testid="gallery-lightbox"
+        >
+          <button
+            className="absolute top-4 right-4 text-white/60 hover:text-white text-2xl z-10"
+            onClick={() => setLightbox(null)}
+            data-testid="lightbox-close"
+          >&times;</button>
+
+          {/* Prev / Next */}
+          {lightbox > 0 && (
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-2 z-10"
+              onClick={(e) => { e.stopPropagation(); setLightbox(lightbox - 1); }}
+              data-testid="lightbox-prev"
+            ><ChevronLeft size={32} /></button>
+          )}
+          {lightbox < filtered.length - 1 && (
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-2 z-10"
+              onClick={(e) => { e.stopPropagation(); setLightbox(lightbox + 1); }}
+              data-testid="lightbox-next"
+            ><ChevronRight size={32} /></button>
+          )}
+
+          <div className="max-w-4xl max-h-[85vh] relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={resolveImg(filtered[lightbox].image_url)}
+              alt={filtered[lightbox].title}
+              className="max-w-full max-h-[80vh] object-contain mx-auto"
+              data-testid="lightbox-image"
+            />
+            <div className="text-center mt-3">
+              <p className="text-white font-medium text-sm">{filtered[lightbox].title}</p>
+              {filtered[lightbox].description && <p className="text-zinc-400 text-xs mt-1">{filtered[lightbox].description}</p>}
+              <p className="text-[10px] text-[#F5A623] mt-1">{catLabels[filtered[lightbox].category] || filtered[lightbox].category}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ==================== MAIN TEAM HUB PAGE ====================
 const TeamHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -679,6 +805,7 @@ const TeamHubPage = () => {
         {activeTab === "roster" && <RosterTab players={players} />}
         {activeTab === "results" && <ResultsTab fixtures={fixtures} />}
         {activeTab === "schedule" && <ScheduleTab />}
+        {activeTab === "gallery" && <GalleryTab />}
         {activeTab === "venues" && <VenuesTab />}
       </div>
     </div>
