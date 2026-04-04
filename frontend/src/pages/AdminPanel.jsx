@@ -4,7 +4,7 @@ import {
   Users, Calendar, Newspaper, Trophy, GraduationCap, Mail,
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
-  Check, Clock, ChevronRight
+  Check, Clock, ChevronRight, Settings
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -820,8 +820,15 @@ const StandingsTab = ({ standings, onRefresh }) => {
   const [editStanding, setEditStanding] = useState(null);
   const [saving, setSaving] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [showColConfig, setShowColConfig] = useState(false);
+  const [colConfig, setColConfig] = useState(null);
+  const [savingCols, setSavingCols] = useState(false);
   const emptyStanding = { team_name: "", team_logo: "", played: 0, won: 0, drawn: 0, lost: 0, goals_for: 0, goals_against: 0, points: 0, competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", form: "" };
   const [form, setForm] = useState(emptyStanding);
+
+  useEffect(() => {
+    axios.get(`${API}/settings/standings-columns`).then(r => setColConfig(r.data)).catch(() => {});
+  }, []);
 
   const openCreate = () => { setForm(emptyStanding); setEditStanding(null); setShowForm(true); };
   const openEdit = (s) => { setForm({ team_name: s.team_name, team_logo: s.team_logo || "", played: s.played, won: s.won, drawn: s.drawn, lost: s.lost, goals_for: s.goals_for, goals_against: s.goals_against, points: s.points, competition: s.competition, season: s.season || "2025/26", form: s.form || "" }); setEditStanding(s); setShowForm(true); };
@@ -852,9 +859,28 @@ const StandingsTab = ({ standings, onRefresh }) => {
     } catch (e) { alert("Σφάλμα"); } finally { setRecalculating(false); }
   };
 
+  const handleSaveColumns = async () => {
+    setSavingCols(true);
+    try {
+      await axios.put(`${API}/admin/settings/standings-columns`, colConfig, { headers: getAuthHeaders() });
+      setShowColConfig(false);
+    } catch (e) { alert("Σφάλμα αποθήκευσης"); } finally { setSavingCols(false); }
+  };
+
+  const toggleCol = (key) => setColConfig(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const colLabels = {
+    played: "Αγώνες (Αγ)", won: "Νίκες (Ν)", drawn: "Ισοπαλίες (Ι)", lost: "Ήττες (Η)",
+    goals_for: "Γκολ Υπέρ (ΓΥ)", goals_against: "Γκολ Κατά (ΓΚ)",
+    goal_difference: "Διαφορά Γκολ (ΔΓ)", points: "Βαθμοί (Βαθ)", form: "Φόρμα"
+  };
+
   return (
     <div data-testid="admin-standings-tab">
       <TabHeader title="Βαθμολογία" count={standings.length}>
+        <button onClick={() => setShowColConfig(true)} className="admin-btn-ghost text-xs" data-testid="column-config-btn">
+          <Settings size={13} /> Στήλες
+        </button>
         <button onClick={handleRecalculate} disabled={recalculating} className="admin-btn-ghost text-xs" data-testid="recalculate-btn">
           <RefreshCw size={13} className={recalculating ? 'animate-spin' : ''} /> {recalculating ? 'Υπολογισμός...' : 'Επανυπολογισμός'}
         </button>
@@ -894,6 +920,25 @@ const StandingsTab = ({ standings, onRefresh }) => {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Βαθμοί"><AdminInput type="number" value={form.points} onChange={e => setForm({...form, points: e.target.value})} /></Field>
             <Field label="Φόρμα"><AdminInput placeholder="WWDLW" value={form.form} onChange={e => setForm({...form, form: e.target.value})} /></Field>
+          </div>
+        </FormModal>
+      )}
+      {showColConfig && colConfig && (
+        <FormModal title="Ρυθμίσεις Στηλών Βαθμολογίας" onClose={() => setShowColConfig(false)} onSave={handleSaveColumns} saving={savingCols}>
+          <p className="text-xs text-zinc-500 mb-4">Επιλέξτε ποιες στήλες θα εμφανίζονται στη δημόσια βαθμολογία.</p>
+          <div className="space-y-2">
+            {Object.entries(colLabels).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-3 p-3 rounded bg-[#111] hover:bg-[#161616] transition-colors cursor-pointer" data-testid={`col-toggle-${key}`}>
+                <input
+                  type="checkbox"
+                  checked={colConfig[key] || false}
+                  onChange={() => toggleCol(key)}
+                  className="w-4 h-4 accent-[#F5A623] rounded"
+                />
+                <span className="text-sm text-zinc-300">{label}</span>
+                {key === 'points' && <span className="text-[10px] text-[#F5A623] ml-auto">Συνιστάται</span>}
+              </label>
+            ))}
           </div>
         </FormModal>
       )}

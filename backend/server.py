@@ -1455,6 +1455,39 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "academy_groups": groups_count
     }
 
+
+# ==================== SITE SETTINGS ====================
+class StandingsColumnConfig(BaseModel):
+    played: bool = True
+    won: bool = True
+    drawn: bool = True
+    lost: bool = True
+    goals_for: bool = False
+    goals_against: bool = False
+    goal_difference: bool = True
+    points: bool = True
+    form: bool = False
+
+class SiteSettings(BaseModel):
+    standings_columns: StandingsColumnConfig = StandingsColumnConfig()
+
+@api_router.get("/settings/standings-columns")
+async def get_standings_columns():
+    settings = await db.site_settings.find_one({"key": "standings_columns"}, {"_id": 0})
+    if not settings:
+        return StandingsColumnConfig().model_dump()
+    return settings.get("value", StandingsColumnConfig().model_dump())
+
+@api_router.put("/admin/settings/standings-columns")
+async def update_standings_columns(config: StandingsColumnConfig, current_user: dict = Depends(get_current_user)):
+    await db.site_settings.update_one(
+        {"key": "standings_columns"},
+        {"$set": {"key": "standings_columns", "value": config.model_dump()}},
+        upsert=True
+    )
+    return config.model_dump()
+
+
 # Seed Data
 @api_router.post("/seed")
 async def seed_data():

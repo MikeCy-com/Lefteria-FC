@@ -1,0 +1,113 @@
+{
+  "summary": "Iteration 8 testing complete. All Standings Column Configuration features working correctly. 9/9 backend tests passed, 7/7 frontend UI tests passed. Admin can toggle which columns appear in the public standings table via the 'Στήλες' button in the Standings tab. Settings persist in MongoDB.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8_standings_columns.py",
+    "/app/test_reports/pytest/pytest_results_iter8.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "StandingsColumnConfig model in server.py correctly defines all 9 column toggles with proper defaults",
+    "GET /api/settings/standings-columns returns default config when no document exists in MongoDB",
+    "PUT /api/admin/settings/standings-columns correctly requires authentication (returns 401 without auth)",
+    "Admin modal in StandingsTab shows all 9 checkboxes with Greek labels",
+    "Points column has 'Συνιστάται' (Recommended) label for UX guidance",
+    "Public homepage standings table correctly conditionally renders columns based on config",
+    "Settings stored in MongoDB collection 'site_settings' with key 'standings_columns'",
+    "All interactive elements have data-testid attributes for testing"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration8_standings_columns.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (7/7 UI tests passed)"
+  },
+  "test_credentials": {
+    "admin_username": "Lefteria FC",
+    "admin_password": "L3ft3r1@FC#2024$Secure!"
+  },
+  "seed_data_creation": "None - used existing seeded data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 8 verified: 1) GET /api/settings/standings-columns returns default config (played/won/drawn/lost/goal_difference/points=true, goals_for/goals_against/form=false), 2) PUT /api/admin/settings/standings-columns requires auth (401 without), 3) Admin Panel Standings tab has 'Στήλες' button (data-testid='column-config-btn'), 4) Column config modal shows 9 toggle checkboxes with Greek labels (Αγώνες, Νίκες, Ισοπαλίες, Ήττες, Γκολ Υπέρ, Γκολ Κατά, Διαφορά Γκολ, Βαθμοί, Φόρμα), 5) Toggling goals_for ON shows ΓΥ column on public homepage, 6) Toggling goals_for OFF hides ΓΥ column, 7) Settings persist in MongoDB (reload shows same config), 8) Public homepage standings table headers are in Greek (Θ, Ομάδα, Αγ, Ν, Ι, Η, ΔΓ, Βαθ)",
+  "features_tested": {
+    "backend_apis": {
+      "GET /api/settings/standings-columns": {
+        "status": "PASS",
+        "details": "Returns default config with correct boolean values"
+      },
+      "PUT /api/admin/settings/standings-columns without auth": {
+        "status": "PASS",
+        "details": "Returns 401 Unauthorized"
+      },
+      "PUT /api/admin/settings/standings-columns with auth": {
+        "status": "PASS",
+        "details": "Updates config and returns updated values"
+      },
+      "Settings persistence": {
+        "status": "PASS",
+        "details": "Settings persist in MongoDB after save"
+      }
+    },
+    "admin_panel": {
+      "standings_tab_column_button": {
+        "status": "PASS",
+        "details": "'Στήλες' button found with data-testid='column-config-btn'"
+      },
+      "column_config_modal": {
+        "status": "PASS",
+        "details": "Modal shows 9 toggle checkboxes with Greek labels"
+      },
+      "toggle_functionality": {
+        "status": "PASS",
+        "details": "Toggling columns on/off works correctly"
+      },
+      "save_functionality": {
+        "status": "PASS",
+        "details": "Save button persists changes to MongoDB"
+      }
+    },
+    "public_homepage": {
+      "standings_table_headers": {
+        "status": "PASS",
+        "details": "Headers in Greek: Θ, Ομάδα, Αγ, Ν, Ι, Η, ΔΓ, Βαθ"
+      },
+      "column_visibility_default": {
+        "status": "PASS",
+        "details": "Default columns visible, ΓΥ/ΓΚ/Φόρμα hidden"
+      },
+      "column_visibility_after_toggle": {
+        "status": "PASS",
+        "details": "ΓΥ column appears after toggling on in admin"
+      },
+      "column_hidden_after_toggle_off": {
+        "status": "PASS",
+        "details": "ΓΥ column hidden after toggling off in admin"
+      }
+    },
+    "greek_labels": {
+      "modal_title": "ΡΥΘΜΙΣΕΙΣ ΣΤΗΛΩΝ ΒΑΘΜΟΛΟΓΙΑΣ - PASS",
+      "column_labels": [
+        "Αγώνες (Αγ) - PASS",
+        "Νίκες (Ν) - PASS",
+        "Ισοπαλίες (Ι) - PASS",
+        "Ήττες (Η) - PASS",
+        "Γκολ Υπέρ (ΓΥ) - PASS",
+        "Γκολ Κατά (ΓΚ) - PASS",
+        "Διαφορά Γκολ (ΔΓ) - PASS",
+        "Βαθμοί (Βαθ) - PASS",
+        "Φόρμα - PASS"
+      ],
+      "recommended_label": "Συνιστάται on Points column - PASS"
+    }
+  }
+}

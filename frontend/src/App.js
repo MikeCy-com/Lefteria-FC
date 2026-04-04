@@ -284,6 +284,7 @@ const HomePage = () => {
   const [liveMatch, setLiveMatch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [prevScore, setPrevScore] = useState(null);
+  const [cols, setCols] = useState({ played: true, won: true, drawn: true, lost: true, goals_for: false, goals_against: false, goal_difference: true, points: true, form: false });
 
   const fetchLive = async () => {
     try {
@@ -313,16 +314,18 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes, liveRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
           axios.get(`${API}/live-match`),
+          axios.get(`${API}/settings/standings-columns`),
         ]);
         setFixtures(fixturesRes.data);
         setStandings(standingsRes.data);
         setNews(newsRes.data);
         if (liveRes.data.active) setLiveMatch(liveRes.data);
+        setCols(colsRes.data);
       } catch (e) {
         console.error("Error fetching data:", e);
       } finally {
@@ -513,14 +516,17 @@ const HomePage = () => {
                 <table className="standings-table" data-testid="standings-table">
                   <thead>
                     <tr>
-                      <th>Pos</th>
-                      <th>Team</th>
-                      <th>P</th>
-                      <th>W</th>
-                      <th>D</th>
-                      <th>L</th>
-                      <th>GD</th>
-                      <th>Pts</th>
+                      <th>Θ</th>
+                      <th>Ομάδα</th>
+                      {cols.played && <th>Αγ</th>}
+                      {cols.won && <th>Ν</th>}
+                      {cols.drawn && <th>Ι</th>}
+                      {cols.lost && <th>Η</th>}
+                      {cols.goals_for && <th>ΓΥ</th>}
+                      {cols.goals_against && <th>ΓΚ</th>}
+                      {cols.goal_difference && <th>ΔΓ</th>}
+                      {cols.form && <th>Φόρμα</th>}
+                      {cols.points && <th>Βαθ</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -536,14 +542,17 @@ const HomePage = () => {
                             <span>{team.team_name}</span>
                           </div>
                         </td>
-                        <td>{team.played}</td>
-                        <td>{team.won}</td>
-                        <td>{team.drawn}</td>
-                        <td>{team.lost}</td>
-                        <td className={team.goal_difference > 0 ? 'text-green-500' : team.goal_difference < 0 ? 'text-red-500' : ''}>
+                        {cols.played && <td>{team.played}</td>}
+                        {cols.won && <td>{team.won}</td>}
+                        {cols.drawn && <td>{team.drawn}</td>}
+                        {cols.lost && <td>{team.lost}</td>}
+                        {cols.goals_for && <td>{team.goals_for}</td>}
+                        {cols.goals_against && <td>{team.goals_against}</td>}
+                        {cols.goal_difference && <td className={team.goal_difference > 0 ? 'text-green-500' : team.goal_difference < 0 ? 'text-red-500' : ''}>
                           {team.goal_difference > 0 ? '+' : ''}{team.goal_difference}
-                        </td>
-                        <td className="font-bold text-[#F5A623]">{team.points}</td>
+                        </td>}
+                        {cols.form && <td className="text-xs">{team.form || '-'}</td>}
+                        {cols.points && <td className="font-bold text-[#F5A623]">{team.points}</td>}
                       </tr>
                     ))}
                   </tbody>
