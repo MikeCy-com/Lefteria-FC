@@ -47,8 +47,9 @@ Create a website for Lefteria FC football club with an academy section, styled l
 
 ### Admin CMS (12 tabs, standalone layout — no public nav/footer)
 - Dashboard, Club Profile, Players (with file upload), Academy Groups
-- Staff, Fixtures, Standings (with Recalculate All), News, Venues, Seasons, Messages
+- Staff, Fixtures, Standings (with Recalculate All + **Column Config**), News, Venues, Seasons, Messages
 - **Live Score** tab → Match Control Center
+- **Standings Column Config**: Admin can toggle which columns (Played, Won, Drawn, Lost, GF, GA, GD, Points, Form) appear on the public standings table via a modal in the Standings tab. Settings stored in MongoDB and fetched by public pages.
 
 ### Professional Live Match System
 - **Match Events**: 9 types (goal, penalty, own_goal, yellow/red/2nd yellow, sub, VAR)
@@ -62,12 +63,12 @@ Create a website for Lefteria FC football club with an academy section, styled l
 - Drag & drop or click-to-browse file upload (JPEG/PNG/WebP, max 5MB)
 - URL input alternative, stored at /api/uploads/players/
 
-## Testing: 100% across 7 iterations
+## Testing: 100% across 8 iterations
 
 ## Prioritized Backlog
 
 ### P2 (Medium Priority)
-- Statistics & League Table Columns Configuration
+- None remaining
 
 ### P3 (Future)
 - Player Transfer history
