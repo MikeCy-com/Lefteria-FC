@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff } from "lucide-react";
+import AdminPanel from "./pages/AdminPanel";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -388,7 +389,7 @@ const HomePage = () => {
                   </div>
                   
                   <div className="flex items-center gap-6 justify-center flex-1">
-                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.home_team === 'Lefteria FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.home_team}
                     </span>
                     <div className="match-score bg-[#1F1F1F] px-4 py-2">
@@ -398,7 +399,7 @@ const HomePage = () => {
                         <span className="text-zinc-400 text-lg">VS</span>
                       )}
                     </div>
-                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.away_team === 'Lefteria FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.away_team}
                     </span>
                   </div>
@@ -666,7 +667,7 @@ const TeamPage = () => {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const res = await axios.get(`${API}/players?is_academy=false`);
+        const res = await axios.get(`${API}/players?team_type=First%20Team`);
         setPlayers(res.data);
       } catch (e) {
         console.error("Error fetching players:", e);
@@ -783,8 +784,8 @@ const AcademyPage = () => {
     const fetchData = async () => {
       try {
         const [infoRes, playersRes] = await Promise.all([
-          axios.get(`${API}/academy`),
-          axios.get(`${API}/players?is_academy=true`),
+          axios.get(`${API}/academy-groups`),
+          axios.get(`${API}/players?team_type=Academy`),
         ]);
         setAcademyInfo(infoRes.data);
         setAcademyPlayers(playersRes.data);
@@ -829,12 +830,10 @@ const AcademyPage = () => {
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Ηλικιακές Κατηγορίες</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {academyInfo.map((group) => (
-              <div key={group.id} className="card p-6" data-testid={`academy-${group.age_group}`}>
+              <div key={group.id} className="card p-6" data-testid={`academy-${group.name}`}>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="font-['Bebas_Neue'] text-4xl text-[#F5A623]">{group.age_group}</span>
-                  <span className="badge badge-secondary">
-                    {group.current_players}/{group.max_players}
-                  </span>
+                  <span className="font-['Bebas_Neue'] text-4xl text-[#F5A623]">{group.name}</span>
+                  <span className="badge badge-secondary">{group.age_range}</span>
                 </div>
                 <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Προπονητής: {group.coach_name}</h3>
                 <p className="text-zinc-400 text-sm mb-4">{group.description}</p>
@@ -842,11 +841,8 @@ const AcademyPage = () => {
                   <Clock size={14} />
                   <span>{group.training_schedule}</span>
                 </div>
-                <div className="mt-4 bg-[#1F1F1F] h-2">
-                  <div 
-                    className="bg-[#F5A623] h-full transition-all duration-500"
-                    style={{ width: `${(group.current_players / group.max_players) * 100}%` }}
-                  ></div>
+                <div className="mt-4 pt-3 border-t border-[#262626]">
+                  <span className="text-xs text-zinc-500">Σεζόν {group.season}</span>
                 </div>
               </div>
             ))}
@@ -887,9 +883,11 @@ const AcademyPage = () => {
             <div className="grid grid-cols-2 gap-4">
               {academyPlayers.slice(0, 4).map((player) => (
                 <div key={player.id} className="card p-4">
-                  <span className="text-xs text-[#F5A623] tracking-wider">{player.age_group}</span>
+                  <span className="text-xs text-[#F5A623] tracking-wider">{player.academy_group_name || player.position}</span>
                   <h4 className="font-['Bebas_Neue'] text-lg text-white">{player.name}</h4>
-                  <span className="text-zinc-500 text-sm">{player.position}</span>
+                  <span className="text-zinc-500 text-sm">{player.position === 'Goalkeeper' ? 'Τερματοφύλακας' :
+                     player.position === 'Defender' ? 'Αμυντικός' :
+                     player.position === 'Midfielder' ? 'Μέσος' : 'Επιθετικός'}</span>
                 </div>
               ))}
             </div>
@@ -1439,347 +1437,17 @@ const AdminLoginPage = () => {
   );
 };
 
-// Admin Page (Protected)
+// Admin Page (Protected) - Uses AdminPanel component
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState("players");
-  const [data, setData] = useState({ players: [], fixtures: [], news: [], standings: [], academy: [], messages: [] });
-  const [loading, setLoading] = useState(true);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
-  const fetchData = useCallback(async () => {
-    try {
-      const headers = getAuthHeaders();
-      const [players, fixtures, news, standings, academy, messages] = await Promise.all([
-        axios.get(`${API}/players`),
-        axios.get(`${API}/fixtures`),
-        axios.get(`${API}/news`),
-        axios.get(`${API}/standings`),
-        axios.get(`${API}/academy`),
-        axios.get(`${API}/admin/contact`, { headers }),
-      ]);
-      setData({
-        players: players.data,
-        fixtures: fixtures.data,
-        news: news.data,
-        standings: standings.data,
-        academy: academy.data,
-        messages: messages.data,
-      });
-    } catch (e) {
-      console.error("Error fetching data:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   const handleLogout = async () => {
     await logout();
     navigate("/admin/login");
   };
 
-  const tabs = [
-    { id: "players", label: "Παίκτες", icon: Users },
-    { id: "fixtures", label: "Αγώνες", icon: Calendar },
-    { id: "news", label: "Νέα", icon: Newspaper },
-    { id: "standings", label: "Βαθμολογία", icon: Trophy },
-    { id: "academy", label: "Ακαδημία", icon: GraduationCap },
-    { id: "messages", label: "Μηνύματα", icon: Mail },
-  ];
-
-  const handleDelete = async (type, id) => {
-    if (!window.confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το στοιχείο;")) return;
-    try {
-      const headers = getAuthHeaders();
-      await axios.delete(`${API}/admin/${type}/${id}`, { headers });
-      fetchData();
-    } catch (e) {
-      console.error("Error deleting:", e);
-      alert("Σφάλμα κατά τη διαγραφή. Παρακαλώ δοκιμάστε ξανά.");
-    }
-  };
-
-  if (loading) return <Loading />;
-
-  return (
-    <div className="pt-24 min-h-screen bg-[#050505]" data-testid="admin-page">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 admin-sidebar min-h-screen fixed left-0 top-24 hidden lg:block">
-          <div className="p-6 border-b border-[#262626]">
-            <h2 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Πάνελ Διαχείρισης</h2>
-            <p className="text-xs text-zinc-500">Καλώς ήρθες, {user?.username}</p>
-          </div>
-          <nav className="py-4">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`admin-menu-item w-full ${activeTab === tab.id ? 'active' : ''}`}
-                data-testid={`admin-tab-${tab.id}`}
-              >
-                <tab.icon size={18} />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-            <button
-              onClick={handleLogout}
-              className="admin-menu-item w-full text-red-400 hover:text-red-300 mt-4"
-              data-testid="admin-logout"
-            >
-              <LogOut size={18} />
-              <span>Αποσύνδεση</span>
-            </button>
-          </nav>
-        </aside>
-
-        {/* Mobile Tabs */}
-        <div className="lg:hidden fixed top-24 left-0 right-0 bg-[#111111] border-b border-[#262626] z-40 overflow-x-auto">
-          <div className="flex p-2 gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm whitespace-nowrap ${
-                  activeTab === tab.id ? 'bg-[#F5A623] text-black' : 'bg-[#1F1F1F] text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm whitespace-nowrap bg-red-900/50 text-red-400"
-            >
-              Αποσύνδεση
-            </button>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <main className="flex-1 lg:ml-64 p-6 pt-20 lg:pt-6">
-          <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="font-['Bebas_Neue'] text-3xl text-white capitalize">
-                {activeTab}
-              </h1>
-            </div>
-
-            {/* Content Tables */}
-            {activeTab === "players" && (
-              <div className="overflow-x-auto">
-                <table className="standings-table" data-testid="admin-players-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Όνομα</th>
-                      <th>Θέση</th>
-                      <th>Ηλικία</th>
-                      <th>Ακαδημία</th>
-                      <th>Ενέργειες</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.players.map((player) => (
-                      <tr key={player.id}>
-                        <td>{player.number}</td>
-                        <td className="font-semibold">{player.name}</td>
-                        <td>{player.position}</td>
-                        <td>{player.age}</td>
-                        <td>
-                          <span className={`badge ${player.is_academy ? 'badge-primary' : 'badge-secondary'}`}>
-                            {player.is_academy ? 'Ναι' : 'Όχι'}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            onClick={() => handleDelete('players', player.id)}
-                            className="text-red-500 hover:text-red-400"
-                            data-testid={`delete-player-${player.id}`}
-                          >
-                            Διαγραφή
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeTab === "fixtures" && (
-              <div className="overflow-x-auto">
-                <table className="standings-table" data-testid="admin-fixtures-table">
-                  <thead>
-                    <tr>
-                      <th>Ημ/νία</th>
-                      <th>Γηπεδούχος</th>
-                      <th>Φιλοξενούμενος</th>
-                      <th>Σκορ</th>
-                      <th>Κατάσταση</th>
-                      <th>Ενέργειες</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.fixtures.map((fixture) => (
-                      <tr key={fixture.id}>
-                        <td>{new Date(fixture.match_date).toLocaleDateString('el-GR')}</td>
-                        <td className={fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-semibold' : ''}>
-                          {fixture.home_team}
-                        </td>
-                        <td className={fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-semibold' : ''}>
-                          {fixture.away_team}
-                        </td>
-                        <td>
-                          {fixture.status === 'Completed' ? `${fixture.home_score} - ${fixture.away_score}` : '-'}
-                        </td>
-                        <td>
-                          <span className={`badge ${
-                            fixture.status === 'Completed' ? 'bg-green-900/50 text-green-400' : 'badge-secondary'
-                          }`}>
-                            {fixture.status === 'Completed' ? 'Ολοκληρώθηκε' : 'Προγραμματισμένος'}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            onClick={() => handleDelete('fixtures', fixture.id)}
-                            className="text-red-500 hover:text-red-400"
-                          >
-                            Διαγραφή
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeTab === "news" && (
-              <div className="grid gap-4">
-                {data.news.map((item) => (
-                  <div key={item.id} className="card p-6 flex justify-between items-start">
-                    <div className="flex gap-4">
-                      {item.image_url && (
-                        <img src={item.image_url} alt="" className="w-20 h-20 object-cover" />
-                      )}
-                      <div>
-                        <span className="badge badge-secondary mb-2">{item.category}</span>
-                        <h3 className="font-['Bebas_Neue'] text-xl text-white">{item.title}</h3>
-                        <p className="text-zinc-400 text-sm mt-1">{item.excerpt}</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => handleDelete('news', item.id)}
-                      className="text-red-500 hover:text-red-400"
-                    >
-                      Διαγραφή
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === "standings" && (
-              <div className="overflow-x-auto">
-                <table className="standings-table" data-testid="admin-standings-table">
-                  <thead>
-                    <tr>
-                      <th>Ομάδα</th>
-                      <th>Αγ</th>
-                      <th>Ν</th>
-                      <th>Ι</th>
-                      <th>Η</th>
-                      <th>ΓΥ</th>
-                      <th>ΓΚ</th>
-                      <th>Βαθ</th>
-                      <th>Ενέργειες</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.standings.map((team) => (
-                      <tr key={team.id} className={team.team_name === 'LEFTERIA FC' ? 'team-highlight' : ''}>
-                        <td className="font-semibold">{team.team_name}</td>
-                        <td>{team.played}</td>
-                        <td>{team.won}</td>
-                        <td>{team.drawn}</td>
-                        <td>{team.lost}</td>
-                        <td>{team.goals_for}</td>
-                        <td>{team.goals_against}</td>
-                        <td className="font-bold text-[#F5A623]">{team.points}</td>
-                        <td>
-                          <button 
-                            onClick={() => handleDelete('standings', team.id)}
-                            className="text-red-500 hover:text-red-400"
-                          >
-                            Διαγραφή
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeTab === "academy" && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.academy.map((group) => (
-                  <div key={group.id} className="card p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="font-['Bebas_Neue'] text-3xl text-[#F5A623]">{group.age_group}</span>
-                      <button 
-                        onClick={() => handleDelete('academy', group.id)}
-                        className="text-red-500 hover:text-red-400 text-sm"
-                      >
-                        Διαγραφή
-                      </button>
-                    </div>
-                    <p className="text-white mb-1">Προπονητής: {group.coach_name}</p>
-                    <p className="text-zinc-400 text-sm">{group.training_schedule}</p>
-                    <p className="text-zinc-500 text-sm mt-2">{group.current_players}/{group.max_players} παίκτες</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === "messages" && (
-              <div className="space-y-4">
-                {data.messages.map((msg) => (
-                  <div key={msg.id} className="card p-6" data-testid={`message-${msg.id}`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-semibold text-white">{msg.name}</h3>
-                        <p className="text-zinc-400 text-sm">{msg.email}</p>
-                      </div>
-                      <span className="text-zinc-500 text-xs">
-                        {new Date(msg.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <span className="badge badge-secondary mb-2">{msg.subject}</span>
-                    <p className="text-zinc-300">{msg.message}</p>
-                  </div>
-                ))}
-                {data.messages.length === 0 && (
-                  <p className="text-zinc-500 text-center py-12">Δεν υπάρχουν μηνύματα ακόμα</p>
-                )}
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+  return <AdminPanel user={user} onLogout={handleLogout} />;
 };
 
 // ==================== APP ====================
