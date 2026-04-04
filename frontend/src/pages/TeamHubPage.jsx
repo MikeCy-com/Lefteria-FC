@@ -240,12 +240,12 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
             </div>
             <div className="divide-y divide-[#1a1a1a]">
               {completedFixtures.slice(0, 4).map(f => (
-                <div key={f.id} className="px-5 py-3 flex items-center justify-between text-xs">
+                <Link to={`/match/${f.id}`} key={f.id} className="px-5 py-3 flex items-center justify-between text-xs hover:bg-[#111] transition-colors block">
                   <span className="text-zinc-500 w-16">{new Date(f.match_date).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' })}</span>
                   <span className={`flex-1 ${f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.home_team}</span>
                   <span className="font-['Bebas_Neue'] text-sm text-white px-2">{f.home_score}-{f.away_score}</span>
                   <span className={`flex-1 text-right ${f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.away_team}</span>
-                </div>
+                </Link>
               ))}
               {completedFixtures.length === 0 && <p className="px-5 py-4 text-zinc-600 text-xs">Χωρίς αποτελέσματα</p>}
             </div>
@@ -405,7 +405,7 @@ const ResultsTab = ({ fixtures }) => {
 
       <div className="space-y-2">
         {filtered.map(f => (
-          <div key={f.id} className="card p-5 flex items-center justify-between" data-testid={`result-${f.id}`}>
+          <Link to={`/match/${f.id}`} key={f.id} className="card p-5 flex items-center justify-between hover:border-[#F5A623]/30 transition-colors cursor-pointer" data-testid={`result-${f.id}`}>
             <span className="text-xs text-zinc-500 w-20">
               {new Date(f.match_date).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
             </span>
@@ -423,7 +423,7 @@ const ResultsTab = ({ fixtures }) => {
               f.status === 'Live' ? 'bg-red-500/10 text-red-400' :
               'bg-zinc-800 text-zinc-400'
             }`}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span>
-          </div>
+          </Link>
         ))}
         {filtered.length === 0 && <p className="text-zinc-500 text-center py-8">Δεν υπάρχουν αγώνες</p>}
       </div>

@@ -6,6 +6,7 @@ import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight
 import AdminPanel from "./pages/AdminPanel";
 import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
+import MatchReportPage from "./pages/MatchReportPage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1460,6 +1461,7 @@ function App() {
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
+            <Route path="/match/:fixtureId" element={<PublicLayout><MatchReportPage /></PublicLayout>} />
             {/* Legacy redirects */}
             <Route path="/calendar" element={<Navigate to="/team?tab=schedule" replace />} />
             <Route path="/venues" element={<Navigate to="/team?tab=venues" replace />} />
