@@ -1,92 +1,66 @@
 # Lefteria FC Website - PRD
 
 ## Original Problem Statement
-Create a website for Lefteria FC (ΛΕΥΤΕΡΙΑ) football club with an academy section, styled like a WordPress theme with SportsPress plugin functionality. Full CMS admin panel for managing all club content.
-
-## User Personas
-1. **Fans** - Browse team info, fixtures, news, standings, live match updates
-2. **Parents** - Research academy programs for children
-3. **Club Administrators** - Manage all content and run live match coverage via admin panel
+Create a website for Lefteria FC football club with an academy section, styled like a WordPress SportsPress theme. Full CMS admin panel with live match management.
 
 ## Core Requirements
 - Club branding: Orange/gold (#F5A623), Black, White
-- WordPress/SportsPress-style design
-- Entire website in Greek
+- WordPress/SportsPress-style design, entire website in Greek
 - Hidden admin panel at /admin/login (JWT protected)
-- MongoDB database for data storage
-- Real data from Lefteria FC (Cyprus, PAAOK league)
+- MongoDB database, real data from Lefteria FC (Cyprus, PAAOK league)
 
 ## Architecture
 ```
 /app/
 ├── backend/
-│   ├── server.py          # FastAPI - Full CMS + match events + live stats
-│   ├── .env               # MONGO_URL, DB_NAME, JWT_SECRET, ADMIN creds
-│   └── tests/
-│       ├── test_api.py             # 42 core API tests
-│       └── test_live_match_stats.py # 35 live match tests
-├── frontend/
-│   └── src/
-│       ├── App.js          # Public pages + auth + routing + live widget
-│       ├── pages/
-│       │   └── AdminPanel.jsx  # Standalone CMS (12 tabs + Match Control Center)
-│       ├── index.css       # SportsPress + admin CMS styles
-│       └── App.css
+│   ├── server.py              # FastAPI - Full CMS + match events + live stats + file uploads
+│   ├── uploads/players/       # Player image files
+│   └── .env
+├── frontend/src/
+│   ├── App.js                 # Public pages + auth + routing + live widget + player profiles
+│   ├── pages/AdminPanel.jsx   # Standalone CMS (12 tabs + Match Control Center)
+│   ├── components/ImageUpload.jsx  # Drag-drop + URL image upload component
+│   ├── utils/sounds.js        # Web Audio API sound effects
+│   └── index.css              # SportsPress + admin CMS styles
 └── memory/
-    ├── PRD.md
-    └── test_credentials.md
 ```
 
-## What's Been Implemented
+## Implemented Features
 
-### Phase 1 - Base Platform
-- SportsPress-style public website (7 pages)
-- JWT-protected admin panel, full Greek translation
-- Real data scraping from lefteriafc.cy
-- MongoDB data seeding
+### Public Website (7+ pages)
+- Home (hero, live match widget, fixtures, standings with logos, news)
+- About, Team (clickable player cards → profile), Academy (grouped by age group)
+- Fixtures, News, Contact form
+- **Player Profile** (/player/:id) — stats, bio, photo, previous clubs
 
-### Phase 2 - CMS Expansion
-- Full CRUD for Players, Academy Groups, Staff, Fixtures, Standings, News, Venues, Seasons
-- Re-seeded DB with expanded schema (team_type, is_active, etc.)
-- Admin CMS with 11 management tabs
+### Admin CMS (12 tabs, standalone layout — no public nav/footer)
+- Dashboard, Club Profile, Players (with file upload), Academy Groups
+- Staff, Fixtures, Standings (with Recalculate All), News, Venues, Seasons, Messages
+- **Live Score** tab → Match Control Center
 
-### Phase 3 - Admin Redesign + Auto-Standings
-- Standalone admin layout (no public nav/footer)
-- Professional dark CMS theme
-- Auto-update standings from fixture results
-- Recalculate All button
-- Quick live-score endpoint
+### Professional Live Match System
+- **Match Events**: 9 types (goal, penalty, own_goal, yellow/red/2nd yellow, sub, VAR)
+- **Match Stats**: possession%, shots, on-target, corners, fouls, offsides, saves
+- **Auto Score**: Adding goal events auto-increments scores; deleting reverses
+- **Auto Standings**: Completing match auto-recalculates both teams' standings
+- **Sound Effects**: Web Audio API sounds (goal horn, whistle, card beep, sub chime)
+- **Homepage Widget**: Auto-refresh 30s, LIVE indicator, goal scorers, browser notifications
 
-### Phase 4 - Professional Live Match System (Latest)
-- **Match Events Model**: 9 event types (goal, penalty_scored, penalty_missed, own_goal, yellow_card, red_card, second_yellow, substitution, var_decision)
-- **Match Stats Model**: possession%, shots, shots on target, corners, fouls, offsides, saves, match minute
-- **Match Control Center (Admin)**: Full event logging with timeline, scorer summary, editable stats panel, quick action buttons, status transitions (Scheduled → Live → Half Time → Completed)
-- **Auto Score Updates**: Adding goal events auto-increments score, own goals go to opposing team, deleting events reverses score
-- **Homepage Live Widget**: Auto-refreshing (30s) match banner with teams, score, LIVE indicator, minute counter, goal scorers
-- **Public API**: /api/live-match returns full match data for fans
-- **Fixture Detail API**: /api/fixtures/{id}/detail returns events+stats
+### Player Image Upload
+- Drag & drop or click-to-browse file upload (JPEG/PNG/WebP, max 5MB)
+- URL input alternative, stored at /api/uploads/players/
 
-## Testing Results
-- Backend: 100% (77+ tests - 42 core + 35 live match)
-- Frontend: 100%
-- Overall: 100% across all 4 iterations
+## Testing: 100% across 5 iterations (77+ backend tests, all frontend verified)
 
 ## Prioritized Backlog
 
-### P1 (High Priority)
-- Individual Player Profile pages (public view with stats)
-- Player picture upload in Admin
-- Automated League Standings with Club Logos
-- Academy hierarchy: assign players to specific groups
-
 ### P2 (Medium Priority)
 - Events Calendar view
-- Statistics & League Table Columns Configuration
 - Venue Information with Maps integration
 - Season Archives logic
+- Statistics & League Table Columns Configuration
 
 ### P3 (Future)
-- Staff Profiles management & public display
-- Player Transfer history (Previous/Current clubs)
-- Ticket sales integration
-- Merchandise shop
+- Staff Profiles public display
+- Player Transfer history
+- Ticket sales / Merchandise shop

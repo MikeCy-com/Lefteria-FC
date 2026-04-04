@@ -6,7 +6,6 @@ load_dotenv(ROOT_DIR / '.env')
 
 from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Response, Depends, UploadFile, File
 from starlette.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
@@ -34,11 +33,19 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 app = FastAPI(title="LEFTERIA FC API", description="Football Club & Academy Management System")
 api_router = APIRouter(prefix="/api")
 
-# Static files for uploads
+# Static files for uploads - serve via /api/uploads to go through ingress
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 (UPLOAD_DIR / "players").mkdir(exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+
+# Serve uploads through api router to ensure K8s ingress routing
+@api_router.get("/uploads/{path:path}")
+async def serve_upload(path: str):
+    from starlette.responses import FileResponse
+    file_path = UPLOAD_DIR / path
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(str(file_path))
 
 # ==================== ENUMS ====================
 class PlayerPosition(str, Enum):
@@ -966,7 +973,7 @@ async def upload_player_image(player_id: str, file: UploadFile = File(...), curr
         await f.write(content)
     
     # Update player image_url
-    image_url = f"/uploads/players/{filename}"
+    image_url = f"/api/uploads/players/{filename}"
     await db.players.update_one({"id": player_id}, {"$set": {"image_url": image_url}})
     
     return {"image_url": image_url, "message": "Η εικόνα ανέβηκε επιτυχώς"}
@@ -988,7 +995,7 @@ async def upload_general_image(file: UploadFile = File(...), current_user: dict 
     async with aiofiles.open(str(filepath), "wb") as f:
         await f.write(content)
     
-    return {"image_url": f"/uploads/players/{filename}"}
+    return {"image_url": f"/api/uploads/players/{filename}"}
 
 # Academy Groups Admin
 @api_router.post("/admin/academy-groups", response_model=AcademyGroup)

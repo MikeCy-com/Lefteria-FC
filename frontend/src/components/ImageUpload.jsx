@@ -19,7 +19,7 @@ const ImageUpload = ({ currentUrl, onImageChange, playerId, label = "Φωτογ�
   const resolveUrl = (url) => {
     if (!url) return "";
     if (url.startsWith("http")) return url;
-    if (url.startsWith("/uploads")) return `${BASE_URL}${url}`;
+    if (url.startsWith("/api/uploads") || url.startsWith("/uploads")) return `${BASE_URL}${url}`;
     return url;
   };
 
