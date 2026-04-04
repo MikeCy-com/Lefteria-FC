@@ -4,7 +4,8 @@ import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams
 import axios from "axios";
 import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
-import { CalendarPage, VenuePage, SeasonsPage, StaffPage } from "./pages/PublicPages";
+import TeamHubPage from "./pages/TeamHubPage";
+import PlayerProfilePage from "./pages/PlayerProfilePage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -104,12 +105,8 @@ const Navigation = () => {
     { path: "/", label: "Αρχική", icon: HomeIcon },
     { path: "/about", label: "Σχετικά", icon: Info },
     { path: "/team", label: "Ομάδα", icon: Users },
-    { path: "/staff", label: "Staff", icon: Shield },
     { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
     { path: "/fixtures", label: "Αγώνες", icon: Calendar },
-    { path: "/calendar", label: "Ημερολόγιο", icon: Calendar },
-    { path: "/seasons", label: "Αρχείο", icon: Trophy },
-    { path: "/venues", label: "Γήπεδα", icon: MapPin },
     { path: "/news", label: "Νέα", icon: Newspaper },
     { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
@@ -211,12 +208,10 @@ const Footer = () => (
           <ul className="space-y-3">
             {[
               { name: "Πρώτη Ομάδα", path: "/team" },
-              { name: "Τεχνικό Επιτελείο", path: "/staff" },
               { name: "Ακαδημία", path: "/academy" },
               { name: "Αγώνες", path: "/fixtures" },
-              { name: "Ημερολόγιο", path: "/calendar" },
-              { name: "Αρχείο Σεζόν", path: "/seasons" },
-              { name: "Γήπεδα", path: "/venues" },
+              { name: "Πρόγραμμα", path: "/team?tab=schedule" },
+              { name: "Γήπεδα", path: "/team?tab=venues" },
               { name: "Νέα", path: "/news" },
               { name: "Επικοινωνία", path: "/contact" },
             ].map((item) => (
@@ -752,125 +747,6 @@ const AboutPage = () => (
 );
 
 // Team Page
-const TeamPage = () => {
-  const [players, setPlayers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      try {
-        const res = await axios.get(`${API}/players?team_type=First%20Team`);
-        setPlayers(res.data);
-      } catch (e) {
-        console.error("Error fetching players:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPlayers();
-  }, []);
-
-  const filteredPlayers = filter === "all" 
-    ? players 
-    : players.filter(p => p.position === filter);
-
-  const positions = ["all", "Goalkeeper", "Defender", "Midfielder", "Forward"];
-  const positionLabels = {
-    "all": "Όλοι οι Παίκτες",
-    "Goalkeeper": "Τερματοφύλακες",
-    "Defender": "Αμυντικοί",
-    "Midfielder": "Μέσοι",
-    "Forward": "Επιθετικοί"
-  };
-
-  if (loading) return <Loading />;
-
-  return (
-    <div className="pt-24 min-h-screen" data-testid="team-page">
-      {/* Hero */}
-      <section className="py-20 px-6 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
-          <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-            Πρώτη <span className="text-[#F5A623]">Ομάδα</span>
-          </h1>
-          <p className="text-xl text-zinc-300 max-w-3xl">
-            Γνωρίστε τους παίκτες που εκπροσωπούν την LEFTERIA FC στον Α' Όμιλο του ΠΑΑΟΚ.
-          </p>
-        </div>
-      </section>
-
-      {/* Filter */}
-      <section className="py-8 px-6 border-b border-[#262626]">
-        <div className="max-w-7xl mx-auto">
-          <div className="tab-list flex-wrap">
-            {positions.map((pos) => (
-              <button
-                key={pos}
-                onClick={() => setFilter(pos)}
-                className={`tab-item ${filter === pos ? 'active' : ''}`}
-                data-testid={`filter-${pos}`}
-              >
-                {positionLabels[pos]}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Players Grid */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPlayers.map((player) => {
-              const imgUrl = player.image_url ? (player.image_url.startsWith("http") ? player.image_url : `${process.env.REACT_APP_BACKEND_URL}${player.image_url}`) : null;
-              return (
-              <Link 
-                to={`/player/${player.id}`}
-                key={player.id} 
-                className="card player-card group"
-                data-testid={`player-${player.id}`}
-              >
-                <div className="aspect-[3/4] bg-[#1F1F1F] relative overflow-hidden">
-                  {imgUrl ? (
-                    <img 
-                      src={imgUrl} 
-                      alt={player.name}
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Users size={64} className="text-zinc-700" />
-                    </div>
-                  )}
-                  <div className="absolute top-4 left-4 player-number font-['Bebas_Neue'] text-6xl text-white/20">
-                    {player.number}
-                  </div>
-                </div>
-                <div className="p-4 bg-[#111111]">
-                  <span className="text-xs text-[#F5A623] tracking-wider uppercase">
-                    {player.position === 'Goalkeeper' ? 'Τερματοφύλακας' :
-                     player.position === 'Defender' ? 'Αμυντικός' :
-                     player.position === 'Midfielder' ? 'Μέσος' : 'Επιθετικός'}
-                  </span>
-                  <h3 className="font-['Bebas_Neue'] text-2xl text-white mt-1">{player.name}</h3>
-                  <div className="flex items-center gap-2 mt-2 text-zinc-400 text-sm">
-                    <span>{player.nationality}</span>
-                    <span>•</span>
-                    <span>{player.age} ετών</span>
-                  </div>
-                </div>
-              </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
-
 // Academy Page
 const AcademyPage = () => {
   const [academyInfo, setAcademyInfo] = useState([]);
@@ -1434,129 +1310,6 @@ const ContactPage = () => {
   );
 };
 
-// Player Profile Page
-const PlayerProfilePage = () => {
-  const { playerId } = useParams();
-  const [player, setPlayer] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPlayer = async () => {
-      try {
-        const res = await axios.get(`${API}/players/${playerId}`);
-        setPlayer(res.data);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    };
-    fetchPlayer();
-  }, [playerId]);
-
-  if (loading) return <Loading />;
-  if (!player) return (
-    <div className="pt-28 text-center min-h-screen bg-[#050505]">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ο παίκτης δεν βρέθηκε</h2>
-      <Link to="/team" className="text-[#F5A623] hover:underline text-sm mt-2 inline-block">Επιστροφή στην ομάδα</Link>
-    </div>
-  );
-
-  const BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const imgUrl = player.image_url ? (player.image_url.startsWith("http") ? player.image_url : `${BASE_URL}${player.image_url}`) : null;
-  const stats = player.statistics || {};
-  const positionGr = { Goalkeeper: "Τερματοφύλακας", Defender: "Αμυντικός", Midfielder: "Μέσος", Forward: "Επιθετικός" };
-
-  return (
-    <div className="pt-28 min-h-screen bg-[#050505] pb-16" data-testid="player-profile-page">
-      <div className="max-w-5xl mx-auto px-4">
-        {/* Back link */}
-        <Link to="/team" className="text-zinc-500 hover:text-[#F5A623] text-sm flex items-center gap-1 mb-6" data-testid="back-to-team">
-          <ChevronRight size={14} className="rotate-180" /> Ομάδα
-        </Link>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left: Photo + basic info */}
-          <div className="lg:col-span-1">
-            <div className="card overflow-hidden">
-              {imgUrl ? (
-                <img src={imgUrl} alt={player.name} className="w-full aspect-square object-cover" data-testid="player-photo" />
-              ) : (
-                <div className="w-full aspect-square bg-[#1A1A1A] flex items-center justify-center">
-                  <Users size={64} className="text-zinc-800" />
-                </div>
-              )}
-              <div className="p-5">
-                <div className="flex items-baseline gap-3 mb-2">
-                  <span className="font-['Bebas_Neue'] text-5xl text-[#F5A623]">{player.number}</span>
-                  <div>
-                    <h1 className="font-['Bebas_Neue'] text-2xl text-white leading-tight" data-testid="player-name">{player.name}</h1>
-                    <span className="text-zinc-400 text-sm">{positionGr[player.position] || player.position}</span>
-                  </div>
-                </div>
-                <div className="space-y-2 pt-3 border-t border-[#262626] text-sm">
-                  {player.nationality && <div className="flex justify-between"><span className="text-zinc-500">Εθνικότητα</span><span className="text-white">{player.nationality}</span></div>}
-                  {player.age && <div className="flex justify-between"><span className="text-zinc-500">Ηλικία</span><span className="text-white">{player.age}</span></div>}
-                  {player.height && <div className="flex justify-between"><span className="text-zinc-500">Ύψος</span><span className="text-white">{player.height}</span></div>}
-                  {player.weight && <div className="flex justify-between"><span className="text-zinc-500">Βάρος</span><span className="text-white">{player.weight}</span></div>}
-                  {player.preferred_foot && <div className="flex justify-between"><span className="text-zinc-500">Πόδι</span><span className="text-white">{player.preferred_foot === 'Right' ? 'Δεξί' : player.preferred_foot === 'Left' ? 'Αριστερό' : 'Αμφίπλευρο'}</span></div>}
-                  <div className="flex justify-between"><span className="text-zinc-500">Ομάδα</span><span className="text-white">{player.team_type === 'First Team' ? "Α' Ομάδα" : "Ακαδημία"}</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Stats + bio */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Stats Grid */}
-            <div data-testid="player-stats">
-              <h2 className="font-['Bebas_Neue'] text-xl text-white mb-4">Στατιστικά Σεζόν</h2>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                {[
-                  { label: "Συμμετοχές", value: stats.appearances || 0 },
-                  { label: "Γκολ", value: stats.goals || 0 },
-                  { label: "Ασίστ", value: stats.assists || 0 },
-                  { label: "Κίτρινες", value: stats.yellow_cards || 0 },
-                  { label: "Κόκκινες", value: stats.red_cards || 0 },
-                  { label: "Λεπτά", value: stats.minutes_played || 0 },
-                  { label: "Clean Sheets", value: stats.clean_sheets || 0 },
-                ].map((s, i) => (
-                  <div key={i} className="card p-4 text-center">
-                    <div className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{s.value}</div>
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bio */}
-            {player.bio && (
-              <div>
-                <h2 className="font-['Bebas_Neue'] text-xl text-white mb-3">Βιογραφικό</h2>
-                <div className="card p-5">
-                  <p className="text-zinc-400 text-sm leading-relaxed">{player.bio}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Previous Clubs */}
-            {player.previous_clubs && player.previous_clubs.length > 0 && (
-              <div>
-                <h2 className="font-['Bebas_Neue'] text-xl text-white mb-3">Προηγούμενοι Σύλλογοι</h2>
-                <div className="space-y-2">
-                  {player.previous_clubs.map((club, i) => (
-                    <div key={i} className="card p-4 flex justify-between items-center">
-                      <span className="text-white font-medium text-sm">{club.club_name}</span>
-                      <span className="text-zinc-500 text-xs">{club.from_year} - {club.to_year}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Admin Login Page
 const AdminLoginPage = () => {
   const [username, setUsername] = useState("");
@@ -1702,16 +1455,17 @@ function App() {
             {/* Public routes with nav + footer */}
             <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
-            <Route path="/team" element={<PublicLayout><TeamPage /></PublicLayout>} />
+            <Route path="/team" element={<PublicLayout><TeamHubPage /></PublicLayout>} />
             <Route path="/academy" element={<PublicLayout><AcademyPage /></PublicLayout>} />
             <Route path="/fixtures" element={<PublicLayout><FixturesPage /></PublicLayout>} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
-            <Route path="/calendar" element={<PublicLayout><CalendarPage /></PublicLayout>} />
-            <Route path="/venues" element={<PublicLayout><VenuePage /></PublicLayout>} />
-            <Route path="/seasons" element={<PublicLayout><SeasonsPage /></PublicLayout>} />
-            <Route path="/staff" element={<PublicLayout><StaffPage /></PublicLayout>} />
+            {/* Legacy redirects */}
+            <Route path="/calendar" element={<Navigate to="/team?tab=schedule" replace />} />
+            <Route path="/venues" element={<Navigate to="/team?tab=venues" replace />} />
+            <Route path="/seasons" element={<Navigate to="/team?tab=overview" replace />} />
+            <Route path="/staff" element={<Navigate to="/team?tab=overview" replace />} />
             {/* Admin routes - NO nav/footer */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={

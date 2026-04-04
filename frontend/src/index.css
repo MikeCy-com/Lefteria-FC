@@ -710,3 +710,8 @@ body > div[style*="fixed"]:last-of-type {
   50% { opacity: 0.7; }
 }
 
+
+/* Hide scrollbar for tab bars */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
