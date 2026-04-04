@@ -41,8 +41,9 @@ Create a website for Lefteria FC football club with an academy section, styled l
   - Schedule: Calendar grid with month navigation
   - Venues: Venue cards with Google Maps iframes
 - **Player Profile** (/player/:id) — Hero banner with stadium background, player photo, number/name split, info grid, Goals/Assists circular indicators, stat progress bars, tabbed content (Overview, Statistics, Biography)
-- Simplified navigation (7 items): Αρχική, Σχετικά, Ομάδα, Ακαδημία, Αγώνες, Νέα, Επικοινωνία
-- Legacy redirects: /calendar → /team?tab=schedule, /venues → /team?tab=venues, /seasons → /team?tab=overview, /staff → /team?tab=overview
+- **Match Report** (/match/:fixtureId) — Dedicated match page with header (teams, score, date, venue, competition), event timeline (goals, cards, subs, VAR with minute markers, positioned home/away), match statistics bars (possession, shots, corners, etc.), and summary card. Accessible by clicking any fixture from Results tab or Overview.
+- Simplified navigation (6 items): Αρχική, Σχετικά, Ομάδα, Ακαδημία, Νέα, Επικοινωνία
+- Legacy redirects: /fixtures → /team?tab=results, /calendar → /team?tab=schedule, /venues → /team?tab=venues, /seasons → /team?tab=overview, /staff → /team?tab=overview
 
 ### Admin CMS (12 tabs, standalone layout — no public nav/footer)
 - Dashboard, Club Profile, Players (with file upload), Academy Groups
@@ -61,12 +62,11 @@ Create a website for Lefteria FC football club with an academy section, styled l
 - Drag & drop or click-to-browse file upload (JPEG/PNG/WebP, max 5MB)
 - URL input alternative, stored at /api/uploads/players/
 
-## Testing: 100% across 6 iterations (25+ tests each iteration)
+## Testing: 100% across 7 iterations
 
 ## Prioritized Backlog
 
 ### P2 (Medium Priority)
-- Dedicated Match Report Page (Public view showing full timeline of events, stats for past fixtures)
 - Statistics & League Table Columns Configuration
 
 ### P3 (Future)
