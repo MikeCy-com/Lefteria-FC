@@ -449,13 +449,30 @@ input::placeholder, textarea::placeholder {
   }
 }
 
-/* Hide Emergent badge */
+/* Hide Emergent badge - aggressive hiding */
 [data-testid="emergent-badge"],
 .emergent-badge,
 div[class*="emergent"],
-iframe[src*="emergent"] {
+div[class*="Emergent"],
+iframe[src*="emergent"],
+div[style*="position: fixed"][style*="bottom"],
+div[style*="position:fixed"][style*="bottom"],
+#emergent-badge,
+.made-with-emergent,
+div:has(> span:contains("Emergent")),
+div:has(> a[href*="emergent"]) {
   display: none !important;
   visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide any fixed bottom-right badge */
+body > div[style*="fixed"]:last-of-type {
+  display: none !important;
 }
 
 /* Responsive utilities */

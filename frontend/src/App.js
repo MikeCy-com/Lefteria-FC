@@ -118,10 +118,10 @@ const Navigation = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3" data-testid="nav-logo">
-            <img src={CLUB_LOGO} alt="Lefteria FC" className="h-12 w-12 object-contain" />
+            <img src={CLUB_LOGO} alt="Lefteria FC" className="h-16 w-16 object-contain" />
             <div className="hidden sm:block">
-              <span className="font-['Bebas_Neue'] text-2xl tracking-wide text-white">LEFTERIA FC</span>
-              <span className="block text-xs text-[#F5A623] tracking-widest">ΛΕΥΤΕΡΙΑ</span>
+              <span className="font-['Bebas_Neue'] text-3xl tracking-wide text-white">LEFTERIA FC</span>
+              <span className="block text-sm text-[#F5A623] tracking-widest">ΛΕΥΤΕΡΙΑ</span>
             </div>
           </Link>
 
@@ -187,10 +187,10 @@ const Footer = () => (
         {/* Club Info */}
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <img src={CLUB_LOGO} alt="Lefteria FC" className="h-16 w-16 object-contain" />
+            <img src={CLUB_LOGO} alt="Lefteria FC" className="h-20 w-20 object-contain" />
             <div>
-              <span className="font-['Bebas_Neue'] text-2xl tracking-wide text-white">LEFTERIA FC</span>
-              <span className="block text-xs text-[#F5A623] tracking-widest">EST. 2024</span>
+              <span className="font-['Bebas_Neue'] text-3xl tracking-wide text-white">LEFTERIA FC</span>
+              <span className="block text-sm text-[#F5A623] tracking-widest">EST. 2024</span>
             </div>
           </div>
           <p className="text-zinc-400 text-sm leading-relaxed">
