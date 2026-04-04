@@ -1,0 +1,86 @@
+{
+  "theme": "dark",
+  "archetype": "2 (Performance Pro)",
+  "colors": {
+    "background": "#050505",
+    "foreground": "#FFFFFF",
+    "primary": "#F5A623",
+    "primary_foreground": "#000000",
+    "secondary": "#111111",
+    "secondary_foreground": "#F5A623",
+    "muted": "#1F1F1F",
+    "muted_foreground": "#A1A1AA",
+    "accent": "#F5A623",
+    "accent_foreground": "#000000",
+    "card": "#111111",
+    "card_foreground": "#FFFFFF",
+    "border": "#262626",
+    "ring": "#F5A623"
+  },
+  "typography": {
+    "heading_font": "Bebas Neue",
+    "body_font": "Manrope",
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl md:text-7xl font-normal tracking-tight uppercase",
+      "h2": "text-4xl sm:text-5xl font-normal tracking-tight uppercase",
+      "h3": "text-2xl sm:text-3xl font-normal tracking-tight uppercase",
+      "h4": "text-xl font-normal tracking-tight uppercase",
+      "body": "text-base font-normal leading-relaxed text-zinc-300",
+      "small": "text-sm font-medium tracking-widest uppercase text-primary"
+    }
+  },
+  "spacing_and_layout": {
+    "container_padding": "p-6 md:p-12 lg:p-20",
+    "section_gap": "gap-20 md:gap-32",
+    "grid_strategy": "bento_mode_a",
+    "border_radius": "rounded-none",
+    "surface_styles": {
+      "header": "backdrop-blur-xl bg-black/70 border-b border-white/10",
+      "card": "bg-[#111111] border border-[#262626] hover:border-[#F5A623]/50 transition-colors",
+      "primary_button": "bg-[#F5A623] text-black font-bold uppercase tracking-wider px-8 py-4 hover:bg-[#F5A623]/90 transition-transform hover:-translate-y-1"
+    }
+  },
+  "components_strategy": {
+    "marketing_sections": "Custom HTML/Tailwind for hero, bento grids, aggressive asymmetry.",
+    "fixtures_standings": "Dense tables with high contrast, 1px bottom borders, hover rows.",
+    "player_cards": "Cardless or subtle 1px border cards, intense grayscale portrait + neon gold number/name on hover.",
+    "interactive_logic": "Shadcn UI customized for dark/athletic theme (sharp corners, gold accents)."
+  },
+  "icons": "@phosphor-icons/react",
+  "animations": {
+    "hover": "Subtle translate-y, border color shift to #F5A623",
+    "entrance": "Framer motion fade up with stagger for grids",
+    "scroll": "Lenis smooth scroll (MANDATORY)"
+  },
+  "media": {
+    "hero_stadium": {
+      "url": "https://images.unsplash.com/photo-1765130729366-b54d7b2c8ea2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHw0fHxmb290YmFsbCUyMG1hdGNoJTIwc3RhZGl1bSUyMG5pZ2h0fGVufDB8fHx8MTc3NTMwODYzNnww&ixlib=rb-4.1.0&q=85",
+      "description": "Stadium night background for Hero Section"
+    },
+    "youth_academy": {
+      "url": "https://images.unsplash.com/photo-1622659097574-c814ee26068e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2OTV8MHwxfHNlYXJjaHw0fHx5b3V0aCUyMGtpZHMlMjBwbGF5aW5nJTIwZm9vdGJhbGwlMjBzb2NjZXJ8ZW58MHx8fHwxNzc1MzA4NjM2fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Kids playing football for the Academy section"
+    },
+    "crest_logo_element": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/bf6c3d8c-bb69-4407-a80f-3421fc7ad126/images/8e178af9d9d8e848eaeba0d4a58e7d005603df55d47604c7cce922cb1c9b4342.png",
+      "description": "Laurel wreath and dove element in gold, isolated on transparent background. Use as watermark or branding accent."
+    },
+    "dark_texture_bg": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/bf6c3d8c-bb69-4407-a80f-3421fc7ad126/images/1ad19dcfab519a30990be316defbc19cce7bdf8ba32cba0763ba5e31b7afca21.png",
+      "description": "Dark sports abstract texture for repeating sections or footer background"
+    },
+    "placeholder_match": {
+       "url": "https://images.pexels.com/photos/7258838/pexels-photo-7258838.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+       "description": "Football match action for News/Updates cards"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Use ONLY pure HTML/Tailwind for marketing layout structures.",
+    "Use Shadcn UI with hard corners (rounded-none) for Tabs, Forms, Tables.",
+    "Text sizes: DO NOT exceed text-6xl/7xl for H1. Bebas Neue naturally looks compact, so 6xl-7xl is optimal.",
+    "Implement Lenis for smooth scrolling.",
+    "Hero overlay: bg-gradient-to-r from-black/90 via-black/50 to-transparent for stadium readability.",
+    "The admin dashboard should use a strict grid with dense data views (Archetype 2 style).",
+    "Ensure all interactive elements have data-testid attributes."
+  ]
+}
