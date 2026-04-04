@@ -17,8 +17,12 @@ Create a website for Lefteria FC football club with an academy section, styled l
 │   ├── uploads/players/       # Player image files
 │   └── .env
 ├── frontend/src/
-│   ├── App.js                 # Public pages + auth + routing + live widget + player profiles
-│   ├── pages/AdminPanel.jsx   # Standalone CMS (12 tabs + Match Control Center)
+│   ├── App.js                 # Public pages + auth + routing + live widget
+│   ├── pages/
+│   │   ├── AdminPanel.jsx     # Standalone CMS (12 tabs + Match Control Center)
+│   │   ├── TeamHubPage.jsx    # SportsPress-style tabbed Team page (5 tabs)
+│   │   ├── PlayerProfilePage.jsx  # Hero banner + stat bars + tabbed player profile
+│   │   └── PublicPages.jsx    # Legacy (not used in routing anymore)
 │   ├── components/ImageUpload.jsx  # Drag-drop + URL image upload component
 │   ├── utils/sounds.js        # Web Audio API sound effects
 │   └── index.css              # SportsPress + admin CMS styles
@@ -27,11 +31,18 @@ Create a website for Lefteria FC football club with an academy section, styled l
 
 ## Implemented Features
 
-### Public Website (7+ pages)
+### Public Website
 - Home (hero, live match widget, fixtures, standings with logos, news)
-- About, Team (clickable player cards → profile), Academy (grouped by age group)
-- Fixtures, News, Contact form
-- **Player Profile** (/player/:id) — stats, bio, photo, previous clubs
+- About, Academy (grouped by age group), Fixtures, News, Contact form
+- **Team Hub** (/team) — SportsPress-style tabbed page with:
+  - Overview: Game Scoreboard, Games History (W/D/L chart), Roster preview, Latest Results, Team Statistics, Staff
+  - Roster: Full player table with position filter, Goals/Assists/Minutes columns
+  - Latest Results: Fixture results with status filter
+  - Schedule: Calendar grid with month navigation
+  - Venues: Venue cards with Google Maps iframes
+- **Player Profile** (/player/:id) — Hero banner with stadium background, player photo, number/name split, info grid, Goals/Assists circular indicators, stat progress bars, tabbed content (Overview, Statistics, Biography)
+- Simplified navigation (7 items): Αρχική, Σχετικά, Ομάδα, Ακαδημία, Αγώνες, Νέα, Επικοινωνία
+- Legacy redirects: /calendar → /team?tab=schedule, /venues → /team?tab=venues, /seasons → /team?tab=overview, /staff → /team?tab=overview
 
 ### Admin CMS (12 tabs, standalone layout — no public nav/footer)
 - Dashboard, Club Profile, Players (with file upload), Academy Groups
@@ -50,17 +61,16 @@ Create a website for Lefteria FC football club with an academy section, styled l
 - Drag & drop or click-to-browse file upload (JPEG/PNG/WebP, max 5MB)
 - URL input alternative, stored at /api/uploads/players/
 
-## Testing: 100% across 5 iterations (77+ backend tests, all frontend verified)
+## Testing: 100% across 6 iterations (25+ tests each iteration)
 
 ## Prioritized Backlog
 
 ### P2 (Medium Priority)
-- Events Calendar view
-- Venue Information with Maps integration
-- Season Archives logic
+- Dedicated Match Report Page (Public view showing full timeline of events, stats for past fixtures)
 - Statistics & League Table Columns Configuration
 
 ### P3 (Future)
-- Staff Profiles public display
 - Player Transfer history
+- Full Web Push Notification Infrastructure
 - Ticket sales / Merchandise shop
+- Gallery tab (photos) for Team Hub and Player Profile
