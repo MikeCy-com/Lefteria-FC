@@ -6,9 +6,11 @@ load_dotenv(ROOT_DIR / '.env')
 
 from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Response, Depends, UploadFile, File
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import aiofiles
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 import uuid
@@ -31,6 +33,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 # Create the main app
 app = FastAPI(title="LEFTERIA FC API", description="Football Club & Academy Management System")
 api_router = APIRouter(prefix="/api")
+
+# Static files for uploads
+UPLOAD_DIR = ROOT_DIR / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+(UPLOAD_DIR / "players").mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 # ==================== ENUMS ====================
 class PlayerPosition(str, Enum):
@@ -931,6 +939,56 @@ async def transfer_player(player_id: str, transfer: TransferCreate, current_user
         )
     
     return transfer_obj
+
+# Player Image Upload
+@api_router.post("/admin/players/{player_id}/upload-image")
+async def upload_player_image(player_id: str, file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Ο παίκτης δεν βρέθηκε")
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Μη αποδεκτός τύπος αρχείου. Χρησιμοποιήστε JPEG, PNG, WebP ή GIF.")
+    
+    # Validate size (max 5MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Το αρχείο υπερβαίνει τα 5MB")
+    
+    # Save file
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{player_id}.{ext}"
+    filepath = UPLOAD_DIR / "players" / filename
+    
+    async with aiofiles.open(str(filepath), "wb") as f:
+        await f.write(content)
+    
+    # Update player image_url
+    image_url = f"/uploads/players/{filename}"
+    await db.players.update_one({"id": player_id}, {"$set": {"image_url": image_url}})
+    
+    return {"image_url": image_url, "message": "Η εικόνα ανέβηκε επιτυχώς"}
+
+# General image upload (for news, club, etc.)
+@api_router.post("/admin/upload-image")
+async def upload_general_image(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Μη αποδεκτός τύπος αρχείου")
+    
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Το αρχείο υπερβαίνει τα 5MB")
+    
+    filename = f"{uuid.uuid4().hex[:12]}_{file.filename}"
+    filepath = UPLOAD_DIR / "players" / filename
+    
+    async with aiofiles.open(str(filepath), "wb") as f:
+        await f.write(content)
+    
+    return {"image_url": f"/uploads/players/{filename}"}
 
 # Academy Groups Admin
 @api_router.post("/admin/academy-groups", response_model=AcademyGroup)

@@ -6,6 +6,8 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight
 } from "lucide-react";
+import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
+import ImageUpload from "../components/ImageUpload";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
@@ -147,6 +149,9 @@ const MatchControlCenter = ({ fixture, players, onRefresh, onBack }) => {
   const setMatchStatus = async (status) => {
     try {
       await axios.put(`${API}/admin/fixtures/${fixture.id}/live-score`, { status, home_score: fixture.home_score ?? 0, away_score: fixture.away_score ?? 0 }, { headers: getAuthHeaders() });
+      // Play whistle for status changes
+      if (status === 'Live' || status === 'Completed') playMatchWhistle();
+      else if (status === 'Half Time') playWhistleSound();
       onRefresh();
     } catch (e) { alert("Σφάλμα"); }
   };
@@ -157,6 +162,9 @@ const MatchControlCenter = ({ fixture, players, onRefresh, onBack }) => {
     try {
       const payload = { ...eventForm, minute: parseInt(eventForm.minute), added_time: eventForm.added_time ? parseInt(eventForm.added_time) : null };
       await axios.post(`${API}/admin/fixtures/${fixture.id}/events`, payload, { headers: getAuthHeaders() });
+      // Play sound effect for the event
+      const soundFn = getSoundForEvent(eventForm.event_type);
+      if (soundFn) soundFn();
       setShowEventForm(false);
       setEventForm({ event_type: "goal", minute: "", added_time: "", team: "home", player_name: "", secondary_player_name: "", description: "" });
       fetchMatchData();
@@ -592,7 +600,7 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
               </Field>
             )}
           </div>
-          <Field label="URL Φωτογραφίας"><AdminInput placeholder="https://..." value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} data-testid="player-image-input" /></Field>
+          <ImageUpload currentUrl={form.image_url} onImageChange={url => setForm({...form, image_url: url})} playerId={editPlayer?.id} />
           <Field label="Βιογραφικό"><AdminTextarea rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
         </FormModal>
       )}

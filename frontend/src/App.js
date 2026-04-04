@@ -1,9 +1,10 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
+import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -278,11 +279,27 @@ const HomePage = () => {
   const [news, setNews] = useState([]);
   const [liveMatch, setLiveMatch] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [prevScore, setPrevScore] = useState(null);
 
   const fetchLive = async () => {
     try {
       const res = await axios.get(`${API}/live-match`);
-      setLiveMatch(res.data.active ? res.data : null);
+      if (res.data.active) {
+        const newScore = `${res.data.fixture.home_score}-${res.data.fixture.away_score}`;
+        // Play goal sound if score changed
+        if (prevScore && prevScore !== newScore) {
+          playGoalSound();
+          sendBrowserNotification(
+            "ΓΚΟΟΟΛ!",
+            `${res.data.fixture.home_team} ${res.data.fixture.home_score} - ${res.data.fixture.away_score} ${res.data.fixture.away_team}`,
+            CLUB_LOGO
+          );
+        }
+        setPrevScore(newScore);
+        setLiveMatch(res.data);
+      } else {
+        setLiveMatch(null);
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -312,6 +329,7 @@ const HomePage = () => {
     // Auto-refresh live match every 30 seconds
     const interval = setInterval(fetchLive, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <Loading />;
@@ -354,7 +372,7 @@ const HomePage = () => {
         {/* Live Match Widget */}
         {liveMatch && (
           <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-full max-w-lg px-4" data-testid="live-match-widget">
-            <div className="bg-black/90 backdrop-blur-xl border border-red-500/30 rounded-lg p-5 shadow-2xl">
+            <div className="bg-black/90 backdrop-blur-xl border border-red-500/30 rounded-lg p-5 shadow-2xl cursor-pointer" onClick={requestNotificationPermission}>
               <div className="flex items-center justify-between mb-3">
                 <span className="flex items-center gap-1.5 text-xs text-red-400 font-semibold">
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -508,7 +526,12 @@ const HomePage = () => {
                         className={team.team_name === 'LEFTERIA FC' ? 'team-highlight' : ''}
                       >
                         <td className="font-bold">{idx + 1}</td>
-                        <td className="font-semibold">{team.team_name}</td>
+                        <td className="font-semibold">
+                          <div className="flex items-center gap-2">
+                            {team.team_logo && <img src={team.team_logo} alt="" className="w-5 h-5 object-contain" />}
+                            <span>{team.team_name}</span>
+                          </div>
+                        </td>
                         <td>{team.played}</td>
                         <td>{team.won}</td>
                         <td>{team.drawn}</td>
@@ -791,16 +814,19 @@ const TeamPage = () => {
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPlayers.map((player) => (
-              <div 
+            {filteredPlayers.map((player) => {
+              const imgUrl = player.image_url ? (player.image_url.startsWith("http") ? player.image_url : `${process.env.REACT_APP_BACKEND_URL}${player.image_url}`) : null;
+              return (
+              <Link 
+                to={`/player/${player.id}`}
                 key={player.id} 
                 className="card player-card group"
                 data-testid={`player-${player.id}`}
               >
                 <div className="aspect-[3/4] bg-[#1F1F1F] relative overflow-hidden">
-                  {player.image_url ? (
+                  {imgUrl ? (
                     <img 
-                      src={player.image_url} 
+                      src={imgUrl} 
                       alt={player.name}
                       className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                     />
@@ -826,8 +852,9 @@ const TeamPage = () => {
                     <span>{player.age} ετών</span>
                   </div>
                 </div>
-              </div>
-            ))}
+              </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -941,16 +968,29 @@ const AcademyPage = () => {
                 </ul>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {academyPlayers.slice(0, 4).map((player) => (
-                <div key={player.id} className="card p-4">
-                  <span className="text-xs text-[#F5A623] tracking-wider">{player.academy_group_name || player.position}</span>
-                  <h4 className="font-['Bebas_Neue'] text-lg text-white">{player.name}</h4>
-                  <span className="text-zinc-500 text-sm">{player.position === 'Goalkeeper' ? 'Τερματοφύλακας' :
-                     player.position === 'Defender' ? 'Αμυντικός' :
-                     player.position === 'Midfielder' ? 'Μέσος' : 'Επιθετικός'}</span>
-                </div>
-              ))}
+            <div className="space-y-6">
+              {academyInfo.map(group => {
+                const groupPlayers = academyPlayers.filter(p => p.academy_group_id === group.id || p.academy_group_name === group.name);
+                return (
+                  <div key={group.id}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="font-['Bebas_Neue'] text-lg text-[#F5A623]">{group.name}</span>
+                      <span className="text-xs text-zinc-500">({group.age_range})</span>
+                      <span className="text-xs text-zinc-600">| {group.coach_name}</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {groupPlayers.map(player => (
+                        <Link to={`/player/${player.id}`} key={player.id} className="card p-4 hover:border-[#F5A623]/30 transition-colors" data-testid={`academy-player-${player.id}`}>
+                          <span className="text-xs text-[#F5A623] tracking-wider">{player.position === 'Goalkeeper' ? 'Τερμ.' : player.position === 'Defender' ? 'Αμυν.' : player.position === 'Midfielder' ? 'Μέσος' : 'Επιθ.'}</span>
+                          <h4 className="font-['Bebas_Neue'] text-lg text-white">{player.name}</h4>
+                          {player.age && <span className="text-zinc-500 text-sm">{player.age} ετών</span>}
+                        </Link>
+                      ))}
+                      {groupPlayers.length === 0 && <p className="text-zinc-600 text-sm col-span-3">Δεν υπάρχουν παίκτες</p>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1385,6 +1425,129 @@ const ContactPage = () => {
   );
 };
 
+// Player Profile Page
+const PlayerProfilePage = () => {
+  const { playerId } = useParams();
+  const [player, setPlayer] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlayer = async () => {
+      try {
+        const res = await axios.get(`${API}/players/${playerId}`);
+        setPlayer(res.data);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    };
+    fetchPlayer();
+  }, [playerId]);
+
+  if (loading) return <Loading />;
+  if (!player) return (
+    <div className="pt-28 text-center min-h-screen bg-[#050505]">
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ο παίκτης δεν βρέθηκε</h2>
+      <Link to="/team" className="text-[#F5A623] hover:underline text-sm mt-2 inline-block">Επιστροφή στην ομάδα</Link>
+    </div>
+  );
+
+  const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const imgUrl = player.image_url ? (player.image_url.startsWith("http") ? player.image_url : `${BASE_URL}${player.image_url}`) : null;
+  const stats = player.statistics || {};
+  const positionGr = { Goalkeeper: "Τερματοφύλακας", Defender: "Αμυντικός", Midfielder: "Μέσος", Forward: "Επιθετικός" };
+
+  return (
+    <div className="pt-28 min-h-screen bg-[#050505] pb-16" data-testid="player-profile-page">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Back link */}
+        <Link to="/team" className="text-zinc-500 hover:text-[#F5A623] text-sm flex items-center gap-1 mb-6" data-testid="back-to-team">
+          <ChevronRight size={14} className="rotate-180" /> Ομάδα
+        </Link>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left: Photo + basic info */}
+          <div className="lg:col-span-1">
+            <div className="card overflow-hidden">
+              {imgUrl ? (
+                <img src={imgUrl} alt={player.name} className="w-full aspect-square object-cover" data-testid="player-photo" />
+              ) : (
+                <div className="w-full aspect-square bg-[#1A1A1A] flex items-center justify-center">
+                  <Users size={64} className="text-zinc-800" />
+                </div>
+              )}
+              <div className="p-5">
+                <div className="flex items-baseline gap-3 mb-2">
+                  <span className="font-['Bebas_Neue'] text-5xl text-[#F5A623]">{player.number}</span>
+                  <div>
+                    <h1 className="font-['Bebas_Neue'] text-2xl text-white leading-tight" data-testid="player-name">{player.name}</h1>
+                    <span className="text-zinc-400 text-sm">{positionGr[player.position] || player.position}</span>
+                  </div>
+                </div>
+                <div className="space-y-2 pt-3 border-t border-[#262626] text-sm">
+                  {player.nationality && <div className="flex justify-between"><span className="text-zinc-500">Εθνικότητα</span><span className="text-white">{player.nationality}</span></div>}
+                  {player.age && <div className="flex justify-between"><span className="text-zinc-500">Ηλικία</span><span className="text-white">{player.age}</span></div>}
+                  {player.height && <div className="flex justify-between"><span className="text-zinc-500">Ύψος</span><span className="text-white">{player.height}</span></div>}
+                  {player.weight && <div className="flex justify-between"><span className="text-zinc-500">Βάρος</span><span className="text-white">{player.weight}</span></div>}
+                  {player.preferred_foot && <div className="flex justify-between"><span className="text-zinc-500">Πόδι</span><span className="text-white">{player.preferred_foot === 'Right' ? 'Δεξί' : player.preferred_foot === 'Left' ? 'Αριστερό' : 'Αμφίπλευρο'}</span></div>}
+                  <div className="flex justify-between"><span className="text-zinc-500">Ομάδα</span><span className="text-white">{player.team_type === 'First Team' ? "Α' Ομάδα" : "Ακαδημία"}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Stats + bio */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stats Grid */}
+            <div data-testid="player-stats">
+              <h2 className="font-['Bebas_Neue'] text-xl text-white mb-4">Στατιστικά Σεζόν</h2>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {[
+                  { label: "Συμμετοχές", value: stats.appearances || 0 },
+                  { label: "Γκολ", value: stats.goals || 0 },
+                  { label: "Ασίστ", value: stats.assists || 0 },
+                  { label: "Κίτρινες", value: stats.yellow_cards || 0 },
+                  { label: "Κόκκινες", value: stats.red_cards || 0 },
+                  { label: "Λεπτά", value: stats.minutes_played || 0 },
+                  { label: "Clean Sheets", value: stats.clean_sheets || 0 },
+                ].map((s, i) => (
+                  <div key={i} className="card p-4 text-center">
+                    <div className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{s.value}</div>
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bio */}
+            {player.bio && (
+              <div>
+                <h2 className="font-['Bebas_Neue'] text-xl text-white mb-3">Βιογραφικό</h2>
+                <div className="card p-5">
+                  <p className="text-zinc-400 text-sm leading-relaxed">{player.bio}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Previous Clubs */}
+            {player.previous_clubs && player.previous_clubs.length > 0 && (
+              <div>
+                <h2 className="font-['Bebas_Neue'] text-xl text-white mb-3">Προηγούμενοι Σύλλογοι</h2>
+                <div className="space-y-2">
+                  {player.previous_clubs.map((club, i) => (
+                    <div key={i} className="card p-4 flex justify-between items-center">
+                      <span className="text-white font-medium text-sm">{club.club_name}</span>
+                      <span className="text-zinc-500 text-xs">{club.from_year} - {club.to_year}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Admin Login Page
 const AdminLoginPage = () => {
   const [username, setUsername] = useState("");
@@ -1535,6 +1698,7 @@ function App() {
             <Route path="/fixtures" element={<PublicLayout><FixturesPage /></PublicLayout>} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
             {/* Admin routes - NO nav/footer */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={
