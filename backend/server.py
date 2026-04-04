@@ -18,6 +18,8 @@ from enum import Enum
 import bcrypt
 import jwt
 import base64
+import json
+from pywebpush import webpush, WebPushException
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -28,6 +30,11 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-secret-key')
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+
+# VAPID Config for Web Push
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_CONTACT = os.environ.get('VAPID_CONTACT', 'mailto:info@lefteriafc.com')
 
 # Create the main app
 app = FastAPI(title="LEFTERIA FC API", description="Football Club & Academy Management System")
@@ -615,6 +622,21 @@ class GalleryItemCreate(BaseModel):
     player_id: Optional[str] = None
     tags: List[str] = []
     is_featured: bool = False
+
+# ==================== PUSH SUBSCRIPTION MODELS ====================
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str
+    auth: str
+
+class PushSubscription(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    endpoint: str
+    keys: PushSubscriptionKeys
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class PushSubscriptionCreate(BaseModel):
+    endpoint: str
+    keys: PushSubscriptionKeys
 
 # ==================== AUTH ROUTES ====================
 @api_router.post("/auth/login", response_model=LoginResponse)
@@ -1247,6 +1269,30 @@ async def update_live_score(fixture_id: str, request: Request, current_user: dic
     
     await db.fixtures.update_one({"id": fixture_id}, {"$set": update})
     
+    # Send push notification when match goes Live
+    if new_status == "Live" and old_status != "Live":
+        try:
+            await send_push_to_all(
+                title=f"LIVE: {existing['home_team']} vs {existing['away_team']}",
+                body="Ο αγώνας ξεκίνησε!",
+                url=f"/match/{fixture_id}"
+            )
+        except Exception as e:
+            logging.warning(f"Push notification error: {e}")
+    
+    # Send push when match ends
+    if new_status == "Completed" and old_status != "Completed":
+        hs = body.get("home_score", existing.get("home_score", 0))
+        aws = body.get("away_score", existing.get("away_score", 0))
+        try:
+            await send_push_to_all(
+                title=f"Τέλος: {existing['home_team']} {hs} - {aws} {existing['away_team']}",
+                body="Ο αγώνας ολοκληρώθηκε!",
+                url=f"/match/{fixture_id}"
+            )
+        except Exception as e:
+            logging.warning(f"Push notification error: {e}")
+    
     # If transitioning to Completed, auto-update standings
     if new_status == "Completed" and old_status != "Completed":
         hs = body.get("home_score", existing.get("home_score"))
@@ -1305,6 +1351,19 @@ async def add_match_event(fixture_id: str, event: MatchEventCreate, current_user
         score_field = "away_score" if event.team == "home" else "home_score"
         current_score = fixture.get(score_field) or 0
         await db.fixtures.update_one({"id": fixture_id}, {"$set": {score_field: current_score + 1}})
+    
+    # Send push notification for goals
+    if event.event_type in [EventType.GOAL, EventType.PENALTY_SCORED, EventType.OWN_GOAL]:
+        updated_fix = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+        try:
+            player = event.player_name or "Γκολ"
+            await send_push_to_all(
+                title=f"ΓΚΟΛ! {updated_fix['home_team']} {updated_fix.get('home_score',0)} - {updated_fix.get('away_score',0)} {updated_fix['away_team']}",
+                body=f"{player} {event.minute}'",
+                url=f"/match/{fixture_id}"
+            )
+        except Exception as e:
+            logging.warning(f"Push notification error: {e}")
     
     return {"id": event_obj.id, "message": "Το συμβάν προστέθηκε"}
 
@@ -1586,6 +1645,87 @@ async def delete_gallery_item(item_id: str, current_user: dict = Depends(get_cur
     return {"message": "Διαγράφηκε"}
 
 
+# ==================== WEB PUSH NOTIFICATIONS ====================
+@api_router.get("/push/vapid-key")
+async def get_vapid_public_key():
+    return {"public_key": VAPID_PUBLIC_KEY}
+
+@api_router.post("/push/subscribe")
+async def push_subscribe(sub: PushSubscriptionCreate):
+    existing = await db.push_subscriptions.find_one({"endpoint": sub.endpoint}, {"_id": 0})
+    if existing:
+        return {"message": "Ήδη εγγεγραμμένος", "id": existing["id"]}
+    subscription = PushSubscription(**sub.model_dump())
+    await db.push_subscriptions.insert_one(subscription.model_dump())
+    return {"message": "Εγγραφή επιτυχής", "id": subscription.id}
+
+@api_router.post("/push/unsubscribe")
+async def push_unsubscribe(sub: PushSubscriptionCreate):
+    result = await db.push_subscriptions.delete_one({"endpoint": sub.endpoint})
+    if result.deleted_count == 0:
+        return {"message": "Δεν βρέθηκε εγγραφή"}
+    return {"message": "Απεγγραφή επιτυχής"}
+
+@api_router.get("/push/subscribers-count")
+async def get_subscribers_count():
+    count = await db.push_subscriptions.count_documents({})
+    return {"count": count}
+
+async def send_push_to_all(title: str, body: str, url: str = "/"):
+    """Send push notification to all subscribers."""
+    if not VAPID_PRIVATE_KEY:
+        logging.warning("VAPID_PRIVATE_KEY not set, skipping push notifications")
+        return 0
+    
+    subscriptions = await db.push_subscriptions.find({}, {"_id": 0}).to_list(10000)
+    sent = 0
+    failed_endpoints = []
+    
+    payload = json.dumps({
+        "title": title,
+        "body": body,
+        "url": url,
+        "icon": "/logo192.png",
+        "badge": "/logo192.png",
+    })
+    
+    for sub in subscriptions:
+        try:
+            webpush(
+                subscription_info={"endpoint": sub["endpoint"], "keys": sub["keys"]},
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": VAPID_CONTACT},
+            )
+            sent += 1
+        except WebPushException as e:
+            if "410" in str(e) or "404" in str(e):
+                failed_endpoints.append(sub["endpoint"])
+            logging.warning(f"Push failed for {sub['endpoint'][:50]}...: {e}")
+        except Exception as e:
+            logging.warning(f"Push error: {e}")
+    
+    if failed_endpoints:
+        await db.push_subscriptions.delete_many({"endpoint": {"$in": failed_endpoints}})
+    
+    logging.info(f"Push sent to {sent}/{len(subscriptions)} subscribers")
+    return sent
+
+# Admin: Send test push notification
+@api_router.post("/admin/push/test")
+async def send_test_push(current_user: dict = Depends(get_current_user)):
+    sent = await send_push_to_all(
+        title="LEFTERIA FC",
+        body="Δοκιμαστική ειδοποίηση! Οι ειδοποιήσεις λειτουργούν σωστά.",
+        url="/"
+    )
+    return {"message": f"Στάλθηκε σε {sent} συνδρομητές"}
+
+# Admin: Get subscribers count
+@api_router.get("/admin/push/stats")
+async def get_push_stats(current_user: dict = Depends(get_current_user)):
+    count = await db.push_subscriptions.count_documents({})
+    return {"subscribers": count}
 
 # Seed Data
 @api_router.post("/seed")

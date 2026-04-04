@@ -2,12 +2,13 @@ import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
-import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff } from "lucide-react";
+import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
 import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import MatchReportPage from "./pages/MatchReportPage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
+import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -92,6 +93,7 @@ const ProtectedRoute = ({ children }) => {
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [pushState, setPushState] = useState('loading');
   const location = useLocation();
 
   useEffect(() => {
@@ -101,6 +103,20 @@ const Navigation = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    getSubscriptionState().then(setPushState);
+  }, []);
+
+  const handlePushToggle = async () => {
+    if (pushState === 'subscribed') {
+      await unsubscribeFromPush();
+      setPushState('unsubscribed');
+    } else {
+      const sub = await subscribeToPush();
+      setPushState(sub ? 'subscribed' : 'denied');
+    }
+  };
 
   const navLinks = [
     { path: "/", label: "Αρχική", icon: HomeIcon },
@@ -145,14 +161,35 @@ const Navigation = () => {
             ))}
           </nav>
 
-          {/* Mobile Menu Button */}
-          <button
+          <div className="flex items-center gap-3">
+            {/* Push Notification Bell */}
+            {pushState !== 'unsupported' && pushState !== 'loading' && (
+              <button
+                onClick={handlePushToggle}
+                className={`p-2 rounded-full transition-colors ${
+                  pushState === 'subscribed'
+                    ? 'text-[#F5A623] hover:bg-[#F5A623]/10'
+                    : pushState === 'denied'
+                    ? 'text-red-400/50 cursor-not-allowed'
+                    : 'text-zinc-400 hover:text-[#F5A623] hover:bg-white/5'
+                }`}
+                title={pushState === 'subscribed' ? 'Απενεργοποίηση ειδοποιήσεων' : pushState === 'denied' ? 'Οι ειδοποιήσεις αποκλείστηκαν' : 'Ενεργοποίηση ειδοποιήσεων'}
+                disabled={pushState === 'denied'}
+                data-testid="push-notification-bell"
+              >
+                {pushState === 'subscribed' ? <Bell size={20} /> : <BellOff size={20} />}
+              </button>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button
             onClick={() => setIsOpen(!isOpen)}
             className="lg:hidden text-white p-2"
             data-testid="mobile-menu-toggle"
           >
             {isOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
+          </div>
         </div>
       </div>
 

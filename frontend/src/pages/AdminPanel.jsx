@@ -4,7 +4,7 @@ import {
   Users, Calendar, Newspaper, Trophy, GraduationCap, Mail,
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
-  Check, Clock, ChevronRight, Settings, Image
+  Check, Clock, ChevronRight, Settings, Image, ArrowLeftRight
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -491,6 +491,9 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
   const [editPlayer, setEditPlayer] = useState(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [showTransfer, setShowTransfer] = useState(null);
+  const [transferForm, setTransferForm] = useState({ from_team: 'LEFTERIA FC', to_team: '', transfer_date: '', transfer_type: 'Out', fee: '', notes: '' });
+  const [savingTransfer, setSavingTransfer] = useState(false);
   const emptyPlayer = {
     name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "",
     team_type: "First Team", academy_group_id: "", image_url: "", bio: "",
@@ -529,6 +532,25 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
     try { await axios.delete(`${API}/admin/players/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
+  const handleTransfer = async () => {
+    if (!transferForm.to_team || !transferForm.transfer_date) { alert("Συμπληρώστε ομάδα και ημερομηνία"); return; }
+    setSavingTransfer(true);
+    try {
+      await axios.post(`${API}/admin/players/${showTransfer.id}/transfer`, {
+        player_id: showTransfer.id,
+        player_name: showTransfer.name,
+        ...transferForm,
+      }, { headers: getAuthHeaders() });
+      setShowTransfer(null);
+      onRefresh();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSavingTransfer(false); }
+  };
+
+  const openTransfer = (p) => {
+    setTransferForm({ from_team: 'LEFTERIA FC', to_team: '', transfer_date: new Date().toISOString().split('T')[0], transfer_type: 'Out', fee: '', notes: '' });
+    setShowTransfer(p);
+  };
+
   const filtered = filter === "all" ? players : filter === "first_team" ? players.filter(p => p.team_type === "First Team") : players.filter(p => p.team_type === "Academy");
 
   return (
@@ -557,6 +579,7 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
                 <td>
                   <div className="flex gap-1">
                     <button onClick={() => openEdit(p)} className="admin-icon-btn" data-testid={`edit-player-${p.id}`}><Edit2 size={13} /></button>
+                    <button onClick={() => openTransfer(p)} className="admin-icon-btn text-blue-500/60 hover:text-blue-400" data-testid={`transfer-player-${p.id}`} title="Μεταγραφή"><ArrowLeftRight size={13} /></button>
                     <button onClick={() => handleDelete(p.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-player-${p.id}`}><Trash2 size={13} /></button>
                   </div>
                 </td>
@@ -602,6 +625,29 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
           </div>
           <ImageUpload currentUrl={form.image_url} onImageChange={url => setForm({...form, image_url: url})} playerId={editPlayer?.id} />
           <Field label="Βιογραφικό"><AdminTextarea rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
+        </FormModal>
+      )}
+      {showTransfer && (
+        <FormModal title={`Μεταγραφή: ${showTransfer.name}`} onClose={() => setShowTransfer(null)} onSave={handleTransfer} saving={savingTransfer}>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Τύπος Μεταγραφής *">
+              <AdminSelect value={transferForm.transfer_type} onChange={e => setTransferForm({...transferForm, transfer_type: e.target.value})} data-testid="transfer-type-select">
+                <option value="Out">Αποχώρηση</option>
+                <option value="In">Απόκτηση</option>
+                <option value="Loan Out">Δανεισμός (Εξ.)</option>
+                <option value="Loan In">Δανεισμός (Εισ.)</option>
+              </AdminSelect>
+            </Field>
+            <Field label="Ημερομηνία *"><AdminInput type="date" value={transferForm.transfer_date} onChange={e => setTransferForm({...transferForm, transfer_date: e.target.value})} data-testid="transfer-date-input" /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Από"><AdminInput value={transferForm.from_team} onChange={e => setTransferForm({...transferForm, from_team: e.target.value})} data-testid="transfer-from-input" /></Field>
+            <Field label="Προς *"><AdminInput value={transferForm.to_team} onChange={e => setTransferForm({...transferForm, to_team: e.target.value})} data-testid="transfer-to-input" /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Αντίτιμο"><AdminInput placeholder="Ελεύθερος / €10.000" value={transferForm.fee} onChange={e => setTransferForm({...transferForm, fee: e.target.value})} /></Field>
+            <Field label="Σημειώσεις"><AdminInput value={transferForm.notes} onChange={e => setTransferForm({...transferForm, notes: e.target.value})} /></Field>
+          </div>
         </FormModal>
       )}
     </div>

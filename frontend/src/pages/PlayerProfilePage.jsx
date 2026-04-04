@@ -65,16 +65,19 @@ const PlayerProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [gallery, setGallery] = useState([]);
+  const [transfers, setTransfers] = useState([]);
 
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
-        const [playerRes, galleryRes] = await Promise.all([
+        const [playerRes, galleryRes, transfersRes] = await Promise.all([
           axios.get(`${API}/players/${playerId}`),
           axios.get(`${API}/gallery?player_id=${playerId}`),
+          axios.get(`${API}/transfers`),
         ]);
         setPlayer(playerRes.data);
         setGallery(galleryRes.data);
+        setTransfers(transfersRes.data.filter(t => t.player_id === playerId));
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
@@ -379,7 +382,7 @@ const PlayerProfilePage = () => {
 
             {/* Previous Clubs */}
             {player.previous_clubs && player.previous_clubs.length > 0 && (
-              <div>
+              <div className="mb-6">
                 <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Προηγούμενοι Σύλλογοι</h3>
                 <div className="space-y-2">
                   {player.previous_clubs.map((club, i) => (
@@ -388,6 +391,34 @@ const PlayerProfilePage = () => {
                       <span className="text-zinc-500 text-xs">{club.from_year} - {club.to_year}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Transfer History */}
+            {transfers.length > 0 && (
+              <div data-testid="player-transfers">
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Ιστορικό Μεταγραφών</h3>
+                <div className="space-y-2">
+                  {transfers.map(t => {
+                    const typeLabels = { "In": "Απόκτηση", "Out": "Αποχώρηση", "Loan In": "Δανεισμός (Εισ.)", "Loan Out": "Δανεισμός (Εξ.)" };
+                    return (
+                      <div key={t.id} className="card p-4" data-testid={`transfer-${t.id}`}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wider ${
+                            t.transfer_type === 'In' || t.transfer_type === 'Loan In' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                          }`}>{typeLabels[t.transfer_type] || t.transfer_type}</span>
+                          <span className="text-xs text-zinc-500">{new Date(t.transfer_date).toLocaleDateString('el-GR')}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm mt-1">
+                          <span className="text-zinc-400">{t.from_team}</span>
+                          <ChevronRight size={14} className="text-[#F5A623]" />
+                          <span className="text-white font-medium">{t.to_team}</span>
+                        </div>
+                        {t.fee && <p className="text-xs text-zinc-500 mt-1">Αντίτιμο: {t.fee}</p>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
