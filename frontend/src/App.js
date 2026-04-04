@@ -98,13 +98,13 @@ const Navigation = () => {
   }, []);
 
   const navLinks = [
-    { path: "/", label: "Home", icon: HomeIcon },
-    { path: "/about", label: "About", icon: Info },
-    { path: "/team", label: "First Team", icon: Users },
-    { path: "/academy", label: "Academy", icon: GraduationCap },
-    { path: "/fixtures", label: "Fixtures", icon: Calendar },
-    { path: "/news", label: "News", icon: Newspaper },
-    { path: "/contact", label: "Contact", icon: Mail },
+    { path: "/", label: "Αρχική", icon: HomeIcon },
+    { path: "/about", label: "Σχετικά", icon: Info },
+    { path: "/team", label: "Ομάδα", icon: Users },
+    { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
+    { path: "/fixtures", label: "Αγώνες", icon: Calendar },
+    { path: "/news", label: "Νέα", icon: Newspaper },
+    { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
 
   return (
@@ -317,21 +317,21 @@ const HomePage = () => {
         <div className="absolute inset-0 hero-gradient"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-32">
           <div className="max-w-3xl">
-            <span className="badge badge-primary mb-6 animate-fadeInUp">Est. 2024</span>
+            <span className="badge badge-primary mb-6 animate-fadeInUp">Ιδρ. 2024</span>
             <h1 className="font-['Bebas_Neue'] text-6xl md:text-7xl lg:text-8xl text-white mb-6 animate-fadeInUp animation-delay-200">
-              Welcome to<br/>
-              <span className="text-[#F5A623]">Lefteria FC</span>
+              Καλώς Ήρθατε στην<br/>
+              <span className="text-[#F5A623]">LEFTERIA FC</span>
             </h1>
             <p className="text-xl text-zinc-300 mb-8 animate-fadeInUp animation-delay-400 max-w-xl">
-              Building champions through passion, discipline, and teamwork. Join us on our journey to greatness.
+              Χτίζουμε πρωταθλητές μέσα από το πάθος, την πειθαρχία και την ομαδικότητα. Ελάτε μαζί μας στο ταξίδι προς την κορυφή.
             </p>
             <div className="flex flex-wrap gap-4 animate-fadeInUp animation-delay-600">
               <Link to="/team" className="btn-primary" data-testid="hero-view-team">
-                View First Team
+                Δες την Ομάδα
                 <ArrowRight size={18} />
               </Link>
               <Link to="/academy" className="btn-secondary" data-testid="hero-join-academy">
-                Join Academy
+                Ακαδημία
               </Link>
             </div>
           </div>
@@ -518,20 +518,20 @@ const HomePage = () => {
       >
         <div className="absolute inset-0 bg-black/80"></div>
         <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <span className="badge badge-primary mb-6">Youth Development</span>
+          <span className="badge badge-primary mb-6">Ανάπτυξη Νέων</span>
           <h2 className="font-['Bebas_Neue'] text-5xl md:text-6xl text-white mb-6">
-            Join Our <span className="text-[#F5A623]">Academy</span>
+            Έλα στην <span className="text-[#F5A623]">Ακαδημία</span>
           </h2>
           <p className="text-xl text-zinc-300 mb-8 max-w-2xl mx-auto">
-            From U8 to U18, our academy develops young talents with world-class coaching and facilities. 
-            Start your journey to becoming a professional footballer.
+            Από U8 έως U18, η ακαδημία μας αναπτύσσει νέα ταλέντα με προπονητές και εγκαταστάσεις υψηλού επιπέδου. 
+            Ξεκίνα το ταξίδι σου για να γίνεις επαγγελματίας ποδοσφαιριστής.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/academy" className="btn-primary">
-              Explore Academy <ArrowRight size={18} />
+              Εξερεύνησε την Ακαδημία <ArrowRight size={18} />
             </Link>
             <Link to="/contact" className="btn-secondary">
-              Register Interest
+              Δήλωσε Ενδιαφέρον
             </Link>
           </div>
         </div>
@@ -812,13 +812,13 @@ const AcademyPage = () => {
       >
         <div className="absolute inset-0 bg-black/70"></div>
         <div className="relative z-10 max-w-7xl mx-auto">
-          <span className="badge badge-primary mb-4">Youth Development</span>
+          <span className="badge badge-primary mb-4">Ανάπτυξη Νέων</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-            Lefteria FC <span className="text-[#F5A623]">Academy</span>
+            LEFTERIA FC <span className="text-[#F5A623]">Ακαδημία</span>
           </h1>
           <p className="text-xl text-zinc-300 max-w-3xl">
-            Developing the next generation of Greek football talent through world-class coaching, 
-            facilities, and a pathway to professional football.
+            Αναπτύσσουμε την επόμενη γενιά ταλέντων του κυπριακού ποδοσφαίρου μέσω 
+            κορυφαίας προπόνησης, εγκαταστάσεων και πορείας προς τον επαγγελματισμό.
           </p>
         </div>
       </section>
@@ -826,7 +826,7 @@ const AcademyPage = () => {
       {/* Age Groups */}
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Age Groups</h2>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Ηλικιακές Κατηγορίες</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {academyInfo.map((group) => (
               <div key={group.id} className="card p-6" data-testid={`academy-${group.age_group}`}>
@@ -836,7 +836,7 @@ const AcademyPage = () => {
                     {group.current_players}/{group.max_players}
                   </span>
                 </div>
-                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Coach: {group.coach_name}</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Προπονητής: {group.coach_name}</h3>
                 <p className="text-zinc-400 text-sm mb-4">{group.description}</p>
                 <div className="flex items-center gap-2 text-zinc-500 text-sm">
                   <Clock size={14} />
@@ -859,22 +859,22 @@ const AcademyPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="badge badge-secondary mb-4">Philosophy</span>
+              <span className="badge badge-secondary mb-4">Φιλοσοφία</span>
               <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">
-                Our Development Philosophy
+                Η Αναπτυξιακή μας Φιλοσοφία
               </h2>
               <div className="space-y-4 text-zinc-300">
                 <p>
-                  At Lefteria FC Academy, we believe in holistic player development. Our program focuses 
-                  not just on technical skills, but also on tactical understanding, physical conditioning, 
-                  and mental resilience.
+                  Στην Ακαδημία της LEFTERIA FC πιστεύουμε στην ολιστική ανάπτυξη των παικτών. 
+                  Το πρόγραμμά μας εστιάζει όχι μόνο στις τεχνικές δεξιότητες, αλλά και στην 
+                  τακτική κατανόηση, τη φυσική κατάσταση και την ψυχική ανθεκτικότητα.
                 </p>
                 <ul className="space-y-3">
                   {[
-                    "Individual development over team results at youth level",
-                    "Age-appropriate training methodologies",
-                    "Education and football balance",
-                    "Clear pathway to first team",
+                    "Ατομική ανάπτυξη πάνω από τα αποτελέσματα σε επίπεδο νέων",
+                    "Μεθοδολογίες προπόνησης ανάλογα με την ηλικία",
+                    "Ισορροπία εκπαίδευσης και ποδοσφαίρου",
+                    "Σαφής πορεία προς την πρώτη ομάδα",
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-3">
                       <ChevronRight className="text-[#F5A623] flex-shrink-0" size={18} />
@@ -901,13 +901,13 @@ const AcademyPage = () => {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6">
-            Ready to Start Your Journey?
+            Έτοιμος να Ξεκινήσεις το Ταξίδι σου;
           </h2>
           <p className="text-zinc-300 mb-8">
-            Join Lefteria FC Academy and take the first step towards becoming a professional footballer.
+            Γίνε μέλος της Ακαδημίας LEFTERIA FC και κάνε το πρώτο βήμα για να γίνεις επαγγελματίας ποδοσφαιριστής.
           </p>
           <Link to="/contact" className="btn-primary">
-            Register for Trials <ArrowRight size={18} />
+            Δήλωσε Συμμετοχή για Δοκιμαστικά <ArrowRight size={18} />
           </Link>
         </div>
       </section>
@@ -946,9 +946,9 @@ const FixturesPage = () => {
       {/* Hero */}
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">2025/26 Season</span>
+          <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-            Fixtures & <span className="text-[#F5A623]">Results</span>
+            Αγώνες & <span className="text-[#F5A623]">Αποτελέσματα</span>
           </h1>
         </div>
       </section>
@@ -957,14 +957,18 @@ const FixturesPage = () => {
       <section className="py-8 px-6 border-b border-[#262626]">
         <div className="max-w-7xl mx-auto">
           <div className="tab-list flex-wrap">
-            {["all", "Scheduled", "Completed"].map((status) => (
+            {[
+              { value: "all", label: "Όλοι οι Αγώνες" },
+              { value: "Scheduled", label: "Προγραμματισμένοι" },
+              { value: "Completed", label: "Ολοκληρωμένοι" }
+            ].map((status) => (
               <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`tab-item ${filter === status ? 'active' : ''}`}
-                data-testid={`filter-${status}`}
+                key={status.value}
+                onClick={() => setFilter(status.value)}
+                className={`tab-item ${filter === status.value ? 'active' : ''}`}
+                data-testid={`filter-${status.value}`}
               >
-                {status === "all" ? "All Matches" : status}
+                {status.label}
               </button>
             ))}
           </div>
@@ -1002,14 +1006,14 @@ const FixturesPage = () => {
                       <span className="text-3xl text-[#F5A623]">{fixture.home_score || 0} - {fixture.away_score || 0}</span>
                     ) : (
                       <span className="text-xl text-zinc-400">
-                        {new Date(fixture.match_date).toLocaleTimeString('en-GB', { 
+                        {new Date(fixture.match_date).toLocaleTimeString('el-GR', { 
                           hour: '2-digit', minute: '2-digit' 
                         })}
                       </span>
                     )}
                   </div>
                   <div className="mt-2 text-sm text-zinc-500">
-                    {new Date(fixture.match_date).toLocaleDateString('en-GB', { 
+                    {new Date(fixture.match_date).toLocaleDateString('el-GR', { 
                       weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' 
                     })}
                   </div>
@@ -1082,9 +1086,9 @@ const NewsPage = () => {
       {/* Hero */}
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">Latest Updates</span>
+          <span className="badge badge-secondary mb-4">Τελευταία Ενημέρωση</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-            Club <span className="text-[#F5A623]">News</span>
+            Τα <span className="text-[#F5A623]">Νέα</span> μας
           </h1>
         </div>
       </section>
@@ -1106,14 +1110,14 @@ const NewsPage = () => {
                   />
                 </div>
                 <div className="p-8 md:p-12 flex flex-col justify-center">
-                  <span className="badge badge-primary mb-4 self-start">Featured</span>
+                  <span className="badge badge-primary mb-4 self-start">Προτεινόμενο</span>
                   <span className="text-sm text-[#F5A623] tracking-wider uppercase mb-2">{featuredNews.category}</span>
                   <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white group-hover:text-[#F5A623] transition-colors mb-4">
                     {featuredNews.title}
                   </h2>
                   <p className="text-zinc-400 mb-6">{featuredNews.excerpt}</p>
                   <span className="text-zinc-500 text-sm">
-                    {new Date(featuredNews.created_at).toLocaleDateString('en-GB', { 
+                    {new Date(featuredNews.created_at).toLocaleDateString('el-GR', { 
                       day: 'numeric', month: 'long', year: 'numeric' 
                     })}
                   </span>
@@ -1148,7 +1152,7 @@ const NewsPage = () => {
                   </h3>
                   <p className="text-zinc-400 text-sm line-clamp-2 mb-4">{item.excerpt}</p>
                   <span className="text-zinc-500 text-xs">
-                    {new Date(item.created_at).toLocaleDateString('en-GB', { 
+                    {new Date(item.created_at).toLocaleDateString('el-GR', { 
                       day: 'numeric', month: 'short', year: 'numeric' 
                     })}
                   </span>
@@ -1192,9 +1196,9 @@ const ContactPage = () => {
       {/* Hero */}
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">Get In Touch</span>
+          <span className="badge badge-secondary mb-4">Επικοινωνήστε Μαζί Μας</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-            Contact <span className="text-[#F5A623]">Us</span>
+            <span className="text-[#F5A623]">Επικοινωνία</span>
           </h1>
         </div>
       </section>
@@ -1205,35 +1209,28 @@ const ContactPage = () => {
             {/* Contact Info */}
             <div>
               <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8 section-heading">
-                Club Information
+                Πληροφορίες Συλλόγου
               </h2>
               <div className="space-y-6">
                 <div className="card p-6 flex items-start gap-4">
                   <MapPin className="text-[#F5A623] flex-shrink-0" size={24} />
                   <div>
-                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Address</h3>
-                    <p className="text-zinc-400">Lefteria Stadium<br/>Athens, Greece 10557</p>
-                  </div>
-                </div>
-                <div className="card p-6 flex items-start gap-4">
-                  <Phone className="text-[#F5A623] flex-shrink-0" size={24} />
-                  <div>
-                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Phone</h3>
-                    <p className="text-zinc-400">+30 210 123 4567</p>
+                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Διεύθυνση</h3>
+                    <p className="text-zinc-400">Γήπεδο Αετού<br/>Λεμεσός, Κύπρος</p>
                   </div>
                 </div>
                 <div className="card p-6 flex items-start gap-4">
                   <Mail className="text-[#F5A623] flex-shrink-0" size={24} />
                   <div>
                     <h3 className="font-['Bebas_Neue'] text-lg text-white">Email</h3>
-                    <p className="text-zinc-400">info@lefteriafc.gr</p>
+                    <p className="text-zinc-400">info@lefteriafc.cy</p>
                   </div>
                 </div>
                 <div className="card p-6 flex items-start gap-4">
                   <Clock className="text-[#F5A623] flex-shrink-0" size={24} />
                   <div>
-                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Office Hours</h3>
-                    <p className="text-zinc-400">Monday - Friday: 9:00 - 18:00<br/>Saturday: 10:00 - 14:00</p>
+                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Ώρες Γραφείου</h3>
+                    <p className="text-zinc-400">Δευτέρα - Παρασκευή: 9:00 - 18:00<br/>Σάββατο: 10:00 - 14:00</p>
                   </div>
                 </div>
               </div>
@@ -1242,7 +1239,7 @@ const ContactPage = () => {
             {/* Contact Form */}
             <div>
               <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8 section-heading">
-                Send a Message
+                Στείλτε Μήνυμα
               </h2>
               
               {submitted ? (
@@ -1250,62 +1247,62 @@ const ContactPage = () => {
                   <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <ChevronRight className="text-green-500" size={32} />
                   </div>
-                  <h3 className="font-['Bebas_Neue'] text-2xl text-white mb-2">Message Sent!</h3>
-                  <p className="text-zinc-400">We'll get back to you as soon as possible.</p>
+                  <h3 className="font-['Bebas_Neue'] text-2xl text-white mb-2">Το Μήνυμα Εστάλη!</h3>
+                  <p className="text-zinc-400">Θα επικοινωνήσουμε μαζί σας το συντομότερο δυνατό.</p>
                   <button 
                     onClick={() => setSubmitted(false)}
                     className="btn-secondary mt-6"
                   >
-                    Send Another Message
+                    Στείλε Άλλο Μήνυμα
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6" data-testid="contact-form">
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-2">Your Name</label>
+                    <label className="block text-sm text-zinc-400 mb-2">Όνομα</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Enter your name"
+                      placeholder="Εισάγετε το όνομά σας"
                       required
                       data-testid="contact-name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-2">Email Address</label>
+                    <label className="block text-sm text-zinc-400 mb-2">Email</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="Enter your email"
+                      placeholder="Εισάγετε το email σας"
                       required
                       data-testid="contact-email"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-2">Subject</label>
+                    <label className="block text-sm text-zinc-400 mb-2">Θέμα</label>
                     <select
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                       required
                       data-testid="contact-subject"
                     >
-                      <option value="">Select a subject</option>
-                      <option value="General Inquiry">General Inquiry</option>
-                      <option value="Academy Registration">Academy Registration</option>
-                      <option value="Ticket Information">Ticket Information</option>
-                      <option value="Partnership/Sponsorship">Partnership/Sponsorship</option>
-                      <option value="Media Request">Media Request</option>
-                      <option value="Other">Other</option>
+                      <option value="">Επιλέξτε θέμα</option>
+                      <option value="Γενική Ερώτηση">Γενική Ερώτηση</option>
+                      <option value="Εγγραφή Ακαδημίας">Εγγραφή Ακαδημίας</option>
+                      <option value="Πληροφορίες Εισιτηρίων">Πληροφορίες Εισιτηρίων</option>
+                      <option value="Συνεργασία/Χορηγία">Συνεργασία/Χορηγία</option>
+                      <option value="Αίτημα Μέσων">Αίτημα Μέσων</option>
+                      <option value="Άλλο">Άλλο</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-2">Message</label>
+                    <label className="block text-sm text-zinc-400 mb-2">Μήνυμα</label>
                     <textarea
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Enter your message"
+                      placeholder="Γράψτε το μήνυμά σας"
                       rows={5}
                       required
                       data-testid="contact-message"
@@ -1317,7 +1314,7 @@ const ContactPage = () => {
                     disabled={submitting}
                     data-testid="contact-submit"
                   >
-                    {submitting ? "Sending..." : "Send Message"}
+                    {submitting ? "Αποστολή..." : "Αποστολή Μηνύματος"}
                   </button>
                 </form>
               )}
@@ -1357,7 +1354,7 @@ const AdminLoginPage = () => {
       const from = location.state?.from?.pathname || "/admin";
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.detail || "Invalid username or password");
+      setError(err.response?.data?.detail || "Λάθος όνομα χρήστη ή κωδικός");
     } finally {
       setLoading(false);
     }
@@ -1367,9 +1364,9 @@ const AdminLoginPage = () => {
     <div className="min-h-screen flex items-center justify-center px-6 py-24" data-testid="admin-login-page">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={CLUB_LOGO} alt="Lefteria FC" className="h-20 w-20 mx-auto mb-4" />
-          <h1 className="font-['Bebas_Neue'] text-4xl text-white">Admin Login</h1>
-          <p className="text-zinc-400 mt-2">Enter your credentials to access the admin panel</p>
+          <img src={CLUB_LOGO} alt="LEFTERIA FC" className="h-20 w-20 mx-auto mb-4" />
+          <h1 className="font-['Bebas_Neue'] text-4xl text-white">Σύνδεση Διαχειριστή</h1>
+          <p className="text-zinc-400 mt-2">Εισάγετε τα στοιχεία σας για πρόσβαση στο πάνελ διαχείρισης</p>
         </div>
 
         <div className="card p-8">
@@ -1381,25 +1378,25 @@ const AdminLoginPage = () => {
             )}
 
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Username</label>
+              <label className="block text-sm text-zinc-400 mb-2">Όνομα Χρήστη</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                placeholder="Εισάγετε όνομα χρήστη"
                 required
                 data-testid="login-username"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Password</label>
+              <label className="block text-sm text-zinc-400 mb-2">Κωδικός</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder="Εισάγετε κωδικό"
                   required
                   data-testid="login-password"
                 />
@@ -1422,12 +1419,12 @@ const AdminLoginPage = () => {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
-                  Logging in...
+                  Σύνδεση...
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <Lock size={18} />
-                  Login
+                  Σύνδεση
                 </span>
               )}
             </button>
@@ -1435,7 +1432,7 @@ const AdminLoginPage = () => {
         </div>
 
         <p className="text-center text-zinc-500 text-sm mt-6">
-          <Link to="/" className="hover:text-[#F5A623]">← Back to website</Link>
+          <Link to="/" className="hover:text-[#F5A623]">← Επιστροφή στην ιστοσελίδα</Link>
         </p>
       </div>
     </div>
@@ -1491,23 +1488,23 @@ const AdminPage = () => {
   };
 
   const tabs = [
-    { id: "players", label: "Players", icon: Users },
-    { id: "fixtures", label: "Fixtures", icon: Calendar },
-    { id: "news", label: "News", icon: Newspaper },
-    { id: "standings", label: "Standings", icon: Trophy },
-    { id: "academy", label: "Academy", icon: GraduationCap },
-    { id: "messages", label: "Messages", icon: Mail },
+    { id: "players", label: "Παίκτες", icon: Users },
+    { id: "fixtures", label: "Αγώνες", icon: Calendar },
+    { id: "news", label: "Νέα", icon: Newspaper },
+    { id: "standings", label: "Βαθμολογία", icon: Trophy },
+    { id: "academy", label: "Ακαδημία", icon: GraduationCap },
+    { id: "messages", label: "Μηνύματα", icon: Mail },
   ];
 
   const handleDelete = async (type, id) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    if (!window.confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το στοιχείο;")) return;
     try {
       const headers = getAuthHeaders();
       await axios.delete(`${API}/admin/${type}/${id}`, { headers });
       fetchData();
     } catch (e) {
       console.error("Error deleting:", e);
-      alert("Error deleting item. Please try again.");
+      alert("Σφάλμα κατά τη διαγραφή. Παρακαλώ δοκιμάστε ξανά.");
     }
   };
 
@@ -1519,8 +1516,8 @@ const AdminPage = () => {
         {/* Sidebar */}
         <aside className="w-64 admin-sidebar min-h-screen fixed left-0 top-24 hidden lg:block">
           <div className="p-6 border-b border-[#262626]">
-            <h2 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Admin Panel</h2>
-            <p className="text-xs text-zinc-500">Welcome, {user?.username}</p>
+            <h2 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Πάνελ Διαχείρισης</h2>
+            <p className="text-xs text-zinc-500">Καλώς ήρθες, {user?.username}</p>
           </div>
           <nav className="py-4">
             {tabs.map((tab) => (
@@ -1540,7 +1537,7 @@ const AdminPage = () => {
               data-testid="admin-logout"
             >
               <LogOut size={18} />
-              <span>Logout</span>
+              <span>Αποσύνδεση</span>
             </button>
           </nav>
         </aside>
@@ -1563,7 +1560,7 @@ const AdminPage = () => {
               onClick={handleLogout}
               className="px-4 py-2 text-sm whitespace-nowrap bg-red-900/50 text-red-400"
             >
-              Logout
+              Αποσύνδεση
             </button>
           </div>
         </div>
@@ -1585,11 +1582,11 @@ const AdminPage = () => {
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Name</th>
-                      <th>Position</th>
-                      <th>Age</th>
-                      <th>Academy</th>
-                      <th>Actions</th>
+                      <th>Όνομα</th>
+                      <th>Θέση</th>
+                      <th>Ηλικία</th>
+                      <th>Ακαδημία</th>
+                      <th>Ενέργειες</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1601,7 +1598,7 @@ const AdminPage = () => {
                         <td>{player.age}</td>
                         <td>
                           <span className={`badge ${player.is_academy ? 'badge-primary' : 'badge-secondary'}`}>
-                            {player.is_academy ? 'Yes' : 'No'}
+                            {player.is_academy ? 'Ναι' : 'Όχι'}
                           </span>
                         </td>
                         <td>
@@ -1610,7 +1607,7 @@ const AdminPage = () => {
                             className="text-red-500 hover:text-red-400"
                             data-testid={`delete-player-${player.id}`}
                           >
-                            Delete
+                            Διαγραφή
                           </button>
                         </td>
                       </tr>
@@ -1625,22 +1622,22 @@ const AdminPage = () => {
                 <table className="standings-table" data-testid="admin-fixtures-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Home</th>
-                      <th>Away</th>
-                      <th>Score</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th>Ημ/νία</th>
+                      <th>Γηπεδούχος</th>
+                      <th>Φιλοξενούμενος</th>
+                      <th>Σκορ</th>
+                      <th>Κατάσταση</th>
+                      <th>Ενέργειες</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.fixtures.map((fixture) => (
                       <tr key={fixture.id}>
-                        <td>{new Date(fixture.match_date).toLocaleDateString()}</td>
-                        <td className={fixture.home_team === 'Lefteria FC' ? 'text-[#F5A623] font-semibold' : ''}>
+                        <td>{new Date(fixture.match_date).toLocaleDateString('el-GR')}</td>
+                        <td className={fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-semibold' : ''}>
                           {fixture.home_team}
                         </td>
-                        <td className={fixture.away_team === 'Lefteria FC' ? 'text-[#F5A623] font-semibold' : ''}>
+                        <td className={fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-semibold' : ''}>
                           {fixture.away_team}
                         </td>
                         <td>
@@ -1650,7 +1647,7 @@ const AdminPage = () => {
                           <span className={`badge ${
                             fixture.status === 'Completed' ? 'bg-green-900/50 text-green-400' : 'badge-secondary'
                           }`}>
-                            {fixture.status}
+                            {fixture.status === 'Completed' ? 'Ολοκληρώθηκε' : 'Προγραμματισμένος'}
                           </span>
                         </td>
                         <td>
@@ -1658,7 +1655,7 @@ const AdminPage = () => {
                             onClick={() => handleDelete('fixtures', fixture.id)}
                             className="text-red-500 hover:text-red-400"
                           >
-                            Delete
+                            Διαγραφή
                           </button>
                         </td>
                       </tr>
@@ -1686,7 +1683,7 @@ const AdminPage = () => {
                       onClick={() => handleDelete('news', item.id)}
                       className="text-red-500 hover:text-red-400"
                     >
-                      Delete
+                      Διαγραφή
                     </button>
                   </div>
                 ))}
@@ -1698,20 +1695,20 @@ const AdminPage = () => {
                 <table className="standings-table" data-testid="admin-standings-table">
                   <thead>
                     <tr>
-                      <th>Team</th>
-                      <th>P</th>
-                      <th>W</th>
-                      <th>D</th>
-                      <th>L</th>
-                      <th>GF</th>
-                      <th>GA</th>
-                      <th>Pts</th>
-                      <th>Actions</th>
+                      <th>Ομάδα</th>
+                      <th>Αγ</th>
+                      <th>Ν</th>
+                      <th>Ι</th>
+                      <th>Η</th>
+                      <th>ΓΥ</th>
+                      <th>ΓΚ</th>
+                      <th>Βαθ</th>
+                      <th>Ενέργειες</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.standings.map((team) => (
-                      <tr key={team.id} className={team.team_name === 'Lefteria FC' ? 'team-highlight' : ''}>
+                      <tr key={team.id} className={team.team_name === 'LEFTERIA FC' ? 'team-highlight' : ''}>
                         <td className="font-semibold">{team.team_name}</td>
                         <td>{team.played}</td>
                         <td>{team.won}</td>
@@ -1725,7 +1722,7 @@ const AdminPage = () => {
                             onClick={() => handleDelete('standings', team.id)}
                             className="text-red-500 hover:text-red-400"
                           >
-                            Delete
+                            Διαγραφή
                           </button>
                         </td>
                       </tr>
@@ -1745,12 +1742,12 @@ const AdminPage = () => {
                         onClick={() => handleDelete('academy', group.id)}
                         className="text-red-500 hover:text-red-400 text-sm"
                       >
-                        Delete
+                        Διαγραφή
                       </button>
                     </div>
-                    <p className="text-white mb-1">Coach: {group.coach_name}</p>
+                    <p className="text-white mb-1">Προπονητής: {group.coach_name}</p>
                     <p className="text-zinc-400 text-sm">{group.training_schedule}</p>
-                    <p className="text-zinc-500 text-sm mt-2">{group.current_players}/{group.max_players} players</p>
+                    <p className="text-zinc-500 text-sm mt-2">{group.current_players}/{group.max_players} παίκτες</p>
                   </div>
                 ))}
               </div>
@@ -1774,7 +1771,7 @@ const AdminPage = () => {
                   </div>
                 ))}
                 {data.messages.length === 0 && (
-                  <p className="text-zinc-500 text-center py-12">No messages yet</p>
+                  <p className="text-zinc-500 text-center py-12">Δεν υπάρχουν μηνύματα ακόμα</p>
                 )}
               </div>
             )}
