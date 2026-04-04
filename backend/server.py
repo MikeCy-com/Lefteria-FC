@@ -527,58 +527,66 @@ async def seed_data():
     if player_count > 0:
         return {"message": "Data already seeded"}
     
-    # Seed Players (First Team)
+    # Seed Players (First Team) - Real LEFTERIA FC Players from Cyprus
     first_team_players = [
-        {"name": "Nikos Papadopoulos", "number": 1, "position": "Goalkeeper", "nationality": "Greece", "age": 28, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400"},
-        {"name": "Dimitris Alexiou", "number": 2, "position": "Defender", "nationality": "Greece", "age": 25, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400"},
-        {"name": "Kostas Nikolaidis", "number": 4, "position": "Defender", "nationality": "Greece", "age": 27, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400"},
-        {"name": "Yannis Georgiou", "number": 5, "position": "Defender", "nationality": "Greece", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=400"},
-        {"name": "Alexandros Stavros", "number": 3, "position": "Defender", "nationality": "Greece", "age": 26, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400"},
-        {"name": "Michalis Konstantinou", "number": 6, "position": "Midfielder", "nationality": "Cyprus", "age": 29, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1551958219-acbc608c6377?w=400"},
-        {"name": "Giorgos Papanikolas", "number": 8, "position": "Midfielder", "nationality": "Greece", "age": 23, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=400"},
-        {"name": "Andreas Christodoulou", "number": 10, "position": "Midfielder", "nationality": "Greece", "age": 26, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400"},
-        {"name": "Petros Ioannou", "number": 7, "position": "Midfielder", "nationality": "Greece", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400"},
-        {"name": "Stefanos Vlahos", "number": 9, "position": "Forward", "nationality": "Greece", "age": 27, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400"},
-        {"name": "Thanasis Karagiannis", "number": 11, "position": "Forward", "nationality": "Greece", "age": 22, "is_academy": False, "age_group": "Senior", "image_url": "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400"},
+        # Goalkeepers
+        {"name": "Ανδρέας Πραστίτης", "number": 1, "position": "Goalkeeper", "nationality": "Cyprus", "age": 25, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/31/528045922_122146565900791287_8734561383230242929_n.jpg"},
+        {"name": "Κωνσταντίνος Σάρρου", "number": 12, "position": "Goalkeeper", "nationality": "Cyprus", "age": 23, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/02/23/eikona_viber_2026-02-23_18-54-22-310.jpg"},
+        {"name": "Μάριος Φωτίου", "number": 13, "position": "Goalkeeper", "nationality": "Cyprus", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/31/eikona_viber_2026-01-30_17-02-32-858.jpg"},
+        # Defenders
+        {"name": "Βασίλης Κυριάκου", "number": 2, "position": "Defender", "nationality": "Cyprus", "age": 26, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/31/523964068_122144556074791287_2482787494682151145_n.jpg"},
+        {"name": "Κωνσταντίνος Χριστοδούλου", "number": 3, "position": "Defender", "nationality": "Cyprus", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/503169848_122134869422791287_5056076530651154859_n.jpg"},
+        {"name": "Αρχοντής Στογιάνοβ", "number": 4, "position": "Defender", "nationality": "Bulgaria", "age": 27, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/02/11/arxontis.jpg"},
+        {"name": "Ισμαήλ Ουασίμ", "number": 5, "position": "Defender", "nationality": "Morocco", "age": 25, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/503700541_122135477444791287_4665573012085293882_n.jpg"},
+        {"name": "Χρίστος Νικολάου", "number": 15, "position": "Defender", "nationality": "Cyprus", "age": 23, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/508226964_122137905386791287_1698498073020797453_n.jpg"},
+        # Midfielders
+        {"name": "Κωνσταντίνος Χατζηχρήστος", "number": 6, "position": "Midfielder", "nationality": "Cyprus", "age": 26, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/517752227_122142087260791287_6830899101870867423_n.jpg"},
+        {"name": "Στέφανος Κυπριανού", "number": 8, "position": "Midfielder", "nationality": "Cyprus", "age": 25, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/509313084_122138487422791287_4756376359198609794_n.jpg"},
+        {"name": "Ngeleka Marcus", "number": 10, "position": "Midfielder", "nationality": "Congo", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/506587079_122137218710791287_5051177697532592442_n.jpg"},
+        {"name": "Αλέξανδρος Γεωργιάδης", "number": 14, "position": "Midfielder", "nationality": "Cyprus", "age": 22, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/501799346_122134624826791287_2044572723166562606_n.jpg"},
+        {"name": "Ιούλιος Κοϊνάς", "number": 16, "position": "Midfielder", "nationality": "Cyprus", "age": 23, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/28/515670556_122141240300791287_3364588695721783440_n.jpg"},
+        # Wingers/Attacking Midfielders
+        {"name": "Αντρέας Ανδρέου", "number": 7, "position": "Midfielder", "nationality": "Cyprus", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/31/520316506_122143414910791287_3987226275692365678_n.jpg"},
+        {"name": "David Mlynarczyk", "number": 11, "position": "Midfielder", "nationality": "Poland", "age": 26, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/508207125_122137548812791287_6095146996956984947_n.jpg"},
+        {"name": "Μάριος Δημητρίου", "number": 17, "position": "Midfielder", "nationality": "Cyprus", "age": 22, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/28/528799209_122146292636791287_1550400844660231472_n.jpg"},
+        {"name": "Χριστόφορος Παναγιώτου", "number": 18, "position": "Midfielder", "nationality": "Cyprus", "age": 23, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/31/eikona_viber_2026-01-30_16-59-49-223.jpg"},
+        # Forwards
+        {"name": "Μάριος Ρούκλας", "number": 9, "position": "Forward", "nationality": "Cyprus", "age": 27, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/503124532_122135125964791287_7150647654623647573_n.jpg"},
+        {"name": "Μάριος Σάββα", "number": 19, "position": "Forward", "nationality": "Cyprus", "age": 25, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/01/26/506451069_122137382540791287_6481162118035374507_n.jpg"},
+        {"name": "Παναγιώτης Χριστοφόρου", "number": 20, "position": "Forward", "nationality": "Cyprus", "age": 24, "is_academy": False, "age_group": "Senior", "image_url": "https://lefteriafc.cy/images/2026/02/23/eikona_viber_2026-02-23_18-59-38-220.jpg"},
     ]
     
     for p in first_team_players:
         player = Player(**p)
         await db.players.insert_one(player.model_dump())
     
-    # Seed Academy Players
-    academy_players = [
-        {"name": "Nikos Jr. Papadopoulos", "number": 1, "position": "Goalkeeper", "nationality": "Greece", "age": 16, "is_academy": True, "age_group": "U18"},
-        {"name": "Marios Dimitriou", "number": 5, "position": "Defender", "nationality": "Greece", "age": 15, "is_academy": True, "age_group": "U16"},
-        {"name": "Christos Angelou", "number": 10, "position": "Midfielder", "nationality": "Greece", "age": 14, "is_academy": True, "age_group": "U14"},
-        {"name": "Pavlos Theodorou", "number": 9, "position": "Forward", "nationality": "Greece", "age": 12, "is_academy": True, "age_group": "U12"},
-    ]
-    
-    for p in academy_players:
-        player = Player(**p)
-        await db.players.insert_one(player.model_dump())
-    
-    # Seed Fixtures
+    # Seed Fixtures - Real PAAOK League matches
     fixtures_data = [
-        {"home_team": "Lefteria FC", "away_team": "Olympiacos B", "home_score": 3, "away_score": 1, "match_date": "2026-01-15T15:00:00Z", "venue": "Lefteria Stadium", "competition": "Super League 2", "status": "Completed"},
-        {"home_team": "Panathinaikos B", "away_team": "Lefteria FC", "home_score": 1, "away_score": 2, "match_date": "2026-01-22T17:00:00Z", "venue": "Apostolos Nikolaidis", "competition": "Super League 2", "status": "Completed"},
-        {"home_team": "Lefteria FC", "away_team": "AEK Athens B", "home_score": 2, "away_score": 2, "match_date": "2026-01-29T15:00:00Z", "venue": "Lefteria Stadium", "competition": "Super League 2", "status": "Completed"},
-        {"home_team": "PAOK B", "away_team": "Lefteria FC", "home_score": None, "away_score": None, "match_date": "2026-02-05T18:00:00Z", "venue": "Toumba Stadium", "competition": "Super League 2", "status": "Scheduled"},
-        {"home_team": "Lefteria FC", "away_team": "Aris FC B", "home_score": None, "away_score": None, "match_date": "2026-02-12T15:00:00Z", "venue": "Lefteria Stadium", "competition": "Super League 2", "status": "Scheduled"},
+        {"home_team": "LEFTERIA FC", "away_team": "Αμαθούς Αγίου Τύχωνα", "home_score": 3, "away_score": 0, "match_date": "2026-02-21T14:30:00Z", "venue": "Γήπεδο Αετού", "competition": "ΠΑΑΟΚ Α' Όμιλος", "status": "Completed"},
+        {"home_team": "Απόλλων Επισκοπής", "away_team": "LEFTERIA FC", "home_score": 1, "away_score": 6, "match_date": "2026-02-16T19:30:00Z", "venue": "Επισκοπή", "competition": "ΠΑΑΟΚ Α' Όμιλος", "status": "Completed"},
+        {"home_team": "LEFTERIA FC", "away_team": "Π&Σ Ζακακίου", "home_score": 1, "away_score": 2, "match_date": "2026-02-02T15:00:00Z", "venue": "Γήπεδο Αετού", "competition": "ΠΑΑΟΚ Α' Όμιλος", "status": "Completed"},
+        {"home_team": "Κυριάκος Μάτσης", "away_team": "LEFTERIA FC", "home_score": 2, "away_score": 4, "match_date": "2026-01-24T15:00:00Z", "venue": "Λευκωσία", "competition": "ΠΑΑΟΚ Α' Όμιλος", "status": "Completed"},
+        {"home_team": "LEFTERIA FC", "away_team": "Αναγέννηση Γερμασόγειας", "home_score": None, "away_score": None, "match_date": "2026-03-01T15:00:00Z", "venue": "Γήπεδο Αετού", "competition": "ΠΑΑΟΚ Α' Όμιλος", "status": "Scheduled"},
+        {"home_team": "Άγιος Θεράπων", "away_team": "LEFTERIA FC", "home_score": None, "away_score": None, "match_date": "2026-03-08T15:00:00Z", "venue": "Άγιος Θεράπων", "competition": "ΠΑΑΟΚ Α' Όμιλος", "status": "Scheduled"},
     ]
     
     for f in fixtures_data:
         fixture = Fixture(**f)
         await db.fixtures.insert_one(fixture.model_dump())
     
-    # Seed Standings
+    # Seed Standings - Real PAAOK League standings
     standings_data = [
-        {"team_name": "Olympiacos B", "played": 18, "won": 12, "drawn": 4, "lost": 2, "goals_for": 35, "goals_against": 15, "points": 40, "competition": "Super League 2"},
-        {"team_name": "Lefteria FC", "played": 18, "won": 11, "drawn": 3, "lost": 4, "goals_for": 32, "goals_against": 18, "points": 36, "competition": "Super League 2"},
-        {"team_name": "Panathinaikos B", "played": 18, "won": 10, "drawn": 4, "lost": 4, "goals_for": 28, "goals_against": 20, "points": 34, "competition": "Super League 2"},
-        {"team_name": "AEK Athens B", "played": 18, "won": 9, "drawn": 5, "lost": 4, "goals_for": 25, "goals_against": 17, "points": 32, "competition": "Super League 2"},
-        {"team_name": "PAOK B", "played": 18, "won": 8, "drawn": 6, "lost": 4, "goals_for": 24, "goals_against": 19, "points": 30, "competition": "Super League 2"},
-        {"team_name": "Aris FC B", "played": 18, "won": 7, "drawn": 5, "lost": 6, "goals_for": 22, "goals_against": 22, "points": 26, "competition": "Super League 2"},
+        {"team_name": "Π&Σ Ζακακίου", "played": 16, "won": 16, "drawn": 0, "lost": 0, "goals_for": 57, "goals_against": 6, "points": 48, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "ΑΤΕ-ΠΕΚ Παρεκκλησιάς", "played": 18, "won": 16, "drawn": 0, "lost": 2, "goals_for": 74, "goals_against": 13, "points": 48, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "LEFTERIA FC", "played": 18, "won": 13, "drawn": 2, "lost": 3, "goals_for": 60, "goals_against": 20, "points": 41, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Αμαθούς Αγίου Τύχωνα", "played": 18, "won": 8, "drawn": 3, "lost": 7, "goals_for": 39, "goals_against": 29, "points": 27, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Αναγέννηση Γερμασόγειας", "played": 16, "won": 8, "drawn": 2, "lost": 6, "goals_for": 46, "goals_against": 30, "points": 26, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Απόλλων Επισκοπής", "played": 16, "won": 7, "drawn": 2, "lost": 7, "goals_for": 29, "goals_against": 30, "points": 23, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Κυριάκος Μάτσης", "played": 18, "won": 6, "drawn": 3, "lost": 9, "goals_for": 28, "goals_against": 33, "points": 21, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Άγιος Θεράπων", "played": 17, "won": 5, "drawn": 5, "lost": 7, "goals_for": 27, "goals_against": 38, "points": 20, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Σ.Π.Π. Ύψωνας", "played": 15, "won": 3, "drawn": 1, "lost": 11, "goals_for": 20, "goals_against": 74, "points": 10, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Απαισία", "played": 18, "won": 3, "drawn": 0, "lost": 15, "goals_for": 20, "goals_against": 73, "points": 9, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
+        {"team_name": "Παρθενών", "played": 18, "won": 0, "drawn": 0, "lost": 18, "goals_for": 0, "goals_against": 54, "points": 0, "competition": "ΠΑΑΟΚ Α' Όμιλος"},
     ]
     
     for s in standings_data:
@@ -586,31 +594,31 @@ async def seed_data():
         standing = Standing(**s)
         await db.standings.insert_one(standing.model_dump())
     
-    # Seed News
+    # Seed News - Real news from the club
     news_data = [
         {
-            "title": "Lefteria FC Secures Impressive Win Against Olympiacos B",
-            "content": "In a stunning display of teamwork and skill, Lefteria FC defeated Olympiacos B 3-1 at home. Goals from Stefanos Vlahos (2) and Andreas Christodoulou sealed the victory.",
-            "excerpt": "Lefteria FC defeats Olympiacos B 3-1 in a dominant home performance.",
-            "category": "Match Report",
+            "title": "Νίκη με 3-0 εναντίον Αμαθούς!",
+            "content": "Η ομάδα μας μπήκε στο γήπεδο με αποφασιστικότητα και απόλυτη συγκέντρωση. Με σοβαρότητα, πειθαρχία και σωστή αγωνιστική νοοτροπία, επιβάλαμε τον ρυθμό μας από το πρώτο λεπτό και φτάσαμε δίκαια στο τελικό αποτέλεσμα. Συγχαρητήρια σε όλους για την προσπάθεια, το πάθος και τη συγκέντρωση μέχρι το τελευταίο σφύριγμα. Συνεχίζουμε με την ίδια ένταση, την ίδια πίστη και ακόμη μεγαλύτερη αποφασιστικότητα.",
+            "excerpt": "Η LEFTERIA FC νίκησε 3-0 τον Αμαθούς Αγίου Τύχωνα με εξαιρετική εμφάνιση.",
+            "category": "Αποτελέσματα",
             "is_featured": True,
-            "image_url": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800"
+            "image_url": "https://lefteriafc.cy/images/2026/02/22/639112112_122172212540791287_1953686296477132728_n.jpg"
         },
         {
-            "title": "Academy Success: U18 Team Reaches Regional Finals",
-            "content": "Our U18 academy team has qualified for the regional finals after an unbeaten run in the group stages. Coach Papadopoulos praised the young talents.",
-            "excerpt": "U18 academy team qualifies for regional finals with unbeaten record.",
-            "category": "Academy",
+            "title": "Σπουδαία εκτός έδρας νίκη με 1-6!",
+            "content": "Η LEFTERIA FC πραγματοποίησε μια εξαιρετική εμφάνιση, επιβάλλοντας τον ρυθμό της από το πρώτο λεπτό και δείχνοντας ποιότητα, σοβαρότητα και ομαδικό πνεύμα. Μια νίκη που αντικατοπτρίζει τη δουλειά και τη σωστή νοοτροπία της ομάδας. Συνεχίζουμε δυνατά!",
+            "excerpt": "Εντυπωσιακή νίκη με 1-6 εκτός έδρας εναντίον του Απόλλωνα Επισκοπής.",
+            "category": "Αποτελέσματα",
             "is_featured": True,
-            "image_url": "https://images.unsplash.com/photo-1622659097574-c814ee26068e?w=800"
+            "image_url": "https://lefteriafc.cy/images/2026/02/22/637904373_122171673212791287_1035750099661745766_n.jpg"
         },
         {
-            "title": "New Training Facility Opening Next Month",
-            "content": "Lefteria FC is proud to announce the opening of our new state-of-the-art training facility, featuring modern amenities for both first team and academy players.",
-            "excerpt": "New training facility with modern amenities opening soon.",
-            "category": "Club News",
+            "title": "Αγώνας εναντίον Ζακακίου",
+            "content": "Η ομάδα μας γνώρισε την ήττα με 1-2 από το Ζακάκι, όμως για ακόμη μία φορά έδειξε την ποιότητά της μέσα στο γήπεδο. Με σωστή αγωνιστική παρουσία, ένταση και χαρακτήρα, αποδείξαμε ότι είμαστε μια ομάδα που κάθε αντίπαλος πρέπει να υπολογίζει. Συνεχίζουμε με αυτοπεποίθηση και πίστη στη δουλειά μας.",
+            "excerpt": "Ήττα με 1-2 από τον πρωτοπόρο Ζακάκι, αλλά με αξιοπρεπή εμφάνιση.",
+            "category": "Αποτελέσματα",
             "is_featured": False,
-            "image_url": "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800"
+            "image_url": "https://lefteriafc.cy/images/2026/02/07/626432086_122170147394791287_1230125825034510947_n.jpg"
         },
     ]
     
@@ -620,12 +628,12 @@ async def seed_data():
     
     # Seed Academy Info
     academy_data = [
-        {"age_group": "U8", "coach_name": "Maria Konstantinou", "training_schedule": "Mon, Wed, Fri - 4:00 PM", "description": "Introduction to football fundamentals with fun activities.", "max_players": 20, "current_players": 15},
-        {"age_group": "U10", "coach_name": "Nikos Stavridis", "training_schedule": "Mon, Wed, Fri - 4:30 PM", "description": "Building basic skills and team coordination.", "max_players": 22, "current_players": 18},
-        {"age_group": "U12", "coach_name": "Giorgos Alexandrou", "training_schedule": "Tue, Thu, Sat - 5:00 PM", "description": "Developing tactical awareness and technical skills.", "max_players": 24, "current_players": 20},
-        {"age_group": "U14", "coach_name": "Dimitris Papadopoulos", "training_schedule": "Tue, Thu, Sat - 5:30 PM", "description": "Advanced tactical training and competitive matches.", "max_players": 25, "current_players": 22},
-        {"age_group": "U16", "coach_name": "Andreas Georgiou", "training_schedule": "Mon, Wed, Fri, Sat - 6:00 PM", "description": "Pre-professional development and intensive training.", "max_players": 25, "current_players": 23},
-        {"age_group": "U18", "coach_name": "Kostas Papadopoulos", "training_schedule": "Daily - 6:30 PM", "description": "Professional pathway training with first team integration.", "max_players": 25, "current_players": 24},
+        {"age_group": "U8", "coach_name": "TBA", "training_schedule": "Δευ, Τετ, Παρ - 16:00", "description": "Εισαγωγή στα βασικά του ποδοσφαίρου με διασκεδαστικές δραστηριότητες.", "max_players": 20, "current_players": 15},
+        {"age_group": "U10", "coach_name": "TBA", "training_schedule": "Δευ, Τετ, Παρ - 16:30", "description": "Ανάπτυξη βασικών δεξιοτήτων και ομαδικού συντονισμού.", "max_players": 22, "current_players": 18},
+        {"age_group": "U12", "coach_name": "TBA", "training_schedule": "Τρι, Πεμ, Σαβ - 17:00", "description": "Ανάπτυξη τακτικής αντίληψης και τεχνικών δεξιοτήτων.", "max_players": 24, "current_players": 20},
+        {"age_group": "U14", "coach_name": "TBA", "training_schedule": "Τρι, Πεμ, Σαβ - 17:30", "description": "Προχωρημένη τακτική προπόνηση και αγωνιστικές συμμετοχές.", "max_players": 25, "current_players": 22},
+        {"age_group": "U16", "coach_name": "TBA", "training_schedule": "Δευ, Τετ, Παρ, Σαβ - 18:00", "description": "Προ-επαγγελματική ανάπτυξη και εντατική προπόνηση.", "max_players": 25, "current_players": 23},
+        {"age_group": "U18", "coach_name": "TBA", "training_schedule": "Καθημερινά - 18:30", "description": "Προπόνηση επαγγελματικής πορείας με ενσωμάτωση στην πρώτη ομάδα.", "max_players": 25, "current_players": 24},
     ]
     
     for a in academy_data:

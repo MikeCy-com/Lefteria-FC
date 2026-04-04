@@ -200,16 +200,22 @@ const Footer = () => (
 
         {/* Quick Links */}
         <div>
-          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Quick Links</h4>
+          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Γρήγοροι Σύνδεσμοι</h4>
           <ul className="space-y-3">
-            {["First Team", "Academy", "Fixtures", "News", "Contact"].map((item) => (
-              <li key={item}>
+            {[
+              { name: "Πρώτη Ομάδα", path: "/team" },
+              { name: "Ακαδημία", path: "/academy" },
+              { name: "Αγώνες", path: "/fixtures" },
+              { name: "Νέα", path: "/news" },
+              { name: "Επικοινωνία", path: "/contact" },
+            ].map((item) => (
+              <li key={item.name}>
                 <Link 
-                  to={`/${item.toLowerCase().replace(' ', '-')}`} 
+                  to={item.path} 
                   className="text-zinc-400 hover:text-[#F5A623] transition-colors text-sm flex items-center gap-2"
                 >
                   <ChevronRight size={14} />
-                  {item}
+                  {item.name}
                 </Link>
               </li>
             ))}
@@ -218,26 +224,22 @@ const Footer = () => (
 
         {/* Contact Info */}
         <div>
-          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Contact</h4>
+          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Επικοινωνία</h4>
           <ul className="space-y-3 text-sm text-zinc-400">
             <li className="flex items-center gap-3">
               <MapPin size={16} className="text-[#F5A623]" />
-              Lefteria Stadium, Athens, Greece
-            </li>
-            <li className="flex items-center gap-3">
-              <Phone size={16} className="text-[#F5A623]" />
-              +30 210 123 4567
+              Λεμεσός, Κύπρος
             </li>
             <li className="flex items-center gap-3">
               <Mail size={16} className="text-[#F5A623]" />
-              info@lefteriafc.gr
+              info@lefteriafc.cy
             </li>
           </ul>
         </div>
 
         {/* Social */}
         <div>
-          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Follow Us</h4>
+          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Ακολούθησέ μας</h4>
           <div className="flex gap-4">
             {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
               <a
@@ -253,7 +255,7 @@ const Footer = () => (
       </div>
 
       <div className="mt-12 pt-8 border-t border-[#262626] flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-zinc-500 text-sm">© 2024 Lefteria FC. All rights reserved.</p>
+        <p className="text-zinc-500 text-sm">© 2024 LEFTERIA FC. Με επιφύλαξη κάθε δικαιώματος.</p>
       </div>
     </div>
   </footer>
@@ -339,10 +341,10 @@ const HomePage = () => {
         <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { label: "League Position", value: "2nd" },
-              { label: "Matches Played", value: "18" },
-              { label: "Goals Scored", value: "32" },
-              { label: "Academy Players", value: "120+" },
+              { label: "Θέση Πρωταθλήματος", value: "3η" },
+              { label: "Αγώνες", value: "18" },
+              { label: "Γκολ", value: "60" },
+              { label: "Βαθμοί", value: "41" },
             ].map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="font-['Bebas_Neue'] text-3xl md:text-4xl text-[#F5A623]">{stat.value}</div>
@@ -358,13 +360,13 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <span className="badge badge-secondary mb-4">Schedule</span>
+              <span className="badge badge-secondary mb-4">Πρόγραμμα</span>
               <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading">
-                Latest Fixtures
+                Τελευταίοι Αγώνες
               </h2>
             </div>
             <Link to="/fixtures" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline">
-              View All <ArrowRight size={16} />
+              Όλοι οι Αγώνες <ArrowRight size={16} />
             </Link>
           </div>
 
@@ -418,9 +420,9 @@ const HomePage = () => {
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Standings Table */}
             <div>
-              <span className="badge badge-secondary mb-4">Super League 2</span>
+              <span className="badge badge-secondary mb-4">ΠΑΑΟΚ Α' Όμιλος</span>
               <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading mb-8">
-                League Standings
+                Βαθμολογία
               </h2>
               
               <div className="overflow-x-auto">
@@ -441,7 +443,7 @@ const HomePage = () => {
                     {standings.map((team, idx) => (
                       <tr 
                         key={team.id} 
-                        className={team.team_name === 'Lefteria FC' ? 'team-highlight' : ''}
+                        className={team.team_name === 'LEFTERIA FC' ? 'team-highlight' : ''}
                       >
                         <td className="font-bold">{idx + 1}</td>
                         <td className="font-semibold">{team.team_name}</td>
@@ -462,9 +464,9 @@ const HomePage = () => {
 
             {/* Latest News */}
             <div>
-              <span className="badge badge-secondary mb-4">Updates</span>
+              <span className="badge badge-secondary mb-4">Ενημέρωση</span>
               <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading mb-8">
-                Club News
+                Τελευταία Νέα
               </h2>
               
               <div className="space-y-6">
@@ -496,7 +498,7 @@ const HomePage = () => {
                   </Link>
                 ))}
                 <Link to="/news" className="flex items-center gap-2 text-[#F5A623] hover:underline mt-4">
-                  View All News <ArrowRight size={16} />
+                  Όλα τα Νέα <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
@@ -544,13 +546,13 @@ const AboutPage = () => (
     {/* Hero */}
     <section className="py-20 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        <span className="badge badge-secondary mb-4">Our Story</span>
+        <span className="badge badge-secondary mb-4">Η Ιστορία μας</span>
         <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-          About <span className="text-[#F5A623]">Lefteria FC</span>
+          Σχετικά με την <span className="text-[#F5A623]">LEFTERIA FC</span>
         </h1>
         <p className="text-xl text-zinc-300 max-w-3xl">
-          Founded in 2024, Lefteria FC (ΛΕΥΤΕΡΙΑ - meaning "Freedom" in Greek) embodies the spirit of 
-          passion, excellence, and community in Greek football.
+          Ιδρύθηκε το 2024, η ΛΕΥΤΕΡΙΑ FC ενσαρκώνει το πνεύμα του πάθους, της αριστείας 
+          και της κοινότητας στο κυπριακό ποδόσφαιρο.
         </p>
       </div>
     </section>
@@ -559,27 +561,30 @@ const AboutPage = () => (
     <section className="py-20 px-6">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Our History</h2>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Η Ιστορία μας</h2>
           <div className="space-y-4 text-zinc-300">
             <p>
-              Lefteria FC was established with a vision to create a football club that combines professional 
-              excellence with community values. The dove in our crest symbolizes freedom and peace, while the 
-              laurel wreath represents victory and achievement.
+              Η LEFTERIA FC ιδρύθηκε με όραμα να δημιουργήσει έναν ποδοσφαιρικό σύλλογο που συνδυάζει 
+              την επαγγελματική αριστεία με τις κοινοτικές αξίες. Το περιστέρι στο έμβλημά μας 
+              συμβολίζει την ελευθερία και την ειρήνη, ενώ το στεφάνι δάφνης αντιπροσωπεύει 
+              τη νίκη και το επίτευγμα.
             </p>
             <p>
-              Based in Athens, Greece, we compete in Super League 2 and have quickly established ourselves as 
-              a competitive force with an ambitious academy program developing the next generation of Greek football talent.
+              Με έδρα τη Λεμεσό της Κύπρου, αγωνιζόμαστε στον Α' Όμιλο του ΠΑΑΟΚ και έχουμε 
+              καθιερωθεί γρήγορα ως μια ανταγωνιστική δύναμη, κατέχοντας την 3η θέση στη βαθμολογία 
+              με εντυπωσιακό ρεκόρ 13 νικών, 2 ισοπαλιών και μόλις 3 ηττών.
             </p>
             <p>
-              Our name "Lefteria" (ΛΕΥΤΕΡΙΑ) means "Freedom" in Greek, representing our philosophy of 
-              free-flowing, attacking football and the freedom we give our young players to express themselves.
+              Το όνομά μας "ΛΕΥΤΕΡΙΑ" σημαίνει "Ελευθερία" στα ελληνικά, αντιπροσωπεύοντας τη 
+              φιλοσοφία μας για ελεύθερο, επιθετικό ποδόσφαιρο και την ελευθερία που δίνουμε 
+              στους παίκτες μας να εκφραστούν.
             </p>
           </div>
         </div>
         <div className="relative">
           <img 
             src={CLUB_LOGO} 
-            alt="Lefteria FC Crest" 
+            alt="LEFTERIA FC Crest" 
             className="w-full max-w-md mx-auto"
           />
         </div>
@@ -589,12 +594,12 @@ const AboutPage = () => (
     {/* Values */}
     <section className="py-20 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 text-center">Our Values</h2>
+        <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 text-center">Οι Αξίες μας</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { icon: Trophy, title: "Excellence", desc: "We strive for excellence in everything we do, on and off the pitch." },
-            { icon: Heart, title: "Passion", desc: "Football is more than a game - it's our passion and way of life." },
-            { icon: Target, title: "Ambition", desc: "We set high goals and work tirelessly to achieve them." },
+            { icon: Trophy, title: "Αριστεία", desc: "Επιδιώκουμε την αριστεία σε όλα όσα κάνουμε, εντός και εκτός γηπέδου." },
+            { icon: Heart, title: "Πάθος", desc: "Το ποδόσφαιρο είναι περισσότερο από ένα παιχνίδι - είναι το πάθος και ο τρόπος ζωής μας." },
+            { icon: Target, title: "Φιλοδοξία", desc: "Θέτουμε υψηλούς στόχους και εργαζόμαστε ακούραστα για να τους επιτύχουμε." },
           ].map((value, i) => (
             <div key={i} className="card p-8 text-center">
               <value.icon size={48} className="text-[#F5A623] mx-auto mb-4" />
@@ -611,37 +616,37 @@ const AboutPage = () => (
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <span className="badge badge-secondary mb-4">Home Ground</span>
-            <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Lefteria Stadium</h2>
+            <span className="badge badge-secondary mb-4">Έδρα</span>
+            <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Γήπεδο Αετού</h2>
             <div className="space-y-4 text-zinc-300">
               <p>
-                Our home, Lefteria Stadium, is a modern 5,000-seat venue located in the heart of Athens. 
-                The stadium features state-of-the-art facilities including a natural grass pitch, 
-                modern training areas, and excellent spectator amenities.
+                Η έδρα μας, το Γήπεδο Αετού, βρίσκεται στην καρδιά της Λεμεσού. 
+                Το γήπεδο διαθέτει σύγχρονες εγκαταστάσεις και φιλοξενεί τους 
+                εντός έδρας αγώνες της ομάδας μας.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-center gap-3">
                   <Star className="text-[#F5A623]" size={18} />
-                  <span>5,000 capacity</span>
+                  <span>Φυσικός χλοοτάπητας</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Star className="text-[#F5A623]" size={18} />
-                  <span>Natural grass pitch</span>
+                  <span>Σύγχρονες προπονητικές εγκαταστάσεις</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Star className="text-[#F5A623]" size={18} />
-                  <span>Modern training facilities</span>
+                  <span>Αποδυτήρια υψηλών προδιαγραφών</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Star className="text-[#F5A623]" size={18} />
-                  <span>VIP hospitality areas</span>
+                  <span>Χώροι φιλοξενίας θεατών</span>
                 </li>
               </ul>
             </div>
           </div>
           <div className="aspect-video bg-[#1F1F1F] rounded-none overflow-hidden">
             <img 
-              src="https://images.unsplash.com/photo-1765130729366-b54d7b2c8ea2?w=800"
+              src="https://lefteriafc.cy/images/2026/02/22/639112112_122172212540791287_1953686296477132728_n.jpg"
               alt="Stadium"
               className="w-full h-full object-cover"
             />
@@ -677,6 +682,13 @@ const TeamPage = () => {
     : players.filter(p => p.position === filter);
 
   const positions = ["all", "Goalkeeper", "Defender", "Midfielder", "Forward"];
+  const positionLabels = {
+    "all": "Όλοι οι Παίκτες",
+    "Goalkeeper": "Τερματοφύλακες",
+    "Defender": "Αμυντικοί",
+    "Midfielder": "Μέσοι",
+    "Forward": "Επιθετικοί"
+  };
 
   if (loading) return <Loading />;
 
@@ -685,12 +697,12 @@ const TeamPage = () => {
       {/* Hero */}
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">2025/26 Season</span>
+          <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
-            First <span className="text-[#F5A623]">Team</span>
+            Πρώτη <span className="text-[#F5A623]">Ομάδα</span>
           </h1>
           <p className="text-xl text-zinc-300 max-w-3xl">
-            Meet the squad representing Lefteria FC in Super League 2.
+            Γνωρίστε τους παίκτες που εκπροσωπούν την LEFTERIA FC στον Α' Όμιλο του ΠΑΑΟΚ.
           </p>
         </div>
       </section>
@@ -706,7 +718,7 @@ const TeamPage = () => {
                 className={`tab-item ${filter === pos ? 'active' : ''}`}
                 data-testid={`filter-${pos}`}
               >
-                {pos === "all" ? "All Players" : pos + "s"}
+                {positionLabels[pos]}
               </button>
             ))}
           </div>
@@ -740,12 +752,16 @@ const TeamPage = () => {
                   </div>
                 </div>
                 <div className="p-4 bg-[#111111]">
-                  <span className="text-xs text-[#F5A623] tracking-wider uppercase">{player.position}</span>
+                  <span className="text-xs text-[#F5A623] tracking-wider uppercase">
+                    {player.position === 'Goalkeeper' ? 'Τερματοφύλακας' :
+                     player.position === 'Defender' ? 'Αμυντικός' :
+                     player.position === 'Midfielder' ? 'Μέσος' : 'Επιθετικός'}
+                  </span>
                   <h3 className="font-['Bebas_Neue'] text-2xl text-white mt-1">{player.name}</h3>
                   <div className="flex items-center gap-2 mt-2 text-zinc-400 text-sm">
                     <span>{player.nationality}</span>
                     <span>•</span>
-                    <span>{player.age} years</span>
+                    <span>{player.age} ετών</span>
                   </div>
                 </div>
               </div>
@@ -968,12 +984,12 @@ const FixturesPage = () => {
                 {/* Home Team */}
                 <div className="text-center md:text-right">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    fixture.home_team === 'Lefteria FC' ? 'text-[#F5A623]' : 'text-white'
+                    fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.home_team}
                   </h3>
-                  {fixture.home_team === 'Lefteria FC' && (
-                    <span className="text-xs text-zinc-500">HOME</span>
+                  {fixture.home_team === 'LEFTERIA FC' && (
+                    <span className="text-xs text-zinc-500">ΕΝΤΟΣ</span>
                   )}
                 </div>
 
@@ -1002,12 +1018,12 @@ const FixturesPage = () => {
                 {/* Away Team */}
                 <div className="text-center md:text-left">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    fixture.away_team === 'Lefteria FC' ? 'text-[#F5A623]' : 'text-white'
+                    fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.away_team}
                   </h3>
-                  {fixture.away_team === 'Lefteria FC' && (
-                    <span className="text-xs text-zinc-500">AWAY</span>
+                  {fixture.away_team === 'LEFTERIA FC' && (
+                    <span className="text-xs text-zinc-500">ΕΚΤΟΣ</span>
                   )}
                 </div>
               </div>
@@ -1020,7 +1036,8 @@ const FixturesPage = () => {
                     fixture.status === 'Live' ? 'bg-red-900/50 text-red-400' : 
                     'badge-secondary'
                   }`}>
-                    {fixture.status}
+                    {fixture.status === 'Completed' ? 'Ολοκληρώθηκε' : 
+                     fixture.status === 'Scheduled' ? 'Προγραμματισμένος' : fixture.status}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-zinc-500">
