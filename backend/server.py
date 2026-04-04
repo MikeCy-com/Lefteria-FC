@@ -42,6 +42,7 @@ class PlayerPosition(str, Enum):
 class MatchStatus(str, Enum):
     SCHEDULED = "Scheduled"
     LIVE = "Live"
+    HALF_TIME = "Half Time"
     COMPLETED = "Completed"
     POSTPONED = "Postponed"
 
@@ -324,6 +325,82 @@ class FixtureCreate(BaseModel):
     scorers: List[Dict[str, Any]] = Field(default_factory=list)
     attendance: Optional[int] = None
     referee: Optional[str] = None
+
+# ==================== MATCH EVENTS & LIVE STATS ====================
+class EventType(str, Enum):
+    GOAL = "goal"
+    YELLOW_CARD = "yellow_card"
+    RED_CARD = "red_card"
+    SECOND_YELLOW = "second_yellow"
+    SUBSTITUTION = "substitution"
+    PENALTY_SCORED = "penalty_scored"
+    PENALTY_MISSED = "penalty_missed"
+    OWN_GOAL = "own_goal"
+    VAR_DECISION = "var_decision"
+
+class MatchEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    fixture_id: str
+    event_type: EventType
+    minute: int
+    added_time: Optional[int] = None
+    team: str  # "home" or "away"
+    player_name: Optional[str] = None
+    player_id: Optional[str] = None
+    secondary_player_name: Optional[str] = None  # for subs: player coming in
+    secondary_player_id: Optional[str] = None
+    description: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class MatchEventCreate(BaseModel):
+    event_type: EventType
+    minute: int
+    added_time: Optional[int] = None
+    team: str
+    player_name: Optional[str] = None
+    player_id: Optional[str] = None
+    secondary_player_name: Optional[str] = None
+    secondary_player_id: Optional[str] = None
+    description: Optional[str] = None
+
+class MatchStats(BaseModel):
+    fixture_id: str
+    home_possession: int = 50
+    away_possession: int = 50
+    home_shots: int = 0
+    away_shots: int = 0
+    home_shots_on_target: int = 0
+    away_shots_on_target: int = 0
+    home_corners: int = 0
+    away_corners: int = 0
+    home_fouls: int = 0
+    away_fouls: int = 0
+    home_offsides: int = 0
+    away_offsides: int = 0
+    home_saves: int = 0
+    away_saves: int = 0
+    match_minute: int = 0
+    half: int = 1  # 1 or 2
+    injury_time: int = 0
+
+class MatchStatsUpdate(BaseModel):
+    home_possession: Optional[int] = None
+    away_possession: Optional[int] = None
+    home_shots: Optional[int] = None
+    away_shots: Optional[int] = None
+    home_shots_on_target: Optional[int] = None
+    away_shots_on_target: Optional[int] = None
+    home_corners: Optional[int] = None
+    away_corners: Optional[int] = None
+    home_fouls: Optional[int] = None
+    away_fouls: Optional[int] = None
+    home_offsides: Optional[int] = None
+    away_offsides: Optional[int] = None
+    home_saves: Optional[int] = None
+    away_saves: Optional[int] = None
+    match_minute: Optional[int] = None
+    half: Optional[int] = None
+    injury_time: Optional[int] = None
 
 # Standing with Logo
 class Standing(BaseModel):
@@ -1086,6 +1163,116 @@ async def update_live_score(fixture_id: str, request: Request, current_user: dic
     
     updated = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
     return updated
+
+# ==================== MATCH EVENTS API ====================
+
+# Public: Get live match data (fixture + events + stats)
+@api_router.get("/live-match")
+async def get_live_match():
+    """Get currently live match with all events and stats for public display."""
+    live = await db.fixtures.find_one({"status": {"$in": ["Live", "Half Time"]}}, {"_id": 0})
+    if not live:
+        return {"active": False, "fixture": None, "events": [], "stats": None}
+    
+    events = await db.match_events.find({"fixture_id": live["id"]}, {"_id": 0}).sort("minute", 1).to_list(200)
+    stats = await db.match_stats.find_one({"fixture_id": live["id"]}, {"_id": 0})
+    
+    return {"active": True, "fixture": live, "events": events, "stats": stats}
+
+# Public: Get match detail with events and stats
+@api_router.get("/fixtures/{fixture_id}/detail")
+async def get_fixture_detail(fixture_id: str):
+    fixture = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
+    events = await db.match_events.find({"fixture_id": fixture_id}, {"_id": 0}).sort("minute", 1).to_list(200)
+    stats = await db.match_stats.find_one({"fixture_id": fixture_id}, {"_id": 0})
+    return {"fixture": fixture, "events": events, "stats": stats}
+
+# Admin: Add match event
+@api_router.post("/admin/fixtures/{fixture_id}/events")
+async def add_match_event(fixture_id: str, event: MatchEventCreate, current_user: dict = Depends(get_current_user)):
+    fixture = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
+    
+    event_obj = MatchEvent(fixture_id=fixture_id, **event.model_dump())
+    await db.match_events.insert_one(event_obj.model_dump())
+    
+    # Auto-update score for goal events
+    if event.event_type in [EventType.GOAL, EventType.PENALTY_SCORED]:
+        score_field = "home_score" if event.team == "home" else "away_score"
+        current_score = fixture.get(score_field) or 0
+        await db.fixtures.update_one({"id": fixture_id}, {"$set": {score_field: current_score + 1}})
+    elif event.event_type == EventType.OWN_GOAL:
+        # Own goal goes to the opposing team
+        score_field = "away_score" if event.team == "home" else "home_score"
+        current_score = fixture.get(score_field) or 0
+        await db.fixtures.update_one({"id": fixture_id}, {"$set": {score_field: current_score + 1}})
+    
+    return {"id": event_obj.id, "message": "Το συμβάν προστέθηκε"}
+
+# Admin: Delete match event
+@api_router.delete("/admin/fixtures/{fixture_id}/events/{event_id}")
+async def delete_match_event(fixture_id: str, event_id: str, current_user: dict = Depends(get_current_user)):
+    event = await db.match_events.find_one({"id": event_id, "fixture_id": fixture_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Το συμβάν δεν βρέθηκε")
+    
+    # Reverse score if it was a goal event
+    fixture = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if event["event_type"] in ["goal", "penalty_scored"]:
+        score_field = "home_score" if event["team"] == "home" else "away_score"
+        current_score = fixture.get(score_field) or 0
+        if current_score > 0:
+            await db.fixtures.update_one({"id": fixture_id}, {"$set": {score_field: current_score - 1}})
+    elif event["event_type"] == "own_goal":
+        score_field = "away_score" if event["team"] == "home" else "home_score"
+        current_score = fixture.get(score_field) or 0
+        if current_score > 0:
+            await db.fixtures.update_one({"id": fixture_id}, {"$set": {score_field: current_score - 1}})
+    
+    await db.match_events.delete_one({"id": event_id})
+    return {"message": "Το συμβάν διαγράφηκε"}
+
+# Admin: Get match events
+@api_router.get("/admin/fixtures/{fixture_id}/events")
+async def get_match_events(fixture_id: str, current_user: dict = Depends(get_current_user)):
+    events = await db.match_events.find({"fixture_id": fixture_id}, {"_id": 0}).sort("minute", 1).to_list(200)
+    return events
+
+# Admin: Update match stats
+@api_router.put("/admin/fixtures/{fixture_id}/stats")
+async def update_match_stats(fixture_id: str, stats: MatchStatsUpdate, current_user: dict = Depends(get_current_user)):
+    fixture = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
+    
+    update_data = {k: v for k, v in stats.model_dump().items() if v is not None}
+    
+    # Auto-balance possession
+    if "home_possession" in update_data:
+        update_data["away_possession"] = 100 - update_data["home_possession"]
+    elif "away_possession" in update_data:
+        update_data["home_possession"] = 100 - update_data["away_possession"]
+    
+    existing = await db.match_stats.find_one({"fixture_id": fixture_id})
+    if existing:
+        await db.match_stats.update_one({"fixture_id": fixture_id}, {"$set": update_data})
+    else:
+        new_stats = MatchStats(fixture_id=fixture_id, **update_data)
+        await db.match_stats.insert_one(new_stats.model_dump())
+    
+    result = await db.match_stats.find_one({"fixture_id": fixture_id}, {"_id": 0})
+    return result
+
+# Admin: Get match stats
+@api_router.get("/admin/fixtures/{fixture_id}/stats")
+async def get_match_stats(fixture_id: str, current_user: dict = Depends(get_current_user)):
+    stats = await db.match_stats.find_one({"fixture_id": fixture_id}, {"_id": 0})
+    if not stats:
+        return MatchStats(fixture_id=fixture_id).model_dump()
+    return stats
 
 # Venues Admin
 @api_router.post("/admin/venues", response_model=Venue)

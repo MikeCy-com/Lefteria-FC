@@ -276,7 +276,15 @@ const HomePage = () => {
   const [fixtures, setFixtures] = useState([]);
   const [standings, setStandings] = useState([]);
   const [news, setNews] = useState([]);
+  const [liveMatch, setLiveMatch] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchLive = async () => {
+    try {
+      const res = await axios.get(`${API}/live-match`);
+      setLiveMatch(res.data.active ? res.data : null);
+    } catch (e) { console.error(e); }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -284,14 +292,16 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
+          axios.get(`${API}/live-match`),
         ]);
         setFixtures(fixturesRes.data);
         setStandings(standingsRes.data);
         setNews(newsRes.data);
+        if (liveRes.data.active) setLiveMatch(liveRes.data);
       } catch (e) {
         console.error("Error fetching data:", e);
       } finally {
@@ -299,6 +309,9 @@ const HomePage = () => {
       }
     };
     fetchData();
+    // Auto-refresh live match every 30 seconds
+    const interval = setInterval(fetchLive, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <Loading />;
@@ -337,6 +350,54 @@ const HomePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Live Match Widget */}
+        {liveMatch && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-full max-w-lg px-4" data-testid="live-match-widget">
+            <div className="bg-black/90 backdrop-blur-xl border border-red-500/30 rounded-lg p-5 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <span className="flex items-center gap-1.5 text-xs text-red-400 font-semibold">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  {liveMatch.fixture.status === 'Half Time' ? 'ΗΜΙΧΡΟΝΟ' : 'LIVE'}
+                  {liveMatch.stats?.match_minute ? ` ${liveMatch.stats.match_minute}'` : ''}
+                </span>
+                <span className="text-[10px] text-zinc-500">{liveMatch.fixture.competition}</span>
+              </div>
+              <div className="flex items-center justify-center gap-5">
+                <div className="flex-1 text-right">
+                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                    {liveMatch.fixture.home_team}
+                  </span>
+                </div>
+                <div className="bg-[#111] rounded-lg px-4 py-2">
+                  <span className="font-['Bebas_Neue'] text-3xl text-white">
+                    {liveMatch.fixture.home_score ?? 0} <span className="text-zinc-600">:</span> {liveMatch.fixture.away_score ?? 0}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                    {liveMatch.fixture.away_team}
+                  </span>
+                </div>
+              </div>
+              {/* Goal scorers */}
+              {liveMatch.events && liveMatch.events.filter(e => ['goal', 'penalty_scored', 'own_goal'].includes(e.event_type)).length > 0 && (
+                <div className="flex justify-between mt-3 pt-3 border-t border-white/10">
+                  <div className="flex-1 text-right pr-6 space-y-0.5">
+                    {liveMatch.events.filter(e => e.team === 'home' && ['goal', 'penalty_scored'].includes(e.event_type)).map((e, i) => (
+                      <div key={i} className="text-xs text-zinc-400">{e.player_name} <span className="text-zinc-600">{e.minute}'</span></div>
+                    ))}
+                  </div>
+                  <div className="flex-1 pl-6 space-y-0.5">
+                    {liveMatch.events.filter(e => e.team === 'away' && ['goal', 'penalty_scored'].includes(e.event_type)).map((e, i) => (
+                      <div key={i} className="text-xs text-zinc-400"><span className="text-zinc-600">{e.minute}'</span> {e.player_name}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Stats Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10">
