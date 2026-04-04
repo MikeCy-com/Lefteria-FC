@@ -196,7 +196,6 @@ const Footer = () => (
 
       <div className="mt-12 pt-8 border-t border-[#262626] flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="text-zinc-500 text-sm">© 2024 Lefteria FC. All rights reserved.</p>
-        <p className="text-zinc-500 text-sm">Designed with SportsPress style</p>
       </div>
     </div>
   </footer>

@@ -449,6 +449,15 @@ input::placeholder, textarea::placeholder {
   }
 }
 
+/* Hide Emergent badge */
+[data-testid="emergent-badge"],
+.emergent-badge,
+div[class*="emergent"],
+iframe[src*="emergent"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 /* Responsive utilities */
 @media (max-width: 768px) {
   h1 {
