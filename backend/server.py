@@ -715,6 +715,67 @@ async def get_transfers(season: Optional[str] = None):
     transfers = await db.transfers.find(query, {"_id": 0}).sort("transfer_date", -1).to_list(100)
     return [Transfer(**t) for t in transfers]
 
+# ==================== STANDINGS AUTO-CALCULATION HELPERS ====================
+
+async def ensure_team_in_standings(team_name: str, competition: str, season: str):
+    """Ensure a team exists in standings, create if not."""
+    existing = await db.standings.find_one({"team_name": team_name, "competition": competition, "season": season}, {"_id": 0})
+    if not existing:
+        standing = Standing(team_name=team_name, competition=competition, season=season)
+        await db.standings.insert_one(standing.model_dump())
+
+async def auto_update_standings_for_match(home_team: str, away_team: str, home_score: int, away_score: int, competition: str, season: str):
+    """Auto-update standings based on a completed match result."""
+    await ensure_team_in_standings(home_team, competition, season)
+    await ensure_team_in_standings(away_team, competition, season)
+    
+    home_inc = {"played": 1, "goals_for": home_score, "goals_against": away_score}
+    away_inc = {"played": 1, "goals_for": away_score, "goals_against": home_score}
+    
+    if home_score > away_score:
+        home_inc["won"] = 1; home_inc["points"] = 3
+        away_inc["lost"] = 1
+    elif home_score < away_score:
+        away_inc["won"] = 1; away_inc["points"] = 3
+        home_inc["lost"] = 1
+    else:
+        home_inc["drawn"] = 1; home_inc["points"] = 1
+        away_inc["drawn"] = 1; away_inc["points"] = 1
+    
+    await db.standings.update_one({"team_name": home_team, "competition": competition, "season": season}, {"$inc": home_inc})
+    await db.standings.update_one({"team_name": away_team, "competition": competition, "season": season}, {"$inc": away_inc})
+    
+    # Recalc goal_difference for both
+    for team in [home_team, away_team]:
+        s = await db.standings.find_one({"team_name": team, "competition": competition, "season": season}, {"_id": 0})
+        if s:
+            gd = s.get("goals_for", 0) - s.get("goals_against", 0)
+            await db.standings.update_one({"team_name": team, "competition": competition, "season": season}, {"$set": {"goal_difference": gd}})
+
+async def reverse_standings_for_match(home_team: str, away_team: str, home_score: int, away_score: int, competition: str, season: str):
+    """Reverse standings impact of a match (for score corrections)."""
+    home_dec = {"played": -1, "goals_for": -home_score, "goals_against": -away_score}
+    away_dec = {"played": -1, "goals_for": -away_score, "goals_against": -home_score}
+    
+    if home_score > away_score:
+        home_dec["won"] = -1; home_dec["points"] = -3
+        away_dec["lost"] = -1
+    elif home_score < away_score:
+        away_dec["won"] = -1; away_dec["points"] = -3
+        home_dec["lost"] = -1
+    else:
+        home_dec["drawn"] = -1; home_dec["points"] = -1
+        away_dec["drawn"] = -1; away_dec["points"] = -1
+    
+    await db.standings.update_one({"team_name": home_team, "competition": competition, "season": season}, {"$inc": home_dec})
+    await db.standings.update_one({"team_name": away_team, "competition": competition, "season": season}, {"$inc": away_dec})
+    
+    for team in [home_team, away_team]:
+        s = await db.standings.find_one({"team_name": team, "competition": competition, "season": season}, {"_id": 0})
+        if s:
+            gd = s.get("goals_for", 0) - s.get("goals_against", 0)
+            await db.standings.update_one({"team_name": team, "competition": competition, "season": season}, {"$set": {"goal_difference": gd}})
+
 # ==================== ADMIN ROUTES ====================
 
 # Club Profile Admin
@@ -891,6 +952,11 @@ async def delete_staff(staff_id: str, current_user: dict = Depends(get_current_u
 async def create_fixture(fixture: FixtureCreate, current_user: dict = Depends(get_current_user)):
     fixture_obj = Fixture(**fixture.model_dump())
     await db.fixtures.insert_one(fixture_obj.model_dump())
+    
+    # Auto-update standings if completed
+    if fixture.status == MatchStatus.COMPLETED and fixture.home_score is not None and fixture.away_score is not None:
+        await auto_update_standings_for_match(fixture.home_team, fixture.away_team, fixture.home_score, fixture.away_score, fixture.competition, fixture.season)
+    
     return fixture_obj
 
 @api_router.put("/admin/fixtures/{fixture_id}", response_model=Fixture)
@@ -899,8 +965,21 @@ async def update_fixture(fixture_id: str, fixture: FixtureCreate, current_user: 
     if not existing:
         raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
     
+    old_status = existing.get("status")
     update_data = fixture.model_dump()
     await db.fixtures.update_one({"id": fixture_id}, {"$set": update_data})
+    
+    # Auto-update standings when status changes to Completed
+    if fixture.status == MatchStatus.COMPLETED and fixture.home_score is not None and fixture.away_score is not None:
+        # Only auto-update if the match wasn't already completed, or if scores changed
+        old_completed = old_status == "Completed"
+        scores_changed = old_completed and (existing.get("home_score") != fixture.home_score or existing.get("away_score") != fixture.away_score)
+        
+        if not old_completed or scores_changed:
+            # If scores changed on an already-completed match, reverse old result first
+            if scores_changed:
+                await reverse_standings_for_match(existing["home_team"], existing["away_team"], existing.get("home_score", 0), existing.get("away_score", 0), existing.get("competition", ""), existing.get("season", "2025/26"))
+            await auto_update_standings_for_match(fixture.home_team, fixture.away_team, fixture.home_score, fixture.away_score, fixture.competition, fixture.season)
     
     # Update player statistics if match is completed
     if fixture.status == MatchStatus.COMPLETED and fixture.player_performances:
@@ -954,6 +1033,59 @@ async def delete_standing(standing_id: str, current_user: dict = Depends(get_cur
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Η βαθμολογία δεν βρέθηκε")
     return {"message": "Η βαθμολογία διαγράφηκε"}
+
+# Recalculate all standings from completed fixtures
+@api_router.post("/admin/standings/recalculate")
+async def recalculate_standings(current_user: dict = Depends(get_current_user)):
+    """Drop all standings and rebuild from completed fixtures."""
+    await db.standings.delete_many({})
+    
+    completed = await db.fixtures.find({"status": "Completed"}, {"_id": 0}).to_list(1000)
+    for f in completed:
+        hs = f.get("home_score")
+        aws = f.get("away_score")
+        if hs is not None and aws is not None:
+            await auto_update_standings_for_match(
+                f["home_team"], f["away_team"], hs, aws,
+                f.get("competition", ""), f.get("season", "2025/26")
+            )
+    
+    count = await db.standings.count_documents({})
+    return {"message": f"Η βαθμολογία υπολογίστηκε ξανά από {len(completed)} αγώνες. {count} ομάδες στον πίνακα."}
+
+# Live score update (quick endpoint for match day)
+@api_router.put("/admin/fixtures/{fixture_id}/live-score")
+async def update_live_score(fixture_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    body = await request.json()
+    existing = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
+    
+    update = {}
+    if "home_score" in body:
+        update["home_score"] = body["home_score"]
+    if "away_score" in body:
+        update["away_score"] = body["away_score"]
+    if "status" in body:
+        update["status"] = body["status"]
+    
+    old_status = existing.get("status")
+    new_status = body.get("status", old_status)
+    
+    await db.fixtures.update_one({"id": fixture_id}, {"$set": update})
+    
+    # If transitioning to Completed, auto-update standings
+    if new_status == "Completed" and old_status != "Completed":
+        hs = body.get("home_score", existing.get("home_score"))
+        aws = body.get("away_score", existing.get("away_score"))
+        if hs is not None and aws is not None:
+            await auto_update_standings_for_match(
+                existing["home_team"], existing["away_team"], hs, aws,
+                existing.get("competition", ""), existing.get("season", "2025/26")
+            )
+    
+    updated = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    return updated
 
 # Venues Admin
 @api_router.post("/admin/venues", response_model=Venue)

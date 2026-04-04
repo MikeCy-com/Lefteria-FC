@@ -1,33 +1,34 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import {
   Users, Calendar, Newspaper, Trophy, GraduationCap, Mail,
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
-  MapPin, Archive, UserCog, ChevronDown, ChevronUp, Eye
+  MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
+  Check, Clock, ChevronRight
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// ==================== FORM MODAL ====================
+// ==================== SHARED UI COMPONENTS ====================
 const FormModal = ({ title, onClose, onSave, children, saving }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" data-testid="form-modal">
-    <div className="bg-[#111111] border border-[#262626] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center p-6 border-b border-[#262626] sticky top-0 bg-[#111111] z-10">
-        <h2 className="font-['Bebas_Neue'] text-2xl text-white">{title}</h2>
-        <button onClick={onClose} className="text-zinc-400 hover:text-white" data-testid="modal-close"><X size={24} /></button>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" data-testid="form-modal" onClick={onClose}>
+    <div className="bg-[#141414] border border-[#2a2a2a] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#141414] z-10 rounded-t-lg">
+        <h2 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">{title}</h2>
+        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10" data-testid="modal-close"><X size={18} /></button>
       </div>
       <div className="p-6 space-y-4">{children}</div>
-      <div className="flex gap-3 p-6 border-t border-[#262626] sticky bottom-0 bg-[#111111]">
-        <button onClick={onSave} disabled={saving} className="btn-primary flex-1" data-testid="modal-save">
-          <Save size={16} /> {saving ? "Αποθήκευση..." : "Αποθήκευση"}
+      <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a] sticky bottom-0 bg-[#141414] rounded-b-lg">
+        <button onClick={onSave} disabled={saving} className="admin-btn-primary flex-1" data-testid="modal-save">
+          {saving ? <><RefreshCw size={14} className="animate-spin" /> Αποθήκευση...</> : <><Save size={14} /> Αποθήκευση</>}
         </button>
-        <button onClick={onClose} className="btn-secondary flex-1" data-testid="modal-cancel">Ακύρωση</button>
+        <button onClick={onClose} className="admin-btn-ghost flex-1" data-testid="modal-cancel">Ακύρωση</button>
       </div>
     </div>
   </div>
@@ -35,40 +36,178 @@ const FormModal = ({ title, onClose, onSave, children, saving }) => (
 
 const Field = ({ label, children }) => (
   <div>
-    <label className="block text-sm text-zinc-400 mb-1.5">{label}</label>
+    <label className="block text-xs font-medium text-zinc-500 mb-1.5 uppercase tracking-wider">{label}</label>
     {children}
   </div>
 );
 
-const inputClass = "w-full bg-[#1A1A1A] border border-[#333] text-white px-3 py-2.5 text-sm focus:border-[#F5A623] focus:outline-none transition-colors";
-const selectClass = inputClass;
+const AdminInput = ({ className = "", ...props }) => (
+  <input className={`admin-input ${className}`} {...props} />
+);
+
+const AdminSelect = ({ className = "", ...props }) => (
+  <select className={`admin-input ${className}`} {...props} />
+);
+
+const AdminTextarea = ({ className = "", ...props }) => (
+  <textarea className={`admin-input ${className}`} {...props} />
+);
+
+const TabHeader = ({ title, count, children }) => (
+  <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+    <div>
+      <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">{title}</h2>
+      {count !== undefined && <span className="text-xs text-zinc-500">{count} εγγραφές</span>}
+    </div>
+    <div className="flex gap-2 items-center">{children}</div>
+  </div>
+);
+
+const EmptyState = ({ icon: Icon, text }) => (
+  <div className="flex flex-col items-center justify-center py-16 text-zinc-600">
+    <Icon size={48} strokeWidth={1} />
+    <p className="mt-3 text-sm">{text}</p>
+  </div>
+);
 
 // ==================== DASHBOARD TAB ====================
-const DashboardTab = ({ stats }) => {
+const DashboardTab = ({ stats, onTabChange }) => {
   const cards = [
-    { label: "Παίκτες Α' Ομάδας", value: stats.first_team_players, icon: Users, color: "text-blue-400" },
-    { label: "Παίκτες Ακαδημίας", value: stats.academy_players, icon: GraduationCap, color: "text-green-400" },
-    { label: "Τεχνικό Επιτελείο", value: stats.staff_members, icon: UserCog, color: "text-purple-400" },
-    { label: "Αγώνες", value: stats.total_fixtures, icon: Calendar, color: "text-orange-400" },
-    { label: "Άρθρα Νέων", value: stats.news_articles, icon: Newspaper, color: "text-cyan-400" },
-    { label: "Ομάδες Ακαδημίας", value: stats.academy_groups, icon: GraduationCap, color: "text-yellow-400" },
-    { label: "Μηνύματα", value: stats.unread_messages, icon: Mail, color: "text-red-400" },
+    { label: "Α' Ομάδα", value: stats.first_team_players, icon: Users, color: "#3B82F6", tab: "players" },
+    { label: "Ακαδημία", value: stats.academy_players, icon: GraduationCap, color: "#10B981", tab: "academy" },
+    { label: "Staff", value: stats.staff_members, icon: UserCog, color: "#8B5CF6", tab: "staff" },
+    { label: "Αγώνες", value: stats.total_fixtures, icon: Calendar, color: "#F5A623", tab: "fixtures" },
+    { label: "Νέα", value: stats.news_articles, icon: Newspaper, color: "#06B6D4", tab: "news" },
+    { label: "Μηνύματα", value: stats.unread_messages, icon: Mail, color: "#EF4444", tab: "messages" },
   ];
 
   return (
     <div data-testid="admin-dashboard">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-6">Πίνακας Ελέγχου</h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide mb-6">Πίνακας Ελέγχου</h2>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {cards.map((c, i) => (
-          <div key={i} className="card p-5" data-testid={`stat-${c.label.replace(/\s/g, '-')}`}>
-            <div className="flex items-center justify-between mb-3">
-              <c.icon size={22} className={c.color} />
+          <button key={i} onClick={() => onTabChange(c.tab)} className="admin-stat-card group text-left" data-testid={`stat-${c.label}`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{backgroundColor: c.color + '18'}}>
+                <c.icon size={18} style={{color: c.color}} />
+              </div>
+              <ChevronRight size={14} className="text-zinc-700 group-hover:text-zinc-400 transition-colors" />
             </div>
             <div className="font-['Bebas_Neue'] text-3xl text-white">{c.value ?? 0}</div>
-            <div className="text-xs text-zinc-500 mt-1">{c.label}</div>
+            <div className="text-xs text-zinc-500 mt-0.5">{c.label}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ==================== LIVE SCORE TAB ====================
+const LiveScoreTab = ({ fixtures, onRefresh }) => {
+  const [updating, setUpdating] = useState(null);
+
+  const liveAndScheduled = fixtures.filter(f => f.status === 'Live' || f.status === 'Scheduled').sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+  const completed = fixtures.filter(f => f.status === 'Completed').sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
+
+  const updateScore = async (fixtureId, field, value) => {
+    setUpdating(fixtureId);
+    try {
+      const body = { [field]: parseInt(value) || 0 };
+      await axios.put(`${API}/admin/fixtures/${fixtureId}/live-score`, body, { headers: getAuthHeaders() });
+      onRefresh();
+    } catch (e) { alert("Σφάλμα ενημέρωσης"); }
+    finally { setUpdating(null); }
+  };
+
+  const setStatus = async (fixtureId, status) => {
+    setUpdating(fixtureId);
+    try {
+      const fixture = fixtures.find(f => f.id === fixtureId);
+      const body = { status, home_score: fixture?.home_score ?? 0, away_score: fixture?.away_score ?? 0 };
+      await axios.put(`${API}/admin/fixtures/${fixtureId}/live-score`, body, { headers: getAuthHeaders() });
+      onRefresh();
+    } catch (e) { alert("Σφάλμα"); }
+    finally { setUpdating(null); }
+  };
+
+  return (
+    <div data-testid="admin-livescore-tab">
+      <TabHeader title="Live Score" count={liveAndScheduled.length}>
+        <span className="flex items-center gap-1.5 text-xs text-zinc-500"><Activity size={14} /> Ενεργοί & Προγραμματισμένοι</span>
+      </TabHeader>
+
+      {liveAndScheduled.length === 0 && <EmptyState icon={Calendar} text="Δεν υπάρχουν ενεργοί αγώνες" />}
+
+      <div className="space-y-3 mb-8">
+        {liveAndScheduled.map(f => (
+          <div key={f.id} className={`admin-card p-4 ${f.status === 'Live' ? 'border-red-500/40 bg-red-500/5' : ''}`} data-testid={`live-fixture-${f.id}`}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
+              <span className="text-xs text-zinc-600">|</span>
+              <span className="text-xs text-zinc-500">{f.competition}</span>
+              {f.status === 'Live' && <span className="ml-auto flex items-center gap-1 text-xs text-red-400 font-medium"><span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>LIVE</span>}
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex-1 text-right">
+                <span className={`font-['Bebas_Neue'] text-lg ${f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{f.home_team}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 bg-[#0a0a0a] rounded-lg px-3 py-2">
+                <input
+                  type="number" min="0" value={f.home_score ?? 0}
+                  onChange={e => updateScore(f.id, 'home_score', e.target.value)}
+                  className="w-10 h-8 bg-transparent text-center text-white font-['Bebas_Neue'] text-2xl border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  data-testid={`live-home-score-${f.id}`}
+                />
+                <span className="text-zinc-600 font-bold">:</span>
+                <input
+                  type="number" min="0" value={f.away_score ?? 0}
+                  onChange={e => updateScore(f.id, 'away_score', e.target.value)}
+                  className="w-10 h-8 bg-transparent text-center text-white font-['Bebas_Neue'] text-2xl border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  data-testid={`live-away-score-${f.id}`}
+                />
+              </div>
+
+              <div className="flex-1">
+                <span className={`font-['Bebas_Neue'] text-lg ${f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{f.away_team}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-3 justify-center">
+              {f.status !== 'Live' && (
+                <button onClick={() => setStatus(f.id, 'Live')} disabled={updating === f.id} className="admin-btn-sm bg-red-500/20 text-red-400 hover:bg-red-500/30" data-testid={`start-live-${f.id}`}>
+                  <Zap size={12} /> Έναρξη Live
+                </button>
+              )}
+              {f.status === 'Live' && (
+                <button onClick={() => setStatus(f.id, 'Completed')} disabled={updating === f.id} className="admin-btn-sm bg-green-500/20 text-green-400 hover:bg-green-500/30" data-testid={`end-match-${f.id}`}>
+                  <Check size={12} /> Τέλος Αγώνα
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
+
+      {completed.length > 0 && (
+        <>
+          <h3 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Πρόσφατα Ολοκληρωμένοι</h3>
+          <div className="space-y-2">
+            {completed.slice(0, 5).map(f => (
+              <div key={f.id} className="admin-card px-4 py-3 flex items-center justify-between">
+                <span className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}</span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.home_team}</span>
+                  <span className="font-['Bebas_Neue'] text-lg text-white">{f.home_score} - {f.away_score}</span>
+                  <span className={`text-sm font-medium ${f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.away_team}</span>
+                </div>
+                <span className="badge-completed text-xs">Ολοκλ.</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -83,7 +222,7 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
     name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "",
     team_type: "First Team", academy_group_id: "", image_url: "", bio: "",
     height: "", weight: "", preferred_foot: "Right", date_of_birth: "",
-    joined_date: "", contract_until: "", instagram: "", twitter: "", facebook: ""
+    joined_date: "", contract_until: ""
   };
   const [form, setForm] = useState(emptyPlayer);
 
@@ -96,11 +235,9 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
       image_url: p.image_url || "", bio: p.bio || "", height: p.height || "",
       weight: p.weight || "", preferred_foot: p.preferred_foot || "Right",
       date_of_birth: p.date_of_birth || "", joined_date: p.joined_date || "",
-      contract_until: p.contract_until || "", instagram: p.instagram || "",
-      twitter: p.twitter || "", facebook: p.facebook || ""
+      contract_until: p.contract_until || ""
     });
-    setEditPlayer(p);
-    setShowForm(true);
+    setEditPlayer(p); setShowForm(true);
   };
 
   const handleSave = async () => {
@@ -108,70 +245,46 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
     try {
       const headers = getAuthHeaders();
       const payload = { ...form, number: parseInt(form.number) || 0, age: parseInt(form.age) || 0 };
-      if (editPlayer) {
-        await axios.put(`${API}/admin/players/${editPlayer.id}`, payload, { headers });
-      } else {
-        await axios.post(`${API}/admin/players`, payload, { headers });
-      }
-      setShowForm(false);
-      onRefresh();
-    } catch (e) {
-      alert(e.response?.data?.detail || "Σφάλμα αποθήκευσης");
-    } finally { setSaving(false); }
+      if (editPlayer) await axios.put(`${API}/admin/players/${editPlayer.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/players`, payload, { headers });
+      setShowForm(false); onRefresh();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Διαγραφή παίκτη;")) return;
-    try {
-      await axios.delete(`${API}/admin/players/${id}`, { headers: getAuthHeaders() });
-      onRefresh();
-    } catch (e) { alert("Σφάλμα διαγραφής"); }
+    try { await axios.delete(`${API}/admin/players/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
-  const filtered = filter === "all" ? players :
-    filter === "first_team" ? players.filter(p => p.team_type === "First Team") :
-    players.filter(p => p.team_type === "Academy");
+  const filtered = filter === "all" ? players : filter === "first_team" ? players.filter(p => p.team_type === "First Team") : players.filter(p => p.team_type === "Academy");
 
   return (
     <div data-testid="admin-players-tab">
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Παίκτες ({players.length})</h2>
-        <div className="flex gap-2">
-          <select value={filter} onChange={e => setFilter(e.target.value)} className={selectClass + " w-auto"} data-testid="player-filter">
-            <option value="all">Όλοι</option>
-            <option value="first_team">Α' Ομάδα</option>
-            <option value="academy">Ακαδημία</option>
-          </select>
-          <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-player-btn"><Plus size={16} /> Νέος Παίκτης</button>
-        </div>
-      </div>
+      <TabHeader title="Παίκτες" count={players.length}>
+        <AdminSelect value={filter} onChange={e => setFilter(e.target.value)} className="w-auto text-xs" data-testid="player-filter">
+          <option value="all">Όλοι</option>
+          <option value="first_team">Α' Ομάδα</option>
+          <option value="academy">Ακαδημία</option>
+        </AdminSelect>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-player-btn"><Plus size={14} /> Νέος Παίκτης</button>
+      </TabHeader>
 
-      <div className="overflow-x-auto">
-        <table className="standings-table" data-testid="admin-players-table">
-          <thead><tr><th>#</th><th>Εικόνα</th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th>Ομάδα</th><th>Ενέργειες</th></tr></thead>
+      <div className="admin-table-wrap">
+        <table className="admin-table" data-testid="admin-players-table">
+          <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th>Ομάδα</th><th></th></tr></thead>
           <tbody>
             {filtered.map(p => (
               <tr key={p.id}>
-                <td>{p.number}</td>
+                <td className="font-mono text-zinc-500">{p.number}</td>
+                <td>{p.image_url ? <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>}</td>
+                <td className="font-medium text-white">{p.name}</td>
+                <td className="text-zinc-400">{p.position}</td>
+                <td className="text-zinc-400">{p.age}</td>
+                <td><span className={`admin-badge ${p.team_type === 'Academy' ? 'admin-badge-green' : 'admin-badge-blue'}`}>{p.team_type === 'First Team' ? "Α'" : 'Ακαδ.'}</span></td>
                 <td>
-                  {p.image_url ? (
-                    <img src={p.image_url} alt="" className="w-10 h-10 object-cover rounded" />
-                  ) : (
-                    <div className="w-10 h-10 bg-[#1F1F1F] flex items-center justify-center rounded"><Users size={16} className="text-zinc-600" /></div>
-                  )}
-                </td>
-                <td className="font-semibold">{p.name}</td>
-                <td>{p.position}</td>
-                <td>{p.age}</td>
-                <td>
-                  <span className={`badge ${p.team_type === 'Academy' ? 'badge-primary' : 'badge-secondary'}`}>
-                    {p.team_type === 'First Team' ? "Α' Ομάδα" : 'Ακαδημία'}
-                  </span>
-                </td>
-                <td>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(p)} className="text-[#F5A623] hover:text-[#d48f1e]" data-testid={`edit-player-${p.id}`}><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-400" data-testid={`delete-player-${p.id}`}><Trash2 size={16} /></button>
+                  <div className="flex gap-1">
+                    <button onClick={() => openEdit(p)} className="admin-icon-btn" data-testid={`edit-player-${p.id}`}><Edit2 size={13} /></button>
+                    <button onClick={() => handleDelete(p.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-player-${p.id}`}><Trash2 size={13} /></button>
                   </div>
                 </td>
               </tr>
@@ -183,54 +296,39 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
       {showForm && (
         <FormModal title={editPlayer ? "Επεξεργασία Παίκτη" : "Νέος Παίκτης"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Όνομα *"><input className={inputClass} value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="player-name-input" /></Field>
-            <Field label="Αριθμός *"><input type="number" className={inputClass} value={form.number} onChange={e => setForm({...form, number: e.target.value})} data-testid="player-number-input" /></Field>
+            <Field label="Όνομα *"><AdminInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="player-name-input" /></Field>
+            <Field label="Αριθμός *"><AdminInput type="number" value={form.number} onChange={e => setForm({...form, number: e.target.value})} data-testid="player-number-input" /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Θέση *">
-              <select className={selectClass} value={form.position} onChange={e => setForm({...form, position: e.target.value})} data-testid="player-position-select">
-                <option value="Goalkeeper">Τερματοφύλακας</option>
-                <option value="Defender">Αμυντικός</option>
-                <option value="Midfielder">Μέσος</option>
-                <option value="Forward">Επιθετικός</option>
-              </select>
+              <AdminSelect value={form.position} onChange={e => setForm({...form, position: e.target.value})} data-testid="player-position-select">
+                <option value="Goalkeeper">Τερματοφύλακας</option><option value="Defender">Αμυντικός</option><option value="Midfielder">Μέσος</option><option value="Forward">Επιθετικός</option>
+              </AdminSelect>
             </Field>
-            <Field label="Εθνικότητα"><input className={inputClass} value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
+            <Field label="Εθνικότητα"><AdminInput value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Ηλικία *"><input type="number" className={inputClass} value={form.age} onChange={e => setForm({...form, age: e.target.value})} data-testid="player-age-input" /></Field>
-            <Field label="Ύψος"><input className={inputClass} placeholder="π.χ. 1.85m" value={form.height} onChange={e => setForm({...form, height: e.target.value})} /></Field>
-            <Field label="Βάρος"><input className={inputClass} placeholder="π.χ. 78kg" value={form.weight} onChange={e => setForm({...form, weight: e.target.value})} /></Field>
+            <Field label="Ηλικία *"><AdminInput type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} data-testid="player-age-input" /></Field>
+            <Field label="Ύψος"><AdminInput placeholder="1.85m" value={form.height} onChange={e => setForm({...form, height: e.target.value})} /></Field>
+            <Field label="Βάρος"><AdminInput placeholder="78kg" value={form.weight} onChange={e => setForm({...form, weight: e.target.value})} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ομάδα">
-              <select className={selectClass} value={form.team_type} onChange={e => setForm({...form, team_type: e.target.value})} data-testid="player-team-type-select">
-                <option value="First Team">Α' Ομάδα</option>
-                <option value="Academy">Ακαδημία</option>
-              </select>
+              <AdminSelect value={form.team_type} onChange={e => setForm({...form, team_type: e.target.value})} data-testid="player-team-type-select">
+                <option value="First Team">Α' Ομάδα</option><option value="Academy">Ακαδημία</option>
+              </AdminSelect>
             </Field>
             {form.team_type === "Academy" && (
               <Field label="Ομάδα Ακαδημίας">
-                <select className={selectClass} value={form.academy_group_id} onChange={e => setForm({...form, academy_group_id: e.target.value})}>
+                <AdminSelect value={form.academy_group_id} onChange={e => setForm({...form, academy_group_id: e.target.value})}>
                   <option value="">-- Καμία --</option>
                   {academyGroups.map(g => <option key={g.id} value={g.id}>{g.name} ({g.age_range})</option>)}
-                </select>
+                </AdminSelect>
               </Field>
             )}
           </div>
-          <Field label="Προτιμώμενο πόδι">
-            <select className={selectClass} value={form.preferred_foot} onChange={e => setForm({...form, preferred_foot: e.target.value})}>
-              <option value="Right">Δεξί</option>
-              <option value="Left">Αριστερό</option>
-              <option value="Both">Αμφίπλευρο</option>
-            </select>
-          </Field>
-          <Field label="URL Φωτογραφίας"><input className={inputClass} placeholder="https://..." value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} data-testid="player-image-input" /></Field>
-          <Field label="Βιογραφικό"><textarea className={inputClass} rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Ημ. Γέννησης"><input type="date" className={inputClass} value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} /></Field>
-            <Field label="Ημ. Εγγραφής"><input type="date" className={inputClass} value={form.joined_date} onChange={e => setForm({...form, joined_date: e.target.value})} /></Field>
-          </div>
+          <Field label="URL Φωτογραφίας"><AdminInput placeholder="https://..." value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} data-testid="player-image-input" /></Field>
+          <Field label="Βιογραφικό"><AdminTextarea rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
         </FormModal>
       )}
     </div>
@@ -246,21 +344,15 @@ const AcademyGroupsTab = ({ groups, onRefresh }) => {
   const [form, setForm] = useState(emptyGroup);
 
   const openCreate = () => { setForm(emptyGroup); setEditGroup(null); setShowForm(true); };
-  const openEdit = (g) => {
-    setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26" });
-    setEditGroup(g); setShowForm(true);
-  };
+  const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26" }); setEditGroup(g); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
       const payload = { ...form, max_players: parseInt(form.max_players) || 25 };
-      if (editGroup) {
-        await axios.put(`${API}/admin/academy-groups/${editGroup.id}`, payload, { headers });
-      } else {
-        await axios.post(`${API}/admin/academy-groups`, payload, { headers });
-      }
+      if (editGroup) await axios.put(`${API}/admin/academy-groups/${editGroup.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/academy-groups`, payload, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
@@ -272,42 +364,34 @@ const AcademyGroupsTab = ({ groups, onRefresh }) => {
 
   return (
     <div data-testid="admin-academy-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ομάδες Ακαδημίας ({groups.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-academy-group-btn"><Plus size={16} /> Νέα Ομάδα</button>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <TabHeader title="Ομάδες Ακαδημίας" count={groups.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-academy-group-btn"><Plus size={14} /> Νέα Ομάδα</button>
+      </TabHeader>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {groups.map(g => (
-          <div key={g.id} className="card p-6" data-testid={`academy-group-${g.id}`}>
-            <div className="flex justify-between items-start mb-3">
-              <span className="font-['Bebas_Neue'] text-3xl text-[#F5A623]">{g.name}</span>
-              <div className="flex gap-2">
-                <button onClick={() => openEdit(g)} className="text-[#F5A623] hover:text-[#d48f1e]"><Edit2 size={16} /></button>
-                <button onClick={() => handleDelete(g.id)} className="text-red-500 hover:text-red-400"><Trash2 size={16} /></button>
+          <div key={g.id} className="admin-card p-5" data-testid={`academy-group-${g.id}`}>
+            <div className="flex justify-between items-start mb-2">
+              <span className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{g.name}</span>
+              <div className="flex gap-1">
+                <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={13} /></button>
+                <button onClick={() => handleDelete(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
               </div>
             </div>
-            <span className="badge badge-secondary mb-2">{g.age_range}</span>
-            <p className="text-white text-sm mb-1">Προπονητής: {g.coach_name}</p>
-            <p className="text-zinc-400 text-xs mb-2">{g.training_schedule}</p>
-            <p className="text-zinc-500 text-xs">{g.description}</p>
+            <span className="admin-badge admin-badge-default mb-2">{g.age_range}</span>
+            <p className="text-zinc-300 text-sm mb-1">{g.coach_name}</p>
+            <p className="text-zinc-600 text-xs flex items-center gap-1"><Clock size={11} /> {g.training_schedule}</p>
           </div>
         ))}
       </div>
-
       {showForm && (
-        <FormModal title={editGroup ? "Επεξεργασία Ομάδας" : "Νέα Ομάδα"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+        <FormModal title={editGroup ? "Επεξεργασία" : "Νέα Ομάδα"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Όνομα *"><input className={inputClass} placeholder="π.χ. U18" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
-            <Field label="Ηλικιακό εύρος *"><input className={inputClass} placeholder="π.χ. 16-18 ετών" value={form.age_range} onChange={e => setForm({...form, age_range: e.target.value})} /></Field>
+            <Field label="Όνομα *"><AdminInput placeholder="U18" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
+            <Field label="Ηλικίες *"><AdminInput placeholder="16-18 ετών" value={form.age_range} onChange={e => setForm({...form, age_range: e.target.value})} /></Field>
           </div>
-          <Field label="Όνομα Προπονητή"><input className={inputClass} value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
-          <Field label="Πρόγραμμα Προπόνησης"><input className={inputClass} value={form.training_schedule} onChange={e => setForm({...form, training_schedule: e.target.value})} /></Field>
-          <Field label="Περιγραφή"><textarea className={inputClass} rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Μέγιστος αριθμός παικτών"><input type="number" className={inputClass} value={form.max_players} onChange={e => setForm({...form, max_players: e.target.value})} /></Field>
-            <Field label="Σεζόν"><input className={inputClass} value={form.season} onChange={e => setForm({...form, season: e.target.value})} /></Field>
-          </div>
+          <Field label="Προπονητής"><AdminInput value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
+          <Field label="Πρόγραμμα"><AdminInput value={form.training_schedule} onChange={e => setForm({...form, training_schedule: e.target.value})} /></Field>
+          <Field label="Περιγραφή"><AdminTextarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></Field>
         </FormModal>
       )}
     </div>
@@ -319,85 +403,60 @@ const StaffTab = ({ staff, onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editStaff, setEditStaff] = useState(null);
   const [saving, setSaving] = useState(false);
-  const emptyStaff = { name: "", role: "Head Coach", nationality: "Cyprus", team_type: "First Team", image_url: "", bio: "", joined_date: "" };
+  const emptyStaff = { name: "", role: "Head Coach", nationality: "Cyprus", team_type: "First Team", image_url: "", bio: "" };
   const [form, setForm] = useState(emptyStaff);
-
-  const roles = ["Head Coach", "Assistant Coach", "Goalkeeper Coach", "Fitness Coach", "Physiotherapist", "Team Manager", "Youth Coach", "Scout"];
-  const roleLabels = { "Head Coach": "Προπονητής", "Assistant Coach": "Βοηθός Προπονητή", "Goalkeeper Coach": "Προπονητής Τερματοφυλάκων", "Fitness Coach": "Γυμναστής", "Physiotherapist": "Φυσιοθεραπευτής", "Team Manager": "Διευθυντής Ομάδας", "Youth Coach": "Προπονητής Νέων", "Scout": "Ανιχνευτής" };
+  const roles = { "Head Coach": "Προπονητής", "Assistant Coach": "Βοηθός", "Goalkeeper Coach": "Προπ. Τερμ.", "Fitness Coach": "Γυμναστής", "Physiotherapist": "Φυσιοθ.", "Team Manager": "Διευθυντής", "Youth Coach": "Προπ. Νέων", "Scout": "Ανιχνευτής" };
 
   const openCreate = () => { setForm(emptyStaff); setEditStaff(null); setShowForm(true); };
-  const openEdit = (s) => {
-    setForm({ name: s.name, role: s.role, nationality: s.nationality || "Cyprus", team_type: s.team_type || "First Team", image_url: s.image_url || "", bio: s.bio || "", joined_date: s.joined_date || "" });
-    setEditStaff(s); setShowForm(true);
-  };
+  const openEdit = (s) => { setForm({ name: s.name, role: s.role, nationality: s.nationality || "Cyprus", team_type: s.team_type || "First Team", image_url: s.image_url || "", bio: s.bio || "" }); setEditStaff(s); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
-      if (editStaff) {
-        await axios.put(`${API}/admin/staff/${editStaff.id}`, form, { headers });
-      } else {
-        await axios.post(`${API}/admin/staff`, form, { headers });
-      }
+      if (editStaff) await axios.put(`${API}/admin/staff/${editStaff.id}`, form, { headers });
+      else await axios.post(`${API}/admin/staff`, form, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Διαγραφή μέλους;")) return;
+    if (!confirm("Διαγραφή;")) return;
     try { await axios.delete(`${API}/admin/staff/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
   return (
     <div data-testid="admin-staff-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Τεχνικό Επιτελείο ({staff.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-staff-btn"><Plus size={16} /> Νέο Μέλος</button>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="standings-table">
-          <thead><tr><th>Εικόνα</th><th>Όνομα</th><th>Ρόλος</th><th>Ομάδα</th><th>Ενέργειες</th></tr></thead>
+      <TabHeader title="Τεχνικό Επιτελείο" count={staff.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-staff-btn"><Plus size={14} /> Νέο Μέλος</button>
+      </TabHeader>
+      <div className="admin-table-wrap">
+        <table className="admin-table">
+          <thead><tr><th></th><th>Όνομα</th><th>Ρόλος</th><th>Ομάδα</th><th></th></tr></thead>
           <tbody>
             {staff.map(s => (
               <tr key={s.id}>
-                <td>{s.image_url ? <img src={s.image_url} alt="" className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-[#1F1F1F] rounded flex items-center justify-center"><UserCog size={16} className="text-zinc-600" /></div>}</td>
-                <td className="font-semibold">{s.name}</td>
-                <td>{roleLabels[s.role] || s.role}</td>
-                <td><span className="badge badge-secondary">{s.team_type === 'First Team' ? "Α' Ομάδα" : 'Ακαδημία'}</span></td>
-                <td>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(s)} className="text-[#F5A623]"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(s.id)} className="text-red-500"><Trash2 size={16} /></button>
-                  </div>
-                </td>
+                <td>{s.image_url ? <img src={s.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><UserCog size={12} className="text-zinc-700" /></div>}</td>
+                <td className="font-medium text-white">{s.name}</td>
+                <td className="text-zinc-400">{roles[s.role] || s.role}</td>
+                <td><span className="admin-badge admin-badge-default">{s.team_type === 'First Team' ? "Α'" : 'Ακαδ.'}</span></td>
+                <td><div className="flex gap-1"><button onClick={() => openEdit(s)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(s.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
               </tr>
             ))}
-            {staff.length === 0 && <tr><td colSpan={5} className="text-center text-zinc-500 py-8">Δεν υπάρχουν μέλη</td></tr>}
+            {staff.length === 0 && <tr><td colSpan={5}><EmptyState icon={UserCog} text="Δεν υπάρχουν μέλη" /></td></tr>}
           </tbody>
         </table>
       </div>
-
       {showForm && (
-        <FormModal title={editStaff ? "Επεξεργασία Μέλους" : "Νέο Μέλος"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
-          <Field label="Όνομα *"><input className={inputClass} value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="staff-name-input" /></Field>
+        <FormModal title={editStaff ? "Επεξεργασία" : "Νέο Μέλος"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <Field label="Όνομα *"><AdminInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="staff-name-input" /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Ρόλος *">
-              <select className={selectClass} value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
-                {roles.map(r => <option key={r} value={r}>{roleLabels[r]}</option>)}
-              </select>
-            </Field>
-            <Field label="Εθνικότητα"><input className={inputClass} value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
+            <Field label="Ρόλος"><AdminSelect value={form.role} onChange={e => setForm({...form, role: e.target.value})}>{Object.entries(roles).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</AdminSelect></Field>
+            <Field label="Εθνικότητα"><AdminInput value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
           </div>
-          <Field label="Ομάδα">
-            <select className={selectClass} value={form.team_type} onChange={e => setForm({...form, team_type: e.target.value})}>
-              <option value="First Team">Α' Ομάδα</option>
-              <option value="Academy">Ακαδημία</option>
-            </select>
-          </Field>
-          <Field label="URL Φωτογραφίας"><input className={inputClass} value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} /></Field>
-          <Field label="Βιογραφικό"><textarea className={inputClass} rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
+          <Field label="Ομάδα"><AdminSelect value={form.team_type} onChange={e => setForm({...form, team_type: e.target.value})}><option value="First Team">Α' Ομάδα</option><option value="Academy">Ακαδημία</option></AdminSelect></Field>
+          <Field label="URL Φωτογραφίας"><AdminInput value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} /></Field>
+          <Field label="Βιογραφικό"><AdminTextarea rows={2} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
         </FormModal>
       )}
     </div>
@@ -409,117 +468,73 @@ const FixturesTab = ({ fixtures, onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editFixture, setEditFixture] = useState(null);
   const [saving, setSaving] = useState(false);
-  const emptyFixture = {
-    home_team: "LEFTERIA FC", away_team: "", home_score: "", away_score: "",
-    match_date: "", match_time: "", venue: "Γήπεδο Αετού",
-    competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", status: "Scheduled",
-    attendance: "", referee: ""
-  };
+  const emptyFixture = { home_team: "LEFTERIA FC", away_team: "", home_score: "", away_score: "", match_date: "", match_time: "", venue: "Γήπεδο Αετού", competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", status: "Scheduled", attendance: "", referee: "" };
   const [form, setForm] = useState(emptyFixture);
 
   const openCreate = () => { setForm(emptyFixture); setEditFixture(null); setShowForm(true); };
-  const openEdit = (f) => {
-    setForm({
-      home_team: f.home_team, away_team: f.away_team,
-      home_score: f.home_score ?? "", away_score: f.away_score ?? "",
-      match_date: f.match_date ? f.match_date.split('T')[0] : "",
-      match_time: f.match_time || "", venue: f.venue,
-      competition: f.competition, season: f.season || "2025/26",
-      status: f.status, attendance: f.attendance ?? "", referee: f.referee || ""
-    });
-    setEditFixture(f); setShowForm(true);
-  };
+  const openEdit = (f) => { setForm({ home_team: f.home_team, away_team: f.away_team, home_score: f.home_score ?? "", away_score: f.away_score ?? "", match_date: f.match_date ? f.match_date.split('T')[0] : "", match_time: f.match_time || "", venue: f.venue, competition: f.competition, season: f.season || "2025/26", status: f.status, attendance: f.attendance ?? "", referee: f.referee || "" }); setEditFixture(f); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
-      const payload = {
-        ...form,
-        home_score: form.home_score !== "" ? parseInt(form.home_score) : null,
-        away_score: form.away_score !== "" ? parseInt(form.away_score) : null,
-        attendance: form.attendance !== "" ? parseInt(form.attendance) : null,
-        match_date: form.match_date + (form.match_time ? `T${form.match_time}:00Z` : "T15:00:00Z"),
-      };
-      if (editFixture) {
-        await axios.put(`${API}/admin/fixtures/${editFixture.id}`, payload, { headers });
-      } else {
-        await axios.post(`${API}/admin/fixtures`, payload, { headers });
-      }
+      const payload = { ...form, home_score: form.home_score !== "" ? parseInt(form.home_score) : null, away_score: form.away_score !== "" ? parseInt(form.away_score) : null, attendance: form.attendance !== "" ? parseInt(form.attendance) : null, match_date: form.match_date + (form.match_time ? `T${form.match_time}:00Z` : "T15:00:00Z") };
+      if (editFixture) await axios.put(`${API}/admin/fixtures/${editFixture.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/fixtures`, payload, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Διαγραφή αγώνα;")) return;
+    if (!confirm("Διαγραφή;")) return;
     try { await axios.delete(`${API}/admin/fixtures/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
   return (
     <div data-testid="admin-fixtures-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Αγώνες ({fixtures.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-fixture-btn"><Plus size={16} /> Νέος Αγώνας</button>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="standings-table" data-testid="admin-fixtures-table">
-          <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Φιλοξενούμενος</th><th>Σκορ</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
+      <TabHeader title="Αγώνες" count={fixtures.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
+      </TabHeader>
+      <div className="admin-table-wrap">
+        <table className="admin-table" data-testid="admin-fixtures-table">
+          <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Κατάσταση</th><th></th></tr></thead>
           <tbody>
             {fixtures.map(f => (
               <tr key={f.id}>
-                <td className="text-sm">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
-                <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-semibold' : ''}>{f.home_team}</td>
-                <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-semibold' : ''}>{f.away_team}</td>
-                <td>{f.status === 'Completed' ? `${f.home_score} - ${f.away_score}` : '-'}</td>
-                <td><span className={`badge ${f.status === 'Completed' ? 'bg-green-900/50 text-green-400' : f.status === 'Live' ? 'bg-red-900/50 text-red-400' : 'badge-secondary'}`}>
-                  {f.status === 'Completed' ? 'Ολοκληρώθηκε' : f.status === 'Scheduled' ? 'Προγρ.' : f.status}
-                </span></td>
-                <td>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(f)} className="text-[#F5A623]"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(f.id)} className="text-red-500"><Trash2 size={16} /></button>
-                  </div>
-                </td>
+                <td className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
+                <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.home_team}</td>
+                <td className="font-['Bebas_Neue'] text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
+                <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.away_team}</td>
+                <td><span className={f.status === 'Completed' ? 'badge-completed' : f.status === 'Live' ? 'badge-live' : 'admin-badge admin-badge-default'}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span></td>
+                <td><div className="flex gap-1"><button onClick={() => openEdit(f)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(f.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
       {showForm && (
         <FormModal title={editFixture ? "Επεξεργασία Αγώνα" : "Νέος Αγώνας"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Γηπεδούχος *"><input className={inputClass} value={form.home_team} onChange={e => setForm({...form, home_team: e.target.value})} data-testid="fixture-home-input" /></Field>
-            <Field label="Φιλοξενούμενος *"><input className={inputClass} value={form.away_team} onChange={e => setForm({...form, away_team: e.target.value})} data-testid="fixture-away-input" /></Field>
+            <Field label="Γηπεδούχος *"><AdminInput value={form.home_team} onChange={e => setForm({...form, home_team: e.target.value})} data-testid="fixture-home-input" /></Field>
+            <Field label="Φιλοξενούμενος *"><AdminInput value={form.away_team} onChange={e => setForm({...form, away_team: e.target.value})} data-testid="fixture-away-input" /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Ημερομηνία *"><input type="date" className={inputClass} value={form.match_date} onChange={e => setForm({...form, match_date: e.target.value})} data-testid="fixture-date-input" /></Field>
-            <Field label="Ώρα"><input type="time" className={inputClass} value={form.match_time} onChange={e => setForm({...form, match_time: e.target.value})} /></Field>
+            <Field label="Ημερομηνία *"><AdminInput type="date" value={form.match_date} onChange={e => setForm({...form, match_date: e.target.value})} data-testid="fixture-date-input" /></Field>
+            <Field label="Ώρα"><AdminInput type="time" value={form.match_time} onChange={e => setForm({...form, match_time: e.target.value})} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Σκορ Γηπεδούχου"><input type="number" className={inputClass} value={form.home_score} onChange={e => setForm({...form, home_score: e.target.value})} /></Field>
-            <Field label="Σκορ Φιλοξενούμενου"><input type="number" className={inputClass} value={form.away_score} onChange={e => setForm({...form, away_score: e.target.value})} /></Field>
+            <Field label="Σκορ Γηπ."><AdminInput type="number" value={form.home_score} onChange={e => setForm({...form, home_score: e.target.value})} /></Field>
+            <Field label="Σκορ Φιλ."><AdminInput type="number" value={form.away_score} onChange={e => setForm({...form, away_score: e.target.value})} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Γήπεδο"><input className={inputClass} value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} /></Field>
-            <Field label="Διοργάνωση"><input className={inputClass} value={form.competition} onChange={e => setForm({...form, competition: e.target.value})} /></Field>
+            <Field label="Γήπεδο"><AdminInput value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} /></Field>
+            <Field label="Διοργάνωση"><AdminInput value={form.competition} onChange={e => setForm({...form, competition: e.target.value})} /></Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Κατάσταση">
-              <select className={selectClass} value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
-                <option value="Scheduled">Προγραμματισμένος</option>
-                <option value="Live">Live</option>
-                <option value="Completed">Ολοκληρωμένος</option>
-                <option value="Postponed">Αναβλήθηκε</option>
-              </select>
-            </Field>
-            <Field label="Σεζόν"><input className={inputClass} value={form.season} onChange={e => setForm({...form, season: e.target.value})} /></Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Θεατές"><input type="number" className={inputClass} value={form.attendance} onChange={e => setForm({...form, attendance: e.target.value})} /></Field>
-            <Field label="Διαιτητής"><input className={inputClass} value={form.referee} onChange={e => setForm({...form, referee: e.target.value})} /></Field>
-          </div>
+          <Field label="Κατάσταση">
+            <AdminSelect value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+              <option value="Scheduled">Προγραμματισμένος</option><option value="Live">Live</option><option value="Completed">Ολοκληρωμένος</option><option value="Postponed">Αναβλήθηκε</option>
+            </AdminSelect>
+          </Field>
         </FormModal>
       )}
     </div>
@@ -531,25 +546,20 @@ const StandingsTab = ({ standings, onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editStanding, setEditStanding] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
   const emptyStanding = { team_name: "", team_logo: "", played: 0, won: 0, drawn: 0, lost: 0, goals_for: 0, goals_against: 0, points: 0, competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", form: "" };
   const [form, setForm] = useState(emptyStanding);
 
   const openCreate = () => { setForm(emptyStanding); setEditStanding(null); setShowForm(true); };
-  const openEdit = (s) => {
-    setForm({ team_name: s.team_name, team_logo: s.team_logo || "", played: s.played, won: s.won, drawn: s.drawn, lost: s.lost, goals_for: s.goals_for, goals_against: s.goals_against, points: s.points, competition: s.competition, season: s.season || "2025/26", form: s.form || "" });
-    setEditStanding(s); setShowForm(true);
-  };
+  const openEdit = (s) => { setForm({ team_name: s.team_name, team_logo: s.team_logo || "", played: s.played, won: s.won, drawn: s.drawn, lost: s.lost, goals_for: s.goals_for, goals_against: s.goals_against, points: s.points, competition: s.competition, season: s.season || "2025/26", form: s.form || "" }); setEditStanding(s); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
       const payload = { ...form, played: +form.played, won: +form.won, drawn: +form.drawn, lost: +form.lost, goals_for: +form.goals_for, goals_against: +form.goals_against, points: +form.points };
-      if (editStanding) {
-        await axios.put(`${API}/admin/standings/${editStanding.id}`, payload, { headers });
-      } else {
-        await axios.post(`${API}/admin/standings`, payload, { headers });
-      }
+      if (editStanding) await axios.put(`${API}/admin/standings/${editStanding.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/standings`, payload, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
@@ -559,57 +569,58 @@ const StandingsTab = ({ standings, onRefresh }) => {
     try { await axios.delete(`${API}/admin/standings/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
+  const handleRecalculate = async () => {
+    if (!confirm("Αυτό θα ξαναϋπολογίσει ολόκληρη τη βαθμολογία από τα αποτελέσματα. Συνέχεια;")) return;
+    setRecalculating(true);
+    try {
+      const res = await axios.post(`${API}/admin/standings/recalculate`, {}, { headers: getAuthHeaders() });
+      alert(res.data.message);
+      onRefresh();
+    } catch (e) { alert("Σφάλμα"); } finally { setRecalculating(false); }
+  };
+
   return (
     <div data-testid="admin-standings-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Βαθμολογία ({standings.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-standing-btn"><Plus size={16} /> Νέα Ομάδα</button>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="standings-table" data-testid="admin-standings-table">
-          <thead><tr><th>#</th><th>Ομάδα</th><th>Αγ</th><th>Ν</th><th>Ι</th><th>Η</th><th>ΓΥ</th><th>ΓΚ</th><th>ΔΓ</th><th>Βαθ</th><th>Ενέργειες</th></tr></thead>
+      <TabHeader title="Βαθμολογία" count={standings.length}>
+        <button onClick={handleRecalculate} disabled={recalculating} className="admin-btn-ghost text-xs" data-testid="recalculate-btn">
+          <RefreshCw size={13} className={recalculating ? 'animate-spin' : ''} /> {recalculating ? 'Υπολογισμός...' : 'Επανυπολογισμός'}
+        </button>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-standing-btn"><Plus size={14} /> Νέα Ομάδα</button>
+      </TabHeader>
+      <div className="admin-table-wrap">
+        <table className="admin-table" data-testid="admin-standings-table">
+          <thead><tr><th>#</th><th>Ομάδα</th><th>Αγ</th><th>Ν</th><th>Ι</th><th>Η</th><th>ΓΥ</th><th>ΓΚ</th><th>ΔΓ</th><th>Βαθ</th><th></th></tr></thead>
           <tbody>
             {standings.map((s, i) => (
-              <tr key={s.id} className={s.team_name === 'LEFTERIA FC' ? 'team-highlight' : ''}>
-                <td>{s.position || i + 1}</td>
-                <td className="font-semibold">{s.team_name}</td>
+              <tr key={s.id} className={s.team_name === 'LEFTERIA FC' ? 'bg-[#F5A623]/5' : ''}>
+                <td className="text-zinc-500">{s.position || i + 1}</td>
+                <td className={`font-medium ${s.team_name === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{s.team_name}</td>
                 <td>{s.played}</td><td>{s.won}</td><td>{s.drawn}</td><td>{s.lost}</td>
                 <td>{s.goals_for}</td><td>{s.goals_against}</td>
-                <td className={s.goal_difference > 0 ? 'text-green-500' : s.goal_difference < 0 ? 'text-red-500' : ''}>{s.goal_difference > 0 ? '+' : ''}{s.goal_difference}</td>
+                <td className={s.goal_difference > 0 ? 'text-green-400' : s.goal_difference < 0 ? 'text-red-400' : ''}>{s.goal_difference > 0 ? '+' : ''}{s.goal_difference}</td>
                 <td className="font-bold text-[#F5A623]">{s.points}</td>
-                <td>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(s)} className="text-[#F5A623]"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(s.id)} className="text-red-500"><Trash2 size={16} /></button>
-                  </div>
-                </td>
+                <td><div className="flex gap-1"><button onClick={() => openEdit(s)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(s.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
       {showForm && (
         <FormModal title={editStanding ? "Επεξεργασία" : "Νέα Εγγραφή"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <Field label="Ομάδα *"><AdminInput value={form.team_name} onChange={e => setForm({...form, team_name: e.target.value})} data-testid="standing-team-input" /></Field>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Αγώνες"><AdminInput type="number" value={form.played} onChange={e => setForm({...form, played: e.target.value})} /></Field>
+            <Field label="Νίκες"><AdminInput type="number" value={form.won} onChange={e => setForm({...form, won: e.target.value})} /></Field>
+            <Field label="Ισοπαλίες"><AdminInput type="number" value={form.drawn} onChange={e => setForm({...form, drawn: e.target.value})} /></Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Ήττες"><AdminInput type="number" value={form.lost} onChange={e => setForm({...form, lost: e.target.value})} /></Field>
+            <Field label="ΓΥ"><AdminInput type="number" value={form.goals_for} onChange={e => setForm({...form, goals_for: e.target.value})} /></Field>
+            <Field label="ΓΚ"><AdminInput type="number" value={form.goals_against} onChange={e => setForm({...form, goals_against: e.target.value})} /></Field>
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Ομάδα *"><input className={inputClass} value={form.team_name} onChange={e => setForm({...form, team_name: e.target.value})} data-testid="standing-team-input" /></Field>
-            <Field label="Logo URL"><input className={inputClass} value={form.team_logo} onChange={e => setForm({...form, team_logo: e.target.value})} /></Field>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Αγώνες"><input type="number" className={inputClass} value={form.played} onChange={e => setForm({...form, played: e.target.value})} /></Field>
-            <Field label="Νίκες"><input type="number" className={inputClass} value={form.won} onChange={e => setForm({...form, won: e.target.value})} /></Field>
-            <Field label="Ισοπαλίες"><input type="number" className={inputClass} value={form.drawn} onChange={e => setForm({...form, drawn: e.target.value})} /></Field>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Ήττες"><input type="number" className={inputClass} value={form.lost} onChange={e => setForm({...form, lost: e.target.value})} /></Field>
-            <Field label="Γκολ Υπέρ"><input type="number" className={inputClass} value={form.goals_for} onChange={e => setForm({...form, goals_for: e.target.value})} /></Field>
-            <Field label="Γκολ Κατά"><input type="number" className={inputClass} value={form.goals_against} onChange={e => setForm({...form, goals_against: e.target.value})} /></Field>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Βαθμοί"><input type="number" className={inputClass} value={form.points} onChange={e => setForm({...form, points: e.target.value})} /></Field>
-            <Field label="Διοργάνωση"><input className={inputClass} value={form.competition} onChange={e => setForm({...form, competition: e.target.value})} /></Field>
-            <Field label="Φόρμα"><input className={inputClass} placeholder="π.χ. WWDLW" value={form.form} onChange={e => setForm({...form, form: e.target.value})} /></Field>
+            <Field label="Βαθμοί"><AdminInput type="number" value={form.points} onChange={e => setForm({...form, points: e.target.value})} /></Field>
+            <Field label="Φόρμα"><AdminInput placeholder="WWDLW" value={form.form} onChange={e => setForm({...form, form: e.target.value})} /></Field>
           </div>
         </FormModal>
       )}
@@ -626,20 +637,14 @@ const NewsTab = ({ news, onRefresh }) => {
   const [form, setForm] = useState(emptyNews);
 
   const openCreate = () => { setForm(emptyNews); setEditNews(null); setShowForm(true); };
-  const openEdit = (n) => {
-    setForm({ title: n.title, content: n.content, excerpt: n.excerpt, image_url: n.image_url || "", category: n.category || "Νέα", is_featured: n.is_featured || false });
-    setEditNews(n); setShowForm(true);
-  };
+  const openEdit = (n) => { setForm({ title: n.title, content: n.content, excerpt: n.excerpt, image_url: n.image_url || "", category: n.category || "Νέα", is_featured: n.is_featured || false }); setEditNews(n); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
-      if (editNews) {
-        await axios.put(`${API}/admin/news/${editNews.id}`, form, { headers });
-      } else {
-        await axios.post(`${API}/admin/news`, form, { headers });
-      }
+      if (editNews) await axios.put(`${API}/admin/news/${editNews.id}`, form, { headers });
+      else await axios.post(`${API}/admin/news`, form, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
@@ -651,54 +656,36 @@ const NewsTab = ({ news, onRefresh }) => {
 
   return (
     <div data-testid="admin-news-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Νέα ({news.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-news-btn"><Plus size={16} /> Νέο Άρθρο</button>
-      </div>
-
-      <div className="grid gap-4">
+      <TabHeader title="Νέα" count={news.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-news-btn"><Plus size={14} /> Νέο Άρθρο</button>
+      </TabHeader>
+      <div className="space-y-2">
         {news.map(n => (
-          <div key={n.id} className="card p-5 flex justify-between items-start gap-4">
-            <div className="flex gap-4 flex-1 min-w-0">
-              {n.image_url && <img src={n.image_url} alt="" className="w-20 h-14 object-cover flex-shrink-0" />}
-              <div className="min-w-0">
-                <div className="flex gap-2 items-center mb-1">
-                  <span className="badge badge-secondary text-xs">{n.category}</span>
-                  {n.is_featured && <span className="badge badge-primary text-xs">Προτεινόμενο</span>}
-                </div>
-                <h3 className="font-['Bebas_Neue'] text-lg text-white truncate">{n.title}</h3>
-                <p className="text-zinc-400 text-xs mt-1 truncate">{n.excerpt}</p>
+          <div key={n.id} className="admin-card px-4 py-3 flex items-center gap-4">
+            {n.image_url && <img src={n.image_url} alt="" className="w-14 h-10 object-cover rounded flex-shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <div className="flex gap-2 items-center mb-0.5">
+                <span className="admin-badge admin-badge-default text-[10px]">{n.category}</span>
+                {n.is_featured && <span className="admin-badge admin-badge-gold text-[10px]">Featured</span>}
               </div>
+              <h3 className="text-sm text-white font-medium truncate">{n.title}</h3>
             </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <button onClick={() => openEdit(n)} className="text-[#F5A623]"><Edit2 size={16} /></button>
-              <button onClick={() => handleDelete(n.id)} className="text-red-500"><Trash2 size={16} /></button>
+            <div className="flex gap-1 flex-shrink-0">
+              <button onClick={() => openEdit(n)} className="admin-icon-btn"><Edit2 size={13} /></button>
+              <button onClick={() => handleDelete(n.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
             </div>
           </div>
         ))}
       </div>
-
       {showForm && (
-        <FormModal title={editNews ? "Επεξεργασία Άρθρου" : "Νέο Άρθρο"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
-          <Field label="Τίτλος *"><input className={inputClass} value={form.title} onChange={e => setForm({...form, title: e.target.value})} data-testid="news-title-input" /></Field>
-          <Field label="Περίληψη *"><input className={inputClass} value={form.excerpt} onChange={e => setForm({...form, excerpt: e.target.value})} /></Field>
-          <Field label="Περιεχόμενο *"><textarea className={inputClass} rows={6} value={form.content} onChange={e => setForm({...form, content: e.target.value})} data-testid="news-content-input" /></Field>
-          <Field label="URL Εικόνας"><input className={inputClass} value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} /></Field>
+        <FormModal title={editNews ? "Επεξεργασία" : "Νέο Άρθρο"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <Field label="Τίτλος *"><AdminInput value={form.title} onChange={e => setForm({...form, title: e.target.value})} data-testid="news-title-input" /></Field>
+          <Field label="Περίληψη *"><AdminInput value={form.excerpt} onChange={e => setForm({...form, excerpt: e.target.value})} /></Field>
+          <Field label="Περιεχόμενο *"><AdminTextarea rows={5} value={form.content} onChange={e => setForm({...form, content: e.target.value})} data-testid="news-content-input" /></Field>
+          <Field label="URL Εικόνας"><AdminInput value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Κατηγορία">
-              <select className={selectClass} value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
-                <option value="Νέα">Νέα</option>
-                <option value="Αποτελέσματα">Αποτελέσματα</option>
-                <option value="Μεταγραφές">Μεταγραφές</option>
-                <option value="Ακαδημία">Ακαδημία</option>
-              </select>
-            </Field>
-            <Field label="Προτεινόμενο">
-              <label className="flex items-center gap-3 mt-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_featured} onChange={e => setForm({...form, is_featured: e.target.checked})} className="w-5 h-5 accent-[#F5A623]" />
-                <span className="text-white text-sm">Εμφάνιση ως προτεινόμενο</span>
-              </label>
-            </Field>
+            <Field label="Κατηγορία"><AdminSelect value={form.category} onChange={e => setForm({...form, category: e.target.value})}><option value="Νέα">Νέα</option><option value="Αποτελέσματα">Αποτελέσματα</option><option value="Μεταγραφές">Μεταγραφές</option><option value="Ακαδημία">Ακαδημία</option></AdminSelect></Field>
+            <Field label="Featured"><label className="flex items-center gap-2 mt-2 cursor-pointer"><input type="checkbox" checked={form.is_featured} onChange={e => setForm({...form, is_featured: e.target.checked})} className="accent-[#F5A623] w-4 h-4" /><span className="text-zinc-300 text-sm">Προτεινόμενο</span></label></Field>
           </div>
         </FormModal>
       )}
@@ -715,21 +702,15 @@ const VenuesTab = ({ venues, onRefresh }) => {
   const [form, setForm] = useState(emptyVenue);
 
   const openCreate = () => { setForm(emptyVenue); setEditVenue(null); setShowForm(true); };
-  const openEdit = (v) => {
-    setForm({ name: v.name, address: v.address, city: v.city, country: v.country, capacity: v.capacity ?? "", surface: v.surface || "", image_url: v.image_url || "", map_url: v.map_url || "", is_home_ground: v.is_home_ground || false });
-    setEditVenue(v); setShowForm(true);
-  };
+  const openEdit = (v) => { setForm({ name: v.name, address: v.address, city: v.city, country: v.country, capacity: v.capacity ?? "", surface: v.surface || "", image_url: v.image_url || "", map_url: v.map_url || "", is_home_ground: v.is_home_ground || false }); setEditVenue(v); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
       const payload = { ...form, capacity: form.capacity !== "" ? parseInt(form.capacity) : null };
-      if (editVenue) {
-        await axios.put(`${API}/admin/venues/${editVenue.id}`, payload, { headers });
-      } else {
-        await axios.post(`${API}/admin/venues`, payload, { headers });
-      }
+      if (editVenue) await axios.put(`${API}/admin/venues/${editVenue.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/venues`, payload, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
@@ -741,49 +722,36 @@ const VenuesTab = ({ venues, onRefresh }) => {
 
   return (
     <div data-testid="admin-venues-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Γήπεδα ({venues.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-venue-btn"><Plus size={16} /> Νέο Γήπεδο</button>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
+      <TabHeader title="Γήπεδα" count={venues.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-venue-btn"><Plus size={14} /> Νέο Γήπεδο</button>
+      </TabHeader>
+      <div className="grid sm:grid-cols-2 gap-3">
         {venues.map(v => (
-          <div key={v.id} className="card p-6" data-testid={`venue-${v.id}`}>
-            {v.image_url && <img src={v.image_url} alt="" className="w-full h-32 object-cover mb-4" />}
+          <div key={v.id} className="admin-card p-5" data-testid={`venue-${v.id}`}>
             <div className="flex justify-between items-start mb-2">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white">{v.name}</h3>
-              <div className="flex gap-2">
-                <button onClick={() => openEdit(v)} className="text-[#F5A623]"><Edit2 size={16} /></button>
-                <button onClick={() => handleDelete(v.id)} className="text-red-500"><Trash2 size={16} /></button>
-              </div>
+              <h3 className="font-medium text-white">{v.name}</h3>
+              <div className="flex gap-1"><button onClick={() => openEdit(v)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(v.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div>
             </div>
-            {v.is_home_ground && <span className="badge badge-primary text-xs mb-2">Έδρα</span>}
-            <p className="text-zinc-400 text-sm"><MapPin size={14} className="inline mr-1" />{v.address}, {v.city}</p>
-            {v.surface && <p className="text-zinc-500 text-xs mt-1">Επιφάνεια: {v.surface}</p>}
-            {v.capacity && <p className="text-zinc-500 text-xs">Χωρητικότητα: {v.capacity}</p>}
+            {v.is_home_ground && <span className="admin-badge admin-badge-gold text-[10px] mb-2">Έδρα</span>}
+            <p className="text-zinc-500 text-xs flex items-center gap-1"><MapPin size={11} /> {v.city}, {v.country}</p>
+            {v.surface && <p className="text-zinc-600 text-xs mt-1">{v.surface}</p>}
           </div>
         ))}
-        {venues.length === 0 && <p className="text-zinc-500 col-span-2 text-center py-8">Δεν υπάρχουν γήπεδα</p>}
+        {venues.length === 0 && <EmptyState icon={MapPin} text="Δεν υπάρχουν γήπεδα" />}
       </div>
-
       {showForm && (
-        <FormModal title={editVenue ? "Επεξεργασία Γηπέδου" : "Νέο Γήπεδο"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
-          <Field label="Όνομα *"><input className={inputClass} value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="venue-name-input" /></Field>
-          <Field label="Διεύθυνση *"><input className={inputClass} value={form.address} onChange={e => setForm({...form, address: e.target.value})} /></Field>
+        <FormModal title={editVenue ? "Επεξεργασία" : "Νέο Γήπεδο"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <Field label="Όνομα *"><AdminInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="venue-name-input" /></Field>
+          <Field label="Διεύθυνση *"><AdminInput value={form.address} onChange={e => setForm({...form, address: e.target.value})} /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Πόλη"><input className={inputClass} value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></Field>
-            <Field label="Χώρα"><input className={inputClass} value={form.country} onChange={e => setForm({...form, country: e.target.value})} /></Field>
+            <Field label="Πόλη"><AdminInput value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></Field>
+            <Field label="Χώρα"><AdminInput value={form.country} onChange={e => setForm({...form, country: e.target.value})} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Χωρητικότητα"><input type="number" className={inputClass} value={form.capacity} onChange={e => setForm({...form, capacity: e.target.value})} /></Field>
-            <Field label="Επιφάνεια"><input className={inputClass} placeholder="π.χ. Φυσικός Χλοοτάπητας" value={form.surface} onChange={e => setForm({...form, surface: e.target.value})} /></Field>
+            <Field label="Χωρητικότητα"><AdminInput type="number" value={form.capacity} onChange={e => setForm({...form, capacity: e.target.value})} /></Field>
+            <Field label="Επιφάνεια"><AdminInput placeholder="Φυσικός Χλοοτάπητας" value={form.surface} onChange={e => setForm({...form, surface: e.target.value})} /></Field>
           </div>
-          <Field label="URL Εικόνας"><input className={inputClass} value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} /></Field>
-          <Field label="URL Χάρτη"><input className={inputClass} placeholder="Google Maps URL" value={form.map_url} onChange={e => setForm({...form, map_url: e.target.value})} /></Field>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={form.is_home_ground} onChange={e => setForm({...form, is_home_ground: e.target.checked})} className="w-5 h-5 accent-[#F5A623]" />
-            <span className="text-white text-sm">Είναι η έδρα μας</span>
-          </label>
+          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.is_home_ground} onChange={e => setForm({...form, is_home_ground: e.target.checked})} className="accent-[#F5A623] w-4 h-4" /><span className="text-zinc-300 text-sm">Έδρα</span></label>
         </FormModal>
       )}
     </div>
@@ -799,26 +767,15 @@ const SeasonsTab = ({ seasons, onRefresh }) => {
   const [form, setForm] = useState(emptySeason);
 
   const openCreate = () => { setForm(emptySeason); setEditSeason(null); setShowForm(true); };
-  const openEdit = (s) => {
-    setForm({ name: s.name, start_date: s.start_date || "", end_date: s.end_date || "", is_current: s.is_current || false, competitions: (s.competitions || []).join(", "), achievements: (s.achievements || []).join(", "), final_position: s.final_position ?? "" });
-    setEditSeason(s); setShowForm(true);
-  };
+  const openEdit = (s) => { setForm({ name: s.name, start_date: s.start_date || "", end_date: s.end_date || "", is_current: s.is_current || false, competitions: (s.competitions || []).join(", "), achievements: (s.achievements || []).join(", "), final_position: s.final_position ?? "" }); setEditSeason(s); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
-      const payload = {
-        ...form,
-        competitions: form.competitions ? form.competitions.split(",").map(s => s.trim()).filter(Boolean) : [],
-        achievements: form.achievements ? form.achievements.split(",").map(s => s.trim()).filter(Boolean) : [],
-        final_position: form.final_position !== "" ? parseInt(form.final_position) : null,
-      };
-      if (editSeason) {
-        await axios.put(`${API}/admin/seasons/${editSeason.id}`, payload, { headers });
-      } else {
-        await axios.post(`${API}/admin/seasons`, payload, { headers });
-      }
+      const payload = { ...form, competitions: form.competitions ? form.competitions.split(",").map(s => s.trim()).filter(Boolean) : [], achievements: form.achievements ? form.achievements.split(",").map(s => s.trim()).filter(Boolean) : [], final_position: form.final_position !== "" ? parseInt(form.final_position) : null };
+      if (editSeason) await axios.put(`${API}/admin/seasons/${editSeason.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/seasons`, payload, { headers });
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
@@ -830,50 +787,31 @@ const SeasonsTab = ({ seasons, onRefresh }) => {
 
   return (
     <div data-testid="admin-seasons-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Σεζόν ({seasons.length})</h2>
-        <button onClick={openCreate} className="btn-primary text-sm" data-testid="add-season-btn"><Plus size={16} /> Νέα Σεζόν</button>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <TabHeader title="Σεζόν" count={seasons.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-season-btn"><Plus size={14} /> Νέα Σεζόν</button>
+      </TabHeader>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {seasons.map(s => (
-          <div key={s.id} className="card p-6" data-testid={`season-${s.id}`}>
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-['Bebas_Neue'] text-2xl text-white">{s.name}</h3>
-                {s.is_current && <span className="badge badge-primary text-xs">Τρέχουσα</span>}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => openEdit(s)} className="text-[#F5A623]"><Edit2 size={16} /></button>
-                <button onClick={() => handleDelete(s.id)} className="text-red-500"><Trash2 size={16} /></button>
-              </div>
+          <div key={s.id} className="admin-card p-5" data-testid={`season-${s.id}`}>
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-['Bebas_Neue'] text-xl text-white">{s.name}</h3>
+              <div className="flex gap-1"><button onClick={() => openEdit(s)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(s.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div>
             </div>
-            <p className="text-zinc-400 text-xs">{s.start_date} - {s.end_date}</p>
-            {s.competitions?.length > 0 && <p className="text-zinc-500 text-xs mt-1">Διοργανώσεις: {s.competitions.join(", ")}</p>}
-            {s.final_position && <p className="text-[#F5A623] text-sm mt-2">Τελική θέση: {s.final_position}η</p>}
+            {s.is_current && <span className="admin-badge admin-badge-green text-[10px] mb-1">Τρέχουσα</span>}
+            <p className="text-zinc-500 text-xs">{s.start_date} - {s.end_date}</p>
           </div>
         ))}
-        {seasons.length === 0 && <p className="text-zinc-500 col-span-3 text-center py-8">Δεν υπάρχουν σεζόν</p>}
+        {seasons.length === 0 && <EmptyState icon={Archive} text="Δεν υπάρχουν σεζόν" />}
       </div>
-
       {showForm && (
-        <FormModal title={editSeason ? "Επεξεργασία Σεζόν" : "Νέα Σεζόν"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
-          <Field label="Όνομα *"><input className={inputClass} placeholder="π.χ. 2025/26" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="season-name-input" /></Field>
+        <FormModal title={editSeason ? "Επεξεργασία" : "Νέα Σεζόν"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <Field label="Όνομα *"><AdminInput placeholder="2025/26" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="season-name-input" /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Έναρξη *"><input type="date" className={inputClass} value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} /></Field>
-            <Field label="Λήξη *"><input type="date" className={inputClass} value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} /></Field>
+            <Field label="Έναρξη"><AdminInput type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} /></Field>
+            <Field label="Λήξη"><AdminInput type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} /></Field>
           </div>
-          <Field label="Διοργανώσεις (χωρισμένες με κόμμα)"><input className={inputClass} value={form.competitions} onChange={e => setForm({...form, competitions: e.target.value})} /></Field>
-          <Field label="Επιτεύγματα (χωρισμένα με κόμμα)"><input className={inputClass} value={form.achievements} onChange={e => setForm({...form, achievements: e.target.value})} /></Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Τελική θέση"><input type="number" className={inputClass} value={form.final_position} onChange={e => setForm({...form, final_position: e.target.value})} /></Field>
-            <Field label="Τρέχουσα σεζόν">
-              <label className="flex items-center gap-3 mt-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_current} onChange={e => setForm({...form, is_current: e.target.checked})} className="w-5 h-5 accent-[#F5A623]" />
-                <span className="text-white text-sm">Ναι</span>
-              </label>
-            </Field>
-          </div>
+          <Field label="Διοργανώσεις (κόμμα)"><AdminInput value={form.competitions} onChange={e => setForm({...form, competitions: e.target.value})} /></Field>
+          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.is_current} onChange={e => setForm({...form, is_current: e.target.checked})} className="accent-[#F5A623] w-4 h-4" /><span className="text-zinc-300 text-sm">Τρέχουσα σεζόν</span></label>
         </FormModal>
       )}
     </div>
@@ -884,54 +822,35 @@ const SeasonsTab = ({ seasons, onRefresh }) => {
 const ClubProfileTab = ({ club, onRefresh }) => {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(club || {});
-
   useEffect(() => { if (club) setForm(club); }, [club]);
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      await axios.put(`${API}/admin/club`, form, { headers: getAuthHeaders() });
-      onRefresh();
-      alert("Το προφίλ ενημερώθηκε!");
-    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
+    try { await axios.put(`${API}/admin/club`, form, { headers: getAuthHeaders() }); onRefresh(); alert("Αποθηκεύτηκε!"); } catch (e) { alert("Σφάλμα"); } finally { setSaving(false); }
   };
 
   return (
     <div data-testid="admin-club-tab">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-['Bebas_Neue'] text-3xl text-white">Προφίλ Συλλόγου</h2>
-        <button onClick={handleSave} disabled={saving} className="btn-primary text-sm" data-testid="save-club-btn">
-          <Save size={16} /> {saving ? "Αποθήκευση..." : "Αποθήκευση"}
+      <TabHeader title="Προφίλ Συλλόγου">
+        <button onClick={handleSave} disabled={saving} className="admin-btn-primary" data-testid="save-club-btn">
+          {saving ? <><RefreshCw size={14} className="animate-spin" /> Αποθήκευση...</> : <><Save size={14} /> Αποθήκευση</>}
         </button>
-      </div>
-
-      <div className="card p-6 space-y-4">
+      </TabHeader>
+      <div className="admin-card p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Όνομα"><input className={inputClass} value={form.name || ""} onChange={e => setForm({...form, name: e.target.value})} /></Field>
-          <Field label="Ελληνικό Όνομα"><input className={inputClass} value={form.greek_name || ""} onChange={e => setForm({...form, greek_name: e.target.value})} /></Field>
+          <Field label="Όνομα"><AdminInput value={form.name || ""} onChange={e => setForm({...form, name: e.target.value})} /></Field>
+          <Field label="Ελληνικό"><AdminInput value={form.greek_name || ""} onChange={e => setForm({...form, greek_name: e.target.value})} /></Field>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <Field label="Ίδρυση"><input type="number" className={inputClass} value={form.founded || ""} onChange={e => setForm({...form, founded: parseInt(e.target.value) || 0})} /></Field>
-          <Field label="Γήπεδο"><input className={inputClass} value={form.stadium || ""} onChange={e => setForm({...form, stadium: e.target.value})} /></Field>
-          <Field label="Πόλη"><input className={inputClass} value={form.city || ""} onChange={e => setForm({...form, city: e.target.value})} /></Field>
+          <Field label="Ίδρυση"><AdminInput type="number" value={form.founded || ""} onChange={e => setForm({...form, founded: parseInt(e.target.value) || 0})} /></Field>
+          <Field label="Γήπεδο"><AdminInput value={form.stadium || ""} onChange={e => setForm({...form, stadium: e.target.value})} /></Field>
+          <Field label="Πόλη"><AdminInput value={form.city || ""} onChange={e => setForm({...form, city: e.target.value})} /></Field>
         </div>
-        <Field label="Logo URL"><input className={inputClass} value={form.logo_url || ""} onChange={e => setForm({...form, logo_url: e.target.value})} /></Field>
-        <Field label="Περιγραφή"><textarea className={inputClass} rows={4} value={form.description || ""} onChange={e => setForm({...form, description: e.target.value})} /></Field>
+        <Field label="Logo URL"><AdminInput value={form.logo_url || ""} onChange={e => setForm({...form, logo_url: e.target.value})} /></Field>
+        <Field label="Περιγραφή"><AdminTextarea rows={3} value={form.description || ""} onChange={e => setForm({...form, description: e.target.value})} /></Field>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Email"><input className={inputClass} value={form.email || ""} onChange={e => setForm({...form, email: e.target.value})} /></Field>
-          <Field label="Τηλέφωνο"><input className={inputClass} value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></Field>
-        </div>
-        <Field label="Ιστοσελίδα"><input className={inputClass} value={form.website || ""} onChange={e => setForm({...form, website: e.target.value})} /></Field>
-        <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623] pt-4 border-t border-[#262626]">Κοινωνικά Δίκτυα</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Facebook"><input className={inputClass} value={form.facebook || ""} onChange={e => setForm({...form, facebook: e.target.value})} /></Field>
-          <Field label="Instagram"><input className={inputClass} value={form.instagram || ""} onChange={e => setForm({...form, instagram: e.target.value})} /></Field>
-          <Field label="Twitter"><input className={inputClass} value={form.twitter || ""} onChange={e => setForm({...form, twitter: e.target.value})} /></Field>
-          <Field label="YouTube"><input className={inputClass} value={form.youtube || ""} onChange={e => setForm({...form, youtube: e.target.value})} /></Field>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Κύριο Χρώμα"><input type="color" className="w-full h-10 cursor-pointer bg-transparent border border-[#333]" value={form.primary_color || "#F5A623"} onChange={e => setForm({...form, primary_color: e.target.value})} /></Field>
-          <Field label="Δευτερεύον Χρώμα"><input type="color" className="w-full h-10 cursor-pointer bg-transparent border border-[#333]" value={form.secondary_color || "#000000"} onChange={e => setForm({...form, secondary_color: e.target.value})} /></Field>
+          <Field label="Email"><AdminInput value={form.email || ""} onChange={e => setForm({...form, email: e.target.value})} /></Field>
+          <Field label="Τηλέφωνο"><AdminInput value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></Field>
         </div>
       </div>
     </div>
@@ -941,31 +860,25 @@ const ClubProfileTab = ({ club, onRefresh }) => {
 // ==================== MESSAGES TAB ====================
 const MessagesTab = ({ messages, onRefresh }) => {
   const handleDelete = async (id) => {
-    if (!confirm("Διαγραφή μηνύματος;")) return;
+    if (!confirm("Διαγραφή;")) return;
     try { await axios.delete(`${API}/admin/contact/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
   return (
     <div data-testid="admin-messages-tab">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-6">Μηνύματα ({messages.length})</h2>
-      <div className="space-y-4">
+      <TabHeader title="Μηνύματα" count={messages.length} />
+      {messages.length === 0 && <EmptyState icon={Mail} text="Δεν υπάρχουν μηνύματα" />}
+      <div className="space-y-2">
         {messages.map(m => (
-          <div key={m.id} className="card p-5" data-testid={`message-${m.id}`}>
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="text-white font-semibold">{m.name}</h3>
-                <p className="text-zinc-400 text-sm">{m.email}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-zinc-500 text-xs">{new Date(m.created_at).toLocaleDateString('el-GR')}</span>
-                <button onClick={() => handleDelete(m.id)} className="text-red-500"><Trash2 size={16} /></button>
-              </div>
+          <div key={m.id} className="admin-card px-5 py-4" data-testid={`message-${m.id}`}>
+            <div className="flex justify-between items-start mb-2">
+              <div><span className="text-white text-sm font-medium">{m.name}</span><span className="text-zinc-600 text-xs ml-2">{m.email}</span></div>
+              <div className="flex items-center gap-2"><span className="text-zinc-600 text-xs">{new Date(m.created_at).toLocaleDateString('el-GR')}</span><button onClick={() => handleDelete(m.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div>
             </div>
-            <span className="badge badge-secondary mb-2">{m.subject}</span>
-            <p className="text-zinc-300 text-sm">{m.message}</p>
+            <span className="admin-badge admin-badge-default text-[10px] mb-1.5">{m.subject}</span>
+            <p className="text-zinc-400 text-sm">{m.message}</p>
           </div>
         ))}
-        {messages.length === 0 && <p className="text-zinc-500 text-center py-12">Δεν υπάρχουν μηνύματα</p>}
       </div>
     </div>
   );
@@ -1011,6 +924,7 @@ const AdminPanel = ({ user, onLogout }) => {
 
   const tabs = [
     { id: "dashboard", label: "Πίνακας", icon: BarChart3 },
+    { id: "livescore", label: "Live Score", icon: Zap },
     { id: "club", label: "Σύλλογος", icon: Building2 },
     { id: "players", label: "Παίκτες", icon: Users },
     { id: "academy", label: "Ακαδημία", icon: GraduationCap },
@@ -1024,14 +938,18 @@ const AdminPanel = ({ user, onLogout }) => {
   ];
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[400px]" data-testid="admin-loading">
-      <div className="spinner"></div>
+    <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]" data-testid="admin-loading">
+      <div className="text-center">
+        <img src={CLUB_LOGO} alt="" className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+        <div className="spinner"></div>
+      </div>
     </div>
   );
 
   const renderTab = () => {
     switch (activeTab) {
-      case "dashboard": return <DashboardTab stats={data.stats} />;
+      case "dashboard": return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
+      case "livescore": return <LiveScoreTab fixtures={data.fixtures} onRefresh={fetchAll} />;
       case "club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
       case "players": return <PlayersTab players={data.players} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
       case "academy": return <AcademyGroupsTab groups={data.academyGroups} onRefresh={fetchAll} />;
@@ -1042,63 +960,73 @@ const AdminPanel = ({ user, onLogout }) => {
       case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
       case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
       case "messages": return <MessagesTab messages={data.messages} onRefresh={fetchAll} />;
-      default: return <DashboardTab stats={data.stats} />;
+      default: return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
     }
   };
 
+  const liveCount = data.fixtures.filter(f => f.status === 'Live').length;
+
   return (
-    <div className="pt-24 min-h-screen bg-[#050505]" data-testid="admin-page">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-60 admin-sidebar min-h-screen fixed left-0 top-24 hidden lg:block overflow-y-auto" style={{maxHeight: 'calc(100vh - 96px)'}}>
-          <div className="p-5 border-b border-[#262626]">
-            <h2 className="font-['Bebas_Neue'] text-lg text-[#F5A623]">Πάνελ Διαχείρισης</h2>
-            <p className="text-xs text-zinc-500 mt-1">Καλώς ήρθες, {user?.username}</p>
+    <div className="min-h-screen bg-[#0a0a0a]" data-testid="admin-page">
+      {/* Admin Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#111111] border-b border-[#1e1e1e] flex items-center px-4">
+        <div className="flex items-center gap-3">
+          <img src={CLUB_LOGO} alt="" className="w-8 h-8" />
+          <div>
+            <span className="font-['Bebas_Neue'] text-base text-white tracking-wide">LEFTERIA FC</span>
+            <span className="text-[10px] text-[#F5A623] ml-2 tracking-widest">CMS</span>
           </div>
-          <nav className="py-2">
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-xs text-zinc-500 hidden sm:block">{user?.username}</span>
+          <button onClick={onLogout} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid="admin-logout"><LogOut size={16} /></button>
+        </div>
+      </header>
+
+      <div className="flex pt-14">
+        {/* Sidebar */}
+        <aside className="w-52 fixed left-0 top-14 bottom-0 bg-[#111111] border-r border-[#1e1e1e] hidden lg:flex flex-col overflow-y-auto">
+          <nav className="py-2 flex-1">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`admin-menu-item w-full ${activeTab === tab.id ? 'active' : ''}`}
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all ${
+                  activeTab === tab.id
+                    ? 'text-[#F5A623] bg-[#F5A623]/8 border-r-2 border-[#F5A623]'
+                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
+                }`}
                 data-testid={`admin-tab-${tab.id}`}
               >
-                <tab.icon size={17} />
-                <span className="text-sm">{tab.label}</span>
+                <tab.icon size={16} />
+                <span>{tab.label}</span>
+                {tab.id === "livescore" && liveCount > 0 && (
+                  <span className="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                )}
                 {tab.id === "messages" && data.messages.length > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">{data.messages.length}</span>
+                  <span className="ml-auto text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">{data.messages.length}</span>
                 )}
               </button>
             ))}
-            <button onClick={onLogout} className="admin-menu-item w-full text-red-400 hover:text-red-300 mt-2" data-testid="admin-logout">
-              <LogOut size={17} />
-              <span className="text-sm">Αποσύνδεση</span>
-            </button>
           </nav>
         </aside>
 
-        {/* Mobile Tabs */}
-        <div className="lg:hidden fixed top-24 left-0 right-0 bg-[#111111] border-b border-[#262626] z-40 overflow-x-auto">
-          <div className="flex p-2 gap-1.5">
+        {/* Mobile Tab Bar */}
+        <div className="lg:hidden fixed top-14 left-0 right-0 bg-[#111111] border-b border-[#1e1e1e] z-40 overflow-x-auto">
+          <div className="flex p-1.5 gap-1">
             {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 text-xs whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === tab.id ? 'bg-[#F5A623] text-black' : 'bg-[#1F1F1F] text-white'
-                }`}
-              >
-                <tab.icon size={14} /> {tab.label}
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap rounded flex items-center gap-1 ${
+                  activeTab === tab.id ? 'bg-[#F5A623]/15 text-[#F5A623]' : 'text-zinc-600 hover:text-zinc-400'
+                }`}>
+                <tab.icon size={12} /> {tab.label}
               </button>
             ))}
-            <button onClick={onLogout} className="px-3 py-1.5 text-xs whitespace-nowrap bg-red-900/50 text-red-400">
-              <LogOut size={14} />
-            </button>
           </div>
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-60 p-6 pt-20 lg:pt-6">
+        <main className="flex-1 lg:ml-52 p-5 pt-16 lg:pt-5 min-h-[calc(100vh-56px)]">
           <div className="max-w-6xl mx-auto">
             {renderTab()}
           </div>

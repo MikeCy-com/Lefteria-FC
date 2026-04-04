@@ -1450,21 +1450,31 @@ const AdminPage = () => {
   return <AdminPanel user={user} onLogout={handleLogout} />;
 };
 
+// Public Layout (with nav + footer)
+const PublicLayout = ({ children }) => (
+  <>
+    <Navigation />
+    {children}
+    <Footer />
+  </>
+);
+
 // ==================== APP ====================
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
         <AuthProvider>
-          <Navigation />
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/academy" element={<AcademyPage />} />
-            <Route path="/fixtures" element={<FixturesPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/contact" element={<ContactPage />} />
+            {/* Public routes with nav + footer */}
+            <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
+            <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+            <Route path="/team" element={<PublicLayout><TeamPage /></PublicLayout>} />
+            <Route path="/academy" element={<PublicLayout><AcademyPage /></PublicLayout>} />
+            <Route path="/fixtures" element={<PublicLayout><FixturesPage /></PublicLayout>} />
+            <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
+            <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+            {/* Admin routes - NO nav/footer */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={
               <ProtectedRoute>
@@ -1472,7 +1482,6 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
-          <Footer />
         </AuthProvider>
       </BrowserRouter>
     </div>

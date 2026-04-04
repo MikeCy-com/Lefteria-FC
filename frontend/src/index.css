@@ -491,3 +491,222 @@ body > div[style*="fixed"]:last-of-type {
     font-size: 0.8125rem;
   }
 }
+
+/* ==================== ADMIN CMS STYLES ==================== */
+
+/* Admin Cards */
+.admin-card {
+  background: #141414;
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.admin-card:hover {
+  border-color: #2a2a2a;
+}
+
+.admin-stat-card {
+  background: #141414;
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.admin-stat-card:hover {
+  border-color: #F5A623;
+  background: #F5A623/5;
+}
+
+/* Admin Inputs */
+.admin-input {
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-family: inherit;
+}
+.admin-input:focus {
+  border-color: #F5A623;
+  box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.15);
+}
+.admin-input::placeholder {
+  color: #3a3a3a;
+}
+
+/* Admin Buttons */
+.admin-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: #F5A623;
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.admin-btn-primary:hover {
+  background: #e09520;
+}
+.admin-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #222;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.admin-btn-ghost:hover {
+  border-color: #444;
+  color: #fff;
+}
+
+.admin-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.admin-icon-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: #F5A623;
+}
+
+/* Admin Table */
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  background: #111;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.admin-table thead {
+  background: #0a0a0a;
+}
+.admin-table th {
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e1e1e;
+}
+.admin-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid #151515;
+  color: #999;
+}
+.admin-table tbody tr {
+  transition: background 0.1s;
+}
+.admin-table tbody tr:hover {
+  background: rgba(255,255,255,0.02);
+}
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Admin Badges */
+.admin-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.admin-badge-default {
+  background: rgba(255,255,255,0.06);
+  color: #888;
+}
+.admin-badge-blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+}
+.admin-badge-green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+}
+.admin-badge-gold {
+  background: rgba(245, 166, 35, 0.12);
+  color: #F5A623;
+}
+
+.badge-completed {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
