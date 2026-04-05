@@ -1716,7 +1716,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
   );
 };
 
-// ==================== ENHANCED ACADEMY TAB (with drill-down + gallery) ====================
+// ==================== ENHANCED ACADEMY TAB (full CRUD + drill-down) ====================
 const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -1725,6 +1725,27 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   const [detailTab, setDetailTab] = useState("roster");
   const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26" };
   const [form, setForm] = useState(emptyGroup);
+
+  // Player CRUD state
+  const [showPlayerForm, setShowPlayerForm] = useState(false);
+  const [editPlayer, setEditPlayer] = useState(null);
+  const [savingPlayer, setSavingPlayer] = useState(false);
+  const emptyPlayer = { name: "", number: "", position: "Midfielder", nationality: "Cyprus", date_of_birth: "", image_url: "", bio: "", height: "", weight: "", preferred_foot: "Right", parent_name: "", parent_phone: "", parent_email: "" };
+  const [playerForm, setPlayerForm] = useState(emptyPlayer);
+
+  // Transfer state
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferPlayer, setTransferPlayer] = useState(null);
+  const [transferGroupIds, setTransferGroupIds] = useState([]);
+  const [savingTransfer, setSavingTransfer] = useState(false);
+
+  // Fixtures state
+  const [groupFixtures, setGroupFixtures] = useState([]);
+  const [showFixtureForm, setShowFixtureForm] = useState(false);
+  const [fixtureForm, setFixtureForm] = useState({ home_team: "LEFTERIA FC", away_team: "", match_date: "", venue: "", competition: "", season: "2025/26" });
+  const [savingFixture, setSavingFixture] = useState(false);
+  const [editFixture, setEditFixture] = useState(null);
+
   // Gallery state
   const [galleryItems, setGalleryItems] = useState([]);
   const [showGalleryForm, setShowGalleryForm] = useState(false);
@@ -1732,9 +1753,9 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   const [savingGallery, setSavingGallery] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  // Group CRUD
   const openCreate = () => { setForm(emptyGroup); setEditGroup(null); setShowForm(true); };
   const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26" }); setEditGroup(g); setShowForm(true); };
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -1745,51 +1766,113 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
       setShowForm(false); onRefresh();
     } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
   };
-
-  const handleDelete = async (id) => {
+  const handleDeleteGroup = async (id) => {
     if (!window.confirm("Διαγραφή ομάδας;")) return;
     try { await axios.delete(`${API}/admin/academy-groups/${id}`, { headers: getAuthHeaders() }); if (selectedGroup?.id === id) setSelectedGroup(null); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
-  // Gallery functions
+  // Player CRUD
+  const calcAge = (dob) => { if (!dob) return ""; try { return Math.floor((new Date() - new Date(dob)) / 31557600000); } catch { return ""; } };
+
+  const openCreatePlayer = () => { setPlayerForm({...emptyPlayer}); setEditPlayer(null); setShowPlayerForm(true); };
+  const openEditPlayer = (p) => {
+    setPlayerForm({
+      name: p.name || "", number: p.number || "", position: p.position || "Midfielder", nationality: p.nationality || "Cyprus",
+      date_of_birth: p.date_of_birth || "", image_url: p.image_url || "", bio: p.bio || "",
+      height: p.height || "", weight: p.weight || "", preferred_foot: p.preferred_foot || "Right",
+      parent_name: p.parent_name || "", parent_phone: p.parent_phone || "", parent_email: p.parent_email || ""
+    });
+    setEditPlayer(p); setShowPlayerForm(true);
+  };
+  const handleSavePlayer = async () => {
+    setSavingPlayer(true);
+    try {
+      const headers = getAuthHeaders();
+      const age = calcAge(playerForm.date_of_birth);
+      const payload = {
+        ...playerForm, number: parseInt(playerForm.number) || 0, age: parseInt(age) || 0,
+        team_type: "Academy", academy_group_id: selectedGroup.id, academy_group_ids: [selectedGroup.id]
+      };
+      if (editPlayer) {
+        payload.academy_group_ids = editPlayer.academy_group_ids?.length ? editPlayer.academy_group_ids : [selectedGroup.id];
+        await axios.put(`${API}/admin/players/${editPlayer.id}`, payload, { headers });
+      } else {
+        await axios.post(`${API}/admin/players`, payload, { headers });
+      }
+      setShowPlayerForm(false); onRefresh();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSavingPlayer(false); }
+  };
+  const handleDeletePlayer = async (id) => {
+    if (!window.confirm("Διαγραφή παίκτη;")) return;
+    try { await axios.delete(`${API}/admin/players/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  // Transfer
+  const openTransfer = (p) => {
+    setTransferPlayer(p);
+    setTransferGroupIds(p.academy_group_ids?.length ? [...p.academy_group_ids] : (p.academy_group_id ? [p.academy_group_id] : []));
+    setShowTransfer(true);
+  };
+  const toggleTransferGroup = (gid) => {
+    setTransferGroupIds(prev => prev.includes(gid) ? prev.filter(id => id !== gid) : [...prev, gid]);
+  };
+  const handleTransfer = async () => {
+    if (transferGroupIds.length === 0) { alert("Επιλέξτε τουλάχιστον μία ομάδα"); return; }
+    setSavingTransfer(true);
+    try {
+      await axios.post(`${API}/admin/players/${transferPlayer.id}/transfer`, { group_ids: transferGroupIds, primary_group_id: transferGroupIds[0] }, { headers: getAuthHeaders() });
+      setShowTransfer(false); onRefresh();
+    } catch (e) { alert("Σφάλμα"); } finally { setSavingTransfer(false); }
+  };
+
+  // Fixtures
+  const fetchFixtures = useCallback(async () => {
+    if (!selectedGroup) return;
+    try { const res = await axios.get(`${API}/academy-groups/${selectedGroup.id}/fixtures`); setGroupFixtures(res.data); } catch (e) { console.error(e); }
+  }, [selectedGroup]);
+  useEffect(() => { if (detailTab === "schedule" && selectedGroup) fetchFixtures(); }, [detailTab, selectedGroup, fetchFixtures]);
+
+  const openCreateFixture = () => { setFixtureForm({ home_team: "LEFTERIA FC", away_team: "", match_date: "", venue: "", competition: "", season: "2025/26" }); setEditFixture(null); setShowFixtureForm(true); };
+  const handleSaveFixture = async () => {
+    setSavingFixture(true);
+    try {
+      await axios.post(`${API}/admin/academy-groups/${selectedGroup.id}/fixtures`, fixtureForm, { headers: getAuthHeaders() });
+      setShowFixtureForm(false); fetchFixtures();
+    } catch (e) { alert("Σφάλμα"); } finally { setSavingFixture(false); }
+  };
+  const handleUpdateFixture = async (fid, data) => {
+    try { await axios.put(`${API}/admin/fixtures/${fid}`, data, { headers: getAuthHeaders() }); fetchFixtures(); } catch (e) { alert("Σφάλμα"); }
+  };
+  const handleDeleteFixture = async (fid) => {
+    if (!window.confirm("Διαγραφή αγώνα;")) return;
+    try { await axios.delete(`${API}/admin/fixtures/${fid}`, { headers: getAuthHeaders() }); fetchFixtures(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  // Gallery
   const fetchGallery = useCallback(async () => {
     if (!selectedGroup) return;
-    try {
-      const res = await axios.get(`${API}/gallery?academy_group_id=${selectedGroup.id}`);
-      setGalleryItems(res.data);
-    } catch (e) { console.error(e); }
+    try { const res = await axios.get(`${API}/gallery?academy_group_id=${selectedGroup.id}`); setGalleryItems(res.data); } catch (e) { console.error(e); }
   }, [selectedGroup]);
-
   useEffect(() => { if (detailTab === "gallery" && selectedGroup) fetchGallery(); }, [detailTab, selectedGroup, fetchGallery]);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     setUploadingFile(true);
-    try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await axios.post(`${API}/admin/gallery/upload`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
-      setGalleryForm(prev => ({ ...prev, image_url: res.data.url }));
-    } catch (e) { alert("Σφάλμα μεταφόρτωσης"); } finally { setUploadingFile(false); }
+    try { const fd = new FormData(); fd.append("file", file); const res = await axios.post(`${API}/admin/gallery/upload`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } }); setGalleryForm(prev => ({...prev, image_url: res.data.url})); } catch (e) { alert("Σφάλμα"); } finally { setUploadingFile(false); }
   };
-
   const handleSaveGallery = async () => {
     setSavingGallery(true);
-    try {
-      const headers = getAuthHeaders();
-      await axios.post(`${API}/admin/gallery`, { ...galleryForm, academy_group_id: selectedGroup.id }, { headers });
-      setShowGalleryForm(false); fetchGallery();
-      setGalleryForm({ title: "", image_url: "", category: "Training", description: "" });
-    } catch (e) { alert("Σφάλμα"); } finally { setSavingGallery(false); }
+    try { await axios.post(`${API}/admin/gallery`, {...galleryForm, academy_group_id: selectedGroup.id}, { headers: getAuthHeaders() }); setShowGalleryForm(false); fetchGallery(); setGalleryForm({ title: "", image_url: "", category: "Training", description: "" }); } catch (e) { alert("Σφάλμα"); } finally { setSavingGallery(false); }
   };
+  const handleDeleteGallery = async (id) => { if (!window.confirm("Διαγραφή;")) return; try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); } };
 
-  const handleDeleteGallery = async (id) => {
-    if (!window.confirm("Διαγραφή;")) return;
-    try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); }
-  };
-
+  // ── Drill-down view ──
   if (selectedGroup) {
-    const groupPlayers = players.filter(p => p.academy_group_id === selectedGroup.id);
+    const groupPlayers = players.filter(p =>
+      p.academy_group_id === selectedGroup.id ||
+      (p.academy_group_ids && p.academy_group_ids.includes(selectedGroup.id))
+    );
+
     return (
       <div data-testid="academy-detail-view">
         <button onClick={() => setSelectedGroup(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-academy">
@@ -1797,19 +1880,22 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
         </button>
         <div className="mb-6">
           <h2 className="font-['Bebas_Neue'] text-4xl text-[#10B981] tracking-wide">{selectedGroup.name}</h2>
-          <div className="flex items-center gap-3 mt-2 text-sm text-zinc-300">
+          <div className="flex items-center gap-3 mt-2 text-sm text-zinc-300 flex-wrap">
             <span className="admin-badge admin-badge-green">{selectedGroup.age_range}</span>
             {selectedGroup.coach_name && <span>Προπονητής: {selectedGroup.coach_name}</span>}
             {selectedGroup.training_schedule && <span className="flex items-center gap-1"><Clock size={14} /> {selectedGroup.training_schedule}</span>}
           </div>
         </div>
-        <div className="flex gap-1 mb-6 border-b border-[#262626] pb-0">
+
+        {/* Sub-tabs */}
+        <div className="flex gap-1 mb-6 border-b border-[#262626] pb-0 overflow-x-auto">
           {[
-            { id: "roster", label: "Παίκτες", icon: Users, count: groupPlayers.length },
+            { id: "roster", label: "Ρόστερ", icon: Users, count: groupPlayers.length },
+            { id: "schedule", label: "Αγώνες", icon: Calendar, count: groupFixtures.length },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDetailTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
                 detailTab === tab.id ? 'border-[#10B981] text-[#10B981]' : 'border-transparent text-zinc-400 hover:text-white'
               }`} data-testid={`academy-tab-${tab.id}`}>
               <tab.icon size={15} /> {tab.label}
@@ -1818,26 +1904,165 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
           ))}
         </div>
 
+        {/* ── Roster ── */}
         {detailTab === "roster" && (
-          <div className="admin-table-wrap">
-            <table className="admin-table" data-testid="academy-players-table">
-              <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th></tr></thead>
-              <tbody>
-                {groupPlayers.map(p => (
-                  <tr key={p.id}>
-                    <td className="font-mono text-zinc-400">{p.number}</td>
-                    <td>{p.image_url ? <img src={p.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={14} className="text-zinc-600" /></div>}</td>
-                    <td className="font-medium text-white">{p.name}</td>
-                    <td className="text-zinc-300">{p.position}</td>
-                    <td className="text-zinc-300">{p.age}</td>
-                  </tr>
-                ))}
-                {groupPlayers.length === 0 && <tr><td colSpan={5}><EmptyState icon={Users} text="Δεν υπάρχουν παίκτες" /></td></tr>}
-              </tbody>
-            </table>
+          <div>
+            <div className="flex justify-end mb-4 gap-2">
+              <button onClick={openCreatePlayer} className="admin-btn-primary" data-testid="add-academy-player-btn"><Plus size={14} /> Νέος Παίκτης</button>
+            </div>
+            <div className="admin-table-wrap">
+              <table className="admin-table" data-testid="academy-players-table">
+                <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th>Γονέας</th><th>Τηλ.</th><th></th></tr></thead>
+                <tbody>
+                  {groupPlayers.map(p => (
+                    <tr key={p.id}>
+                      <td className="font-mono text-zinc-400">{p.number}</td>
+                      <td>{p.image_url ? <img src={p.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={14} className="text-zinc-600" /></div>}</td>
+                      <td className="font-medium text-white">{p.name}</td>
+                      <td className="text-zinc-300">{p.position}</td>
+                      <td className="text-zinc-300">{p.age || calcAge(p.date_of_birth) || "-"}</td>
+                      <td className="text-zinc-400 text-sm">{p.parent_name || "-"}</td>
+                      <td className="text-zinc-400 text-sm">{p.parent_phone || "-"}</td>
+                      <td>
+                        <div className="flex gap-1">
+                          <button onClick={() => openEditPlayer(p)} className="admin-icon-btn" data-testid={`edit-academy-player-${p.id}`}><Edit2 size={14} /></button>
+                          <button onClick={() => openTransfer(p)} className="admin-icon-btn text-blue-400/70 hover:text-blue-300" title="Μεταφορά" data-testid={`transfer-player-${p.id}`}><ArrowLeftRight size={14} /></button>
+                          <button onClick={() => handleDeletePlayer(p.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-academy-player-${p.id}`}><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {groupPlayers.length === 0 && <tr><td colSpan={8}><EmptyState icon={Users} text="Δεν υπάρχουν παίκτες" /></td></tr>}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Player Form Modal */}
+            {showPlayerForm && (
+              <FormModal title={editPlayer ? "Επεξεργασία Παίκτη" : "Νέος Παίκτης"} onClose={() => setShowPlayerForm(false)} onSave={handleSavePlayer} saving={savingPlayer}>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Ονοματεπώνυμο *"><AdminInput value={playerForm.name} onChange={e => setPlayerForm({...playerForm, name: e.target.value})} data-testid="academy-player-name" /></Field>
+                  <Field label="Αριθμός"><AdminInput type="number" value={playerForm.number} onChange={e => setPlayerForm({...playerForm, number: e.target.value})} data-testid="academy-player-number" /></Field>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Ημ. Γέννησης *">
+                    <AdminInput type="date" value={playerForm.date_of_birth} onChange={e => setPlayerForm({...playerForm, date_of_birth: e.target.value})} data-testid="academy-player-dob" />
+                    {playerForm.date_of_birth && <span className="text-xs text-[#10B981] mt-1 block">Ηλικία: {calcAge(playerForm.date_of_birth)} ετών</span>}
+                  </Field>
+                  <Field label="Θέση">
+                    <AdminSelect value={playerForm.position} onChange={e => setPlayerForm({...playerForm, position: e.target.value})}>
+                      <option value="Goalkeeper">Τερματοφύλακας</option><option value="Defender">Αμυντικός</option><option value="Midfielder">Μέσος</option><option value="Forward">Επιθετικός</option>
+                    </AdminSelect>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <Field label="Εθνικότητα"><AdminInput value={playerForm.nationality} onChange={e => setPlayerForm({...playerForm, nationality: e.target.value})} /></Field>
+                  <Field label="Ύψος"><AdminInput placeholder="1.45m" value={playerForm.height} onChange={e => setPlayerForm({...playerForm, height: e.target.value})} /></Field>
+                  <Field label="Βάρος"><AdminInput placeholder="35kg" value={playerForm.weight} onChange={e => setPlayerForm({...playerForm, weight: e.target.value})} /></Field>
+                </div>
+                <ImageUpload currentUrl={playerForm.image_url} onImageChange={url => setPlayerForm({...playerForm, image_url: url})} playerId={editPlayer?.id} />
+                <div className="border-t border-[#262626] pt-4 mt-2">
+                  <h4 className="text-white text-sm font-semibold mb-3">Στοιχεία Γονέα / Κηδεμόνα</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Ονοματεπώνυμο"><AdminInput value={playerForm.parent_name} onChange={e => setPlayerForm({...playerForm, parent_name: e.target.value})} data-testid="academy-player-parent-name" /></Field>
+                    <Field label="Τηλέφωνο"><AdminInput value={playerForm.parent_phone} onChange={e => setPlayerForm({...playerForm, parent_phone: e.target.value})} data-testid="academy-player-parent-phone" /></Field>
+                  </div>
+                  <Field label="Email"><AdminInput type="email" value={playerForm.parent_email} onChange={e => setPlayerForm({...playerForm, parent_email: e.target.value})} data-testid="academy-player-parent-email" /></Field>
+                </div>
+                <Field label="Βιογραφικό"><AdminTextarea rows={2} value={playerForm.bio} onChange={e => setPlayerForm({...playerForm, bio: e.target.value})} /></Field>
+              </FormModal>
+            )}
+
+            {/* Transfer Modal */}
+            {showTransfer && transferPlayer && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowTransfer(false)}>
+                <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()} data-testid="transfer-modal">
+                  <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a]">
+                    <h2 className="font-['Bebas_Neue'] text-2xl text-white">Μεταφορά: {transferPlayer.name}</h2>
+                    <button onClick={() => setShowTransfer(false)} className="text-zinc-400 hover:text-white"><X size={18} /></button>
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <p className="text-sm text-zinc-400 mb-2">Επιλέξτε τις ομάδες στις οποίες ανήκει ο παίκτης:</p>
+                    {groups.map(g => (
+                      <label key={g.id} className="flex items-center gap-3 p-3 bg-[#0d0d0d] border border-[#262626] rounded-lg cursor-pointer hover:border-[#10B981]/40 transition-colors" data-testid={`transfer-group-${g.id}`}>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${transferGroupIds.includes(g.id) ? 'bg-[#10B981] border-[#10B981]' : 'border-[#444]'}`}>
+                          {transferGroupIds.includes(g.id) && <Check size={13} className="text-black" strokeWidth={3} />}
+                        </div>
+                        <input type="checkbox" checked={transferGroupIds.includes(g.id)} onChange={() => toggleTransferGroup(g.id)} className="hidden" />
+                        <div>
+                          <span className="text-white text-sm font-medium">{g.name}</span>
+                          <span className="text-zinc-500 text-xs ml-2">{g.age_range}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a]">
+                    <button onClick={handleTransfer} disabled={savingTransfer} className="admin-btn-primary flex-1" data-testid="confirm-transfer-btn">
+                      {savingTransfer ? "Μεταφορά..." : "Αποθήκευση"}
+                    </button>
+                    <button onClick={() => setShowTransfer(false)} className="admin-btn-ghost flex-1">Ακύρωση</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
+        {/* ── Schedule / Fixtures ── */}
+        {detailTab === "schedule" && (
+          <div>
+            <div className="flex justify-end mb-4">
+              <button onClick={openCreateFixture} className="admin-btn-primary" data-testid="add-academy-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
+            </div>
+            <div className="admin-table-wrap">
+              <table className="admin-table" data-testid="academy-fixtures-table">
+                <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Κατάσταση</th><th></th></tr></thead>
+                <tbody>
+                  {groupFixtures.map(f => (
+                    <tr key={f.id}>
+                      <td className="text-sm text-zinc-400">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
+                      <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#10B981] font-medium' : 'text-zinc-200'}>{f.home_team}</td>
+                      <td className="font-['Bebas_Neue'] text-lg text-white">
+                        {f.status === 'Completed' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}
+                      </td>
+                      <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#10B981] font-medium' : 'text-zinc-200'}>{f.away_team}</td>
+                      <td>
+                        <span className={f.status === 'Completed' ? 'badge-completed' : 'admin-badge admin-badge-default'}>
+                          {f.status === 'Completed' ? 'Ολοκλ.' : 'Προγρ.'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="flex gap-1">
+                          {f.status === 'Scheduled' && (
+                            <button onClick={() => handleUpdateFixture(f.id, { status: "Completed", home_score: parseInt(prompt("Σκορ γηπεδούχου:") || "0"), away_score: parseInt(prompt("Σκορ φιλοξ.:") || "0") })}
+                              className="admin-icon-btn text-green-400/70 hover:text-green-300" title="Καταχώρηση Σκορ"><Check size={14} /></button>
+                          )}
+                          <button onClick={() => handleDeleteFixture(f.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {groupFixtures.length === 0 && <tr><td colSpan={6}><EmptyState icon={Calendar} text="Δεν υπάρχουν αγώνες" /></td></tr>}
+                </tbody>
+              </table>
+            </div>
+            {showFixtureForm && (
+              <FormModal title="Νέος Αγώνας" onClose={() => setShowFixtureForm(false)} onSave={handleSaveFixture} saving={savingFixture}>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Γηπεδούχος *"><AdminInput value={fixtureForm.home_team} onChange={e => setFixtureForm({...fixtureForm, home_team: e.target.value})} /></Field>
+                  <Field label="Φιλοξενούμενος *"><AdminInput value={fixtureForm.away_team} onChange={e => setFixtureForm({...fixtureForm, away_team: e.target.value})} /></Field>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Ημ/νία & Ώρα *"><AdminInput type="datetime-local" value={fixtureForm.match_date} onChange={e => setFixtureForm({...fixtureForm, match_date: e.target.value})} /></Field>
+                  <Field label="Γήπεδο"><AdminInput value={fixtureForm.venue} onChange={e => setFixtureForm({...fixtureForm, venue: e.target.value})} /></Field>
+                </div>
+                <Field label="Διοργάνωση"><AdminInput value={fixtureForm.competition} onChange={e => setFixtureForm({...fixtureForm, competition: e.target.value})} placeholder="Πρωτάθλημα U12" /></Field>
+              </FormModal>
+            )}
+          </div>
+        )}
+
+        {/* ── Gallery ── */}
         {detailTab === "gallery" && (
           <div>
             <div className="flex justify-end mb-4">
@@ -1846,9 +2071,7 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {galleryItems.map(item => (
                 <div key={item.id} className="bg-[#151515] border border-[#262626] rounded-lg overflow-hidden group">
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  </div>
+                  <div className="aspect-[4/3] overflow-hidden"><img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></div>
                   <div className="p-3">
                     <p className="text-white text-sm font-medium truncate">{item.title}</p>
                     <div className="flex justify-between items-center mt-2">
@@ -1866,10 +2089,7 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
                 <Field label="Εικόνα *">
                   <div className="flex gap-2">
                     <AdminInput value={galleryForm.image_url} onChange={e => setGalleryForm({...galleryForm, image_url: e.target.value})} placeholder="URL εικόνας" className="flex-1" />
-                    <label className="admin-btn-ghost cursor-pointer flex items-center">
-                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-                      {uploadingFile ? <RefreshCw size={14} className="animate-spin" /> : "Upload"}
-                    </label>
+                    <label className="admin-btn-ghost cursor-pointer flex items-center"><input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />{uploadingFile ? <RefreshCw size={14} className="animate-spin" /> : "Upload"}</label>
                   </div>
                 </Field>
                 <Field label="Περιγραφή"><AdminInput value={galleryForm.description} onChange={e => setGalleryForm({...galleryForm, description: e.target.value})} /></Field>
@@ -1881,30 +2101,34 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
     );
   }
 
+  // ── Group List View ──
   return (
     <div data-testid="admin-academy-enhanced-tab">
       <TabHeader title="Ομάδες Ακαδημίας" count={groups.length}>
         <button onClick={openCreate} className="admin-btn-primary" data-testid="add-academy-group-btn"><Plus size={14} /> Νέα Ομάδα</button>
       </TabHeader>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {groups.map(g => (
-          <div key={g.id} className="admin-card p-6 cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => { setSelectedGroup(g); setDetailTab("roster"); }} data-testid={`academy-group-${g.id}`}>
-            <div className="flex justify-between items-start mb-2">
-              <span className="font-['Bebas_Neue'] text-2xl text-[#10B981] group-hover:text-white transition-colors">{g.name}</span>
-              <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={14} /></button>
-                <button onClick={() => handleDelete(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={14} /></button>
+        {groups.map(g => {
+          const playerCount = players.filter(p => p.academy_group_id === g.id || (p.academy_group_ids && p.academy_group_ids.includes(g.id))).length;
+          return (
+            <div key={g.id} className="admin-card p-6 cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => { setSelectedGroup(g); setDetailTab("roster"); }} data-testid={`academy-group-${g.id}`}>
+              <div className="flex justify-between items-start mb-2">
+                <span className="font-['Bebas_Neue'] text-2xl text-[#10B981] group-hover:text-white transition-colors">{g.name}</span>
+                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={14} /></button>
+                  <button onClick={() => handleDeleteGroup(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={14} /></button>
+                </div>
+              </div>
+              <span className="admin-badge admin-badge-green mb-2">{g.age_range}</span>
+              <p className="text-zinc-200 text-sm mb-1">{g.coach_name}</p>
+              <p className="text-zinc-400 text-sm flex items-center gap-1"><Clock size={13} /> {g.training_schedule}</p>
+              <div className="flex items-center mt-3 text-sm text-zinc-400">
+                <Users size={13} className="mr-1" /> {playerCount} παίκτες
+                <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] ml-auto transition-colors" />
               </div>
             </div>
-            <span className="admin-badge admin-badge-green mb-2">{g.age_range}</span>
-            <p className="text-zinc-200 text-sm mb-1">{g.coach_name}</p>
-            <p className="text-zinc-400 text-sm flex items-center gap-1"><Clock size={13} /> {g.training_schedule}</p>
-            <div className="flex items-center mt-3 text-sm text-zinc-400">
-              <Users size={13} className="mr-1" /> {players.filter(p => p.academy_group_id === g.id).length} παίκτες
-              <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] ml-auto transition-colors" />
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {groups.length === 0 && <EmptyState icon={GraduationCap} text="Δεν υπάρχουν ομάδες ακαδημίας" />}
       </div>
       {showForm && (

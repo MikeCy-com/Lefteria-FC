@@ -359,6 +359,12 @@ class Player(BaseModel):
     instagram: Optional[str] = None
     twitter: Optional[str] = None
     facebook: Optional[str] = None
+    # Parent/Guardian Contact (for academy players)
+    parent_name: Optional[str] = None
+    parent_phone: Optional[str] = None
+    parent_email: Optional[str] = None
+    # Multi-group support (academy)
+    academy_group_ids: List[str] = Field(default_factory=list)
     # Meta
     is_active: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -385,6 +391,10 @@ class PlayerCreate(BaseModel):
     instagram: Optional[str] = None
     twitter: Optional[str] = None
     facebook: Optional[str] = None
+    parent_name: Optional[str] = None
+    parent_phone: Optional[str] = None
+    parent_email: Optional[str] = None
+    academy_group_ids: List[str] = Field(default_factory=list)
 
 class PlayerUpdate(BaseModel):
     name: Optional[str] = None
@@ -409,6 +419,10 @@ class PlayerUpdate(BaseModel):
     facebook: Optional[str] = None
     is_active: Optional[bool] = None
     statistics: Optional[PlayerStatistics] = None
+    parent_name: Optional[str] = None
+    parent_phone: Optional[str] = None
+    parent_email: Optional[str] = None
+    academy_group_ids: Optional[List[str]] = None
 
 # Staff Model
 class Staff(BaseModel):
@@ -471,6 +485,7 @@ class Fixture(BaseModel):
     competition: str
     season: str = "2025/26"
     status: MatchStatus = MatchStatus.SCHEDULED
+    academy_group_id: Optional[str] = None
     # Player Performances
     player_performances: List[PlayerPerformance] = Field(default_factory=list)
     # Match Events
@@ -494,6 +509,7 @@ class FixtureCreate(BaseModel):
     competition: str
     season: str = "2025/26"
     status: MatchStatus = MatchStatus.SCHEDULED
+    academy_group_id: Optional[str] = None
     player_performances: List[PlayerPerformance] = Field(default_factory=list)
     scorers: List[Dict[str, Any]] = Field(default_factory=list)
     attendance: Optional[int] = None
@@ -920,8 +936,41 @@ async def get_academy_group(group_id: str):
 
 @api_router.get("/academy-groups/{group_id}/players", response_model=List[Player])
 async def get_academy_group_players(group_id: str):
-    players = await db.players.find({"academy_group_id": group_id, "is_active": True}, {"_id": 0}).to_list(100)
+    players = await db.players.find(
+        {"$or": [{"academy_group_id": group_id}, {"academy_group_ids": group_id}], "is_active": True},
+        {"_id": 0}
+    ).to_list(100)
     return [Player(**p) for p in players]
+
+@api_router.get("/academy-groups/{group_id}/fixtures")
+async def get_academy_group_fixtures(group_id: str):
+    fixtures = await db.fixtures.find({"academy_group_id": group_id}, {"_id": 0}).sort("match_date", -1).to_list(100)
+    return fixtures
+
+@api_router.post("/admin/academy-groups/{group_id}/fixtures")
+async def create_academy_fixture(group_id: str, fixture: FixtureCreate, current_user: dict = Depends(get_current_user)):
+    fixture_data = fixture.model_dump()
+    fixture_data["academy_group_id"] = group_id  # Override with path parameter
+    fixture_dict = Fixture(**fixture_data).model_dump()
+    await db.fixtures.insert_one(fixture_dict)
+    fixture_dict.pop("_id", None)
+    return fixture_dict
+
+@api_router.post("/admin/players/{player_id}/transfer")
+async def transfer_player_group(player_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Ο παίκτης δεν βρέθηκε")
+    target_group_ids = body.get("group_ids", [])
+    primary_group_id = body.get("primary_group_id", target_group_ids[0] if target_group_ids else None)
+    update = {"academy_group_ids": target_group_ids}
+    if primary_group_id:
+        update["academy_group_id"] = primary_group_id
+        group = await db.academy_groups.find_one({"id": primary_group_id}, {"_id": 0})
+        if group:
+            update["academy_group_name"] = group["name"]
+    await db.players.update_one({"id": player_id}, {"$set": update})
+    return {"message": "Ο παίκτης μεταφέρθηκε επιτυχώς"}
 
 # Staff (Public Read)
 @api_router.get("/staff", response_model=List[Staff])
@@ -1137,11 +1186,23 @@ async def update_club_profile(club: ClubProfile, current_user: dict = Depends(ge
 async def create_player(player: PlayerCreate, current_user: dict = Depends(get_current_user)):
     player_dict = player.model_dump()
     
+    # Auto-calculate age from DOB
+    if player_dict.get("date_of_birth"):
+        try:
+            dob = datetime.fromisoformat(player_dict["date_of_birth"])
+            player_dict["age"] = (datetime.now(timezone.utc) - dob.replace(tzinfo=timezone.utc)).days // 365
+        except:
+            pass
+    
     # Get academy group name if provided
     if player.academy_group_id:
         group = await db.academy_groups.find_one({"id": player.academy_group_id}, {"_id": 0})
         if group:
             player_dict["academy_group_name"] = group["name"]
+    
+    # Sync multi-group
+    if player.academy_group_id and not player_dict.get("academy_group_ids"):
+        player_dict["academy_group_ids"] = [player.academy_group_id]
     
     player_obj = Player(**player_dict)
     await db.players.insert_one(player_obj.model_dump())
@@ -1156,11 +1217,28 @@ async def update_player(player_id: str, player: PlayerUpdate, current_user: dict
     update_data = {k: v for k, v in player.model_dump().items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
+    # Auto-calculate age from DOB
+    if update_data.get("date_of_birth"):
+        try:
+            dob = datetime.fromisoformat(update_data["date_of_birth"])
+            update_data["age"] = (datetime.now(timezone.utc) - dob.replace(tzinfo=timezone.utc)).days // 365
+        except:
+            pass
+    
     # Get academy group name if provided
     if "academy_group_id" in update_data and update_data["academy_group_id"]:
         group = await db.academy_groups.find_one({"id": update_data["academy_group_id"]}, {"_id": 0})
         if group:
             update_data["academy_group_name"] = group["name"]
+    
+    # Sync multi-group
+    if "academy_group_ids" in update_data:
+        pass  # explicit multi-group update
+    elif "academy_group_id" in update_data and update_data["academy_group_id"]:
+        current_ids = existing.get("academy_group_ids", [])
+        if update_data["academy_group_id"] not in current_ids:
+            current_ids = [update_data["academy_group_id"]]
+            update_data["academy_group_ids"] = current_ids
     
     await db.players.update_one({"id": player_id}, {"$set": update_data})
     updated = await db.players.find_one({"id": player_id}, {"_id": 0})

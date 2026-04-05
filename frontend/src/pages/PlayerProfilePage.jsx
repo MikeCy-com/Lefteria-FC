@@ -97,6 +97,7 @@ const PlayerProfilePage = () => {
     </div>
   );
 
+  const isAcademy = player.team_type === "Academy";
   const imgUrl = resolveImg(player.image_url);
   const stats = player.statistics || {};
   const positionGr = { Goalkeeper: "Τερματοφύλακας", Defender: "Αμυντικός", Midfielder: "Μέσος", Forward: "Επιθετικός" };
@@ -115,6 +116,20 @@ const PlayerProfilePage = () => {
 
   return (
     <div className="pt-24 min-h-screen bg-[#050505]" data-testid="player-profile-page">
+      {/* Breadcrumb */}
+      <div className="max-w-5xl mx-auto px-4 py-3">
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <Link to="/" className="hover:text-zinc-300 transition-colors">Αρχική</Link>
+          <ChevronRight size={12} />
+          {isAcademy ? (
+            <><Link to="/academy" className="hover:text-zinc-300 transition-colors">Ακαδημία</Link><ChevronRight size={12} /></>
+          ) : (
+            <><Link to="/team" className="hover:text-zinc-300 transition-colors">Ομάδα</Link><ChevronRight size={12} /></>
+          )}
+          <span className="text-zinc-300">{player.name}</span>
+        </div>
+      </div>
+
       {/* HERO BANNER */}
       <div className="relative overflow-hidden" data-testid="player-hero">
         {/* Background image */}
@@ -166,11 +181,11 @@ const PlayerProfilePage = () => {
 
               {/* Info Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 text-sm mb-6">
+                {player.date_of_birth && (
+                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ημ. Γέννησης</span><div className="text-white font-medium">{new Date(player.date_of_birth).toLocaleDateString('el-GR')}</div></div>
+                )}
                 {player.age && (
                   <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ηλικία</span><div className="text-white font-medium">{player.age}</div></div>
-                )}
-                {player.date_of_birth && (
-                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Γέννηση</span><div className="text-white font-medium">{player.date_of_birth}</div></div>
                 )}
                 <div>
                   <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ομάδα</span>
