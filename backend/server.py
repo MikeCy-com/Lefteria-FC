@@ -1892,56 +1892,70 @@ async def seed_data():
 # ==================== PLAYER OF THE MONTH VOTING ====================
 class PotmVote(BaseModel):
     player_id: str
+    voter_name: str
+    voter_email: str
+
+class PotmWithdraw(BaseModel):
+    voter_email: str
 
 @api_router.post("/votes/potm")
-async def cast_potm_vote(vote: PotmVote, request: Request):
+async def cast_potm_vote(vote: PotmVote):
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-    
-    # Get voter fingerprint from IP + User-Agent
-    voter_ip = request.client.host if request.client else "unknown"
-    voter_ua = request.headers.get("user-agent", "")
-    import hashlib
-    voter_fingerprint = hashlib.sha256(f"{voter_ip}:{voter_ua}".encode()).hexdigest()
-    
-    # Check if already voted this month
-    existing = await db.potm_votes.find_one({
-        "voter_fingerprint": voter_fingerprint,
-        "month_key": month_key
-    })
+    email_lower = vote.voter_email.strip().lower()
+
+    if not vote.voter_name.strip() or not email_lower:
+        raise HTTPException(status_code=400, detail="Το όνομα και το email είναι υποχρεωτικά")
+
+    existing = await db.potm_votes.find_one({"voter_email": email_lower, "month_key": month_key})
     if existing:
-        raise HTTPException(status_code=429, detail="Έχετε ήδη ψηφίσει αυτόν τον μήνα")
-    
-    # Verify player exists
+        raise HTTPException(status_code=429, detail="Έχετε ήδη ψηφίσει αυτόν τον μήνα. Αποσύρετε πρώτα την ψήφο σας.")
+
     player = await db.players.find_one({"id": vote.player_id, "is_active": True}, {"_id": 0, "name": 1})
     if not player:
         raise HTTPException(status_code=404, detail="Ο παίκτης δεν βρέθηκε")
-    
+
     await db.potm_votes.insert_one({
         "id": str(uuid.uuid4()),
         "player_id": vote.player_id,
         "player_name": player["name"],
-        "voter_fingerprint": voter_fingerprint,
+        "voter_name": vote.voter_name.strip(),
+        "voter_email": email_lower,
         "month_key": month_key,
         "created_at": now.isoformat()
     })
-    
+
     return {"message": "Η ψήφος σας καταγράφηκε!"}
+
+@api_router.post("/votes/potm/withdraw")
+async def withdraw_potm_vote(body: PotmWithdraw):
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+    email_lower = body.voter_email.strip().lower()
+
+    result = await db.potm_votes.delete_one({"voter_email": email_lower, "month_key": month_key})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε ψήφος για αυτό το email")
+
+    return {"message": "Η ψήφος σας αποσύρθηκε επιτυχώς"}
 
 @api_router.get("/votes/potm/results")
 async def get_potm_results():
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-    
+
     pipeline = [
         {"$match": {"month_key": month_key}},
-        {"$group": {"_id": "$player_id", "player_name": {"$first": "$player_name"}, "votes": {"$sum": 1}}},
+        {"$group": {
+            "_id": "$player_id",
+            "player_name": {"$first": "$player_name"},
+            "votes": {"$sum": 1},
+            "voters": {"$push": "$voter_name"}
+        }},
         {"$sort": {"votes": -1}},
-        {"$limit": 10}
     ]
-    results = await db.potm_votes.aggregate(pipeline).to_list(10)
-    
-    # Enrich with player data
+    results = await db.potm_votes.aggregate(pipeline).to_list(100)
+
     enriched = []
     for r in results:
         player = await db.players.find_one({"id": r["_id"]}, {"_id": 0, "image_url": 1, "number": 1, "position": 1})
@@ -1949,13 +1963,14 @@ async def get_potm_results():
             "player_id": r["_id"],
             "player_name": r["player_name"],
             "votes": r["votes"],
+            "voters": r["voters"],
             "image_url": player.get("image_url") if player else None,
             "number": player.get("number") if player else None,
             "position": player.get("position") if player else None,
         })
-    
+
     total_votes = await db.potm_votes.count_documents({"month_key": month_key})
-    
+
     return {
         "month_key": month_key,
         "total_votes": total_votes,
@@ -1963,38 +1978,67 @@ async def get_potm_results():
     }
 
 @api_router.get("/votes/potm/check")
-async def check_potm_vote(request: Request):
+async def check_potm_vote(email: str = ""):
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-    voter_ip = request.client.host if request.client else "unknown"
-    voter_ua = request.headers.get("user-agent", "")
-    import hashlib
-    voter_fingerprint = hashlib.sha256(f"{voter_ip}:{voter_ua}".encode()).hexdigest()
-    
-    existing = await db.potm_votes.find_one({
-        "voter_fingerprint": voter_fingerprint,
-        "month_key": month_key
-    })
-    return {"has_voted": existing is not None, "voted_player_id": existing["player_id"] if existing else None}
 
-# Admin: Get voting stats
+    if not email:
+        return {"has_voted": False, "voted_player_id": None, "voter_name": None}
+
+    existing = await db.potm_votes.find_one(
+        {"voter_email": email.strip().lower(), "month_key": month_key},
+        {"_id": 0}
+    )
+    if existing:
+        return {"has_voted": True, "voted_player_id": existing["player_id"], "voter_name": existing.get("voter_name", "")}
+    return {"has_voted": False, "voted_player_id": None, "voter_name": None}
+
+@api_router.get("/votes/potm/player/{player_id}")
+async def get_potm_player_detail(player_id: str):
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+
+    player = await db.players.find_one({"id": player_id}, {"_id": 0, "name": 1, "image_url": 1, "number": 1, "position": 1})
+    if not player:
+        raise HTTPException(status_code=404, detail="Ο παίκτης δεν βρέθηκε")
+
+    votes = await db.potm_votes.find(
+        {"player_id": player_id, "month_key": month_key},
+        {"_id": 0, "voter_name": 1, "created_at": 1}
+    ).to_list(500)
+
+    total_month_votes = await db.potm_votes.count_documents({"month_key": month_key})
+
+    return {
+        "player": player,
+        "vote_count": len(votes),
+        "voters": votes,
+        "total_month_votes": total_month_votes,
+        "month_key": month_key
+    }
+
 @api_router.get("/admin/votes/potm")
 async def admin_get_potm_results(current_user: dict = Depends(get_current_user)):
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-    
+
     pipeline = [
         {"$match": {"month_key": month_key}},
-        {"$group": {"_id": "$player_id", "player_name": {"$first": "$player_name"}, "votes": {"$sum": 1}}},
+        {"$group": {
+            "_id": "$player_id",
+            "player_name": {"$first": "$player_name"},
+            "votes": {"$sum": 1},
+            "voters": {"$push": {"name": "$voter_name", "email": "$voter_email", "date": "$created_at"}}
+        }},
         {"$sort": {"votes": -1}}
     ]
     results = await db.potm_votes.aggregate(pipeline).to_list(100)
     total = await db.potm_votes.count_documents({"month_key": month_key})
-    
+
     return {
         "month_key": month_key,
         "total_votes": total,
-        "results": [{"player_id": r["_id"], "player_name": r["player_name"], "votes": r["votes"]} for r in results]
+        "results": [{"player_id": r["_id"], "player_name": r["player_name"], "votes": r["votes"], "voters": r["voters"]} for r in results]
     }
 
 # Admin: Reset votes for current month
@@ -2004,7 +2048,6 @@ async def admin_reset_potm_votes(current_user: dict = Depends(get_current_user))
     month_key = now.strftime("%Y-%m")
     result = await db.potm_votes.delete_many({"month_key": month_key})
     return {"message": f"Διαγράφηκαν {result.deleted_count} ψήφοι"}
-
 
 # Include router
 app.include_router(api_router)

@@ -328,11 +328,7 @@ const HomePage = () => {
   const [prevScore, setPrevScore] = useState(null);
   const [cols, setCols] = useState({ played: true, won: true, drawn: true, lost: true, goals_for: false, goals_against: false, goal_difference: true, points: true, form: false });
   // Player of the Month
-  const [potmPlayers, setPotmPlayers] = useState([]);
   const [potmResults, setPotmResults] = useState({ results: [], total_votes: 0, month_key: "" });
-  const [potmHasVoted, setPotmHasVoted] = useState(false);
-  const [potmVotedId, setPotmVotedId] = useState(null);
-  const [potmVoting, setPotmVoting] = useState(false);
   // Birthdays
   const [birthdayPlayers, setBirthdayPlayers] = useState([]);
 
@@ -364,7 +360,7 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes, potmCheckRes, potmPlayersRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
@@ -372,8 +368,6 @@ const HomePage = () => {
           axios.get(`${API}/settings/standings-columns`),
           axios.get(`${API}/players/birthdays`),
           axios.get(`${API}/votes/potm/results`),
-          axios.get(`${API}/votes/potm/check`),
-          axios.get(`${API}/players?team_type=First%20Team`),
         ]);
         setFixtures(fixturesRes.data);
         setStandings(standingsRes.data);
@@ -382,9 +376,6 @@ const HomePage = () => {
         setCols(colsRes.data);
         setBirthdayPlayers(birthdayRes.data);
         setPotmResults(potmResultsRes.data);
-        setPotmHasVoted(potmCheckRes.data.has_voted);
-        setPotmVotedId(potmCheckRes.data.voted_player_id);
-        setPotmPlayers(potmPlayersRes.data);
       } catch (e) {
         console.error("Error fetching data:", e);
       } finally {
@@ -401,22 +392,6 @@ const HomePage = () => {
   if (loading) return <Loading />;
 
   const resolveImg = (url) => url && url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
-
-  const handlePotmVote = async (playerId) => {
-    if (potmHasVoted || potmVoting) return;
-    setPotmVoting(true);
-    try {
-      await axios.post(`${API}/votes/potm`, { player_id: playerId });
-      setPotmHasVoted(true);
-      setPotmVotedId(playerId);
-      const res = await axios.get(`${API}/votes/potm/results`);
-      setPotmResults(res.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPotmVoting(false);
-    }
-  };
 
   const monthNames = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
   const currentMonthName = monthNames[new Date().getMonth()];
@@ -625,36 +600,41 @@ const HomePage = () => {
               </h2>
             </div>
             <Link to="/vote" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline text-sm" data-testid="potm-vote-link">
-              {potmHasVoted ? "Αποτελέσματα" : "Ψήφισε"} <ArrowRight size={14} />
+              Ψήφισε <ArrowRight size={14} />
             </Link>
           </div>
 
           {potmResults.results.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-testid="potm-top3">
-              {potmResults.results.slice(0, 3).map((r, idx) => {
-                const pct = potmResults.total_votes > 0 ? Math.round((r.votes / potmResults.total_votes) * 100) : 0;
-                const medals = ["border-[#F5A623]", "border-zinc-400", "border-amber-700"];
-                return (
-                  <div key={r.player_id} className={`flex items-center gap-4 p-4 bg-[#111] rounded-lg border ${medals[idx] || 'border-[#222]'}`} data-testid={`potm-top-${idx + 1}`}>
-                    <span className="font-['Bebas_Neue'] text-2xl text-zinc-500 w-6 text-center">{idx + 1}</span>
-                    <div className="w-12 h-12 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 border border-[#333]">
-                      {r.image_url ? (
-                        <img src={resolveImg(r.image_url)} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-zinc-600">#{r.number}</div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-white text-sm truncate">{r.player_name}</div>
-                      <div className="mt-1 w-full bg-[#1a1a1a] rounded-full h-1.5 overflow-hidden">
-                        <div className="h-full bg-[#F5A623] rounded-full transition-all duration-700" style={{ width: `${pct}%` }}></div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-testid="potm-top3">
+                {potmResults.results.slice(0, 3).map((r, idx) => {
+                  const pct = potmResults.total_votes > 0 ? Math.round((r.votes / potmResults.total_votes) * 100) : 0;
+                  const medals = ["border-[#F5A623]", "border-zinc-400", "border-amber-700"];
+                  return (
+                    <div key={r.player_id} className={`flex items-center gap-4 p-4 bg-[#111] rounded-lg border ${medals[idx] || 'border-[#222]'}`} data-testid={`potm-top-${idx + 1}`}>
+                      <span className="font-['Bebas_Neue'] text-2xl text-zinc-500 w-6 text-center">{idx + 1}</span>
+                      <div className="w-12 h-12 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 border border-[#333]">
+                        {r.image_url ? (
+                          <img src={resolveImg(r.image_url)} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-600">#{r.number}</div>
+                        )}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-white text-sm truncate">{r.player_name}</div>
+                        <div className="mt-1 w-full bg-[#1a1a1a] rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full bg-[#F5A623] rounded-full transition-all duration-700" style={{ width: `${pct}%` }}></div>
+                        </div>
+                      </div>
+                      <span className="text-sm text-[#F5A623] font-mono">{r.votes}</span>
                     </div>
-                    <span className="text-sm text-[#F5A623] font-mono">{pct}%</span>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+              <div className="text-center mt-4">
+                <span className="text-zinc-500 text-xs">Σύνολο ψήφων: {potmResults.total_votes}</span>
+              </div>
+            </>
           ) : (
             <div className="text-center py-8">
               <p className="text-zinc-400 text-sm mb-4">Δεν υπάρχουν ψήφοι ακόμα. Γίνε ο πρώτος!</p>
@@ -665,7 +645,7 @@ const HomePage = () => {
           )}
 
           <Link to="/vote" className="flex md:hidden items-center justify-center gap-2 text-[#F5A623] hover:underline text-sm mt-6" data-testid="potm-vote-link-mobile">
-            {potmHasVoted ? "Δες Αποτελέσματα" : "Ψήφισε Τώρα"} <ArrowRight size={14} />
+            Ψήφισε Τώρα <ArrowRight size={14} />
           </Link>
         </div>
       </section>
