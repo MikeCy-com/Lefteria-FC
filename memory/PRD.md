@@ -25,7 +25,7 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 │   │   ├── PlayerProfilePage.jsx  # Hero banner + stat bars + tabbed profile
 │   │   ├── MatchReportPage.jsx    # Full match detail with event timeline
 │   │   ├── ShopPage.jsx      # Tickets & Merchandise info page
-│   │   └── VotePage.jsx      # Dedicated POTM voting page (all players)
+│   │   └── VotePage.jsx      # Trustworthy POTM voting: identity form, leaderboard, detail modal, withdraw
 │   ├── components/ImageUpload.jsx
 │   ├── utils/
 │   │   ├── sounds.js          # Web Audio API sound effects
@@ -45,7 +45,7 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - Shop/Tickets showcase page
 - Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded (105 fixtures, 11 standings)
 - Live Match widget with real-time scoring
-- **Player of the Month voting** — Top 3 on homepage, full voting at /vote page
+- **Trustworthy POTM Voting System** — Name+Email identity, vote counts always visible, player detail modal with voter list, withdraw/revote, 1 vote per email per month
 - **Birthday celebrations** — Compact rotating ticker on homepage
 - **Greek font size optimization** — Reduced Bebas Neue titles globally
 - **Fixtures cleanup** — Removed competition badge, streamlined match rows
@@ -57,16 +57,18 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - 2026-04: Added ScrollToTop to fix SPA scroll persistence between route changes
 
 ## Key API Endpoints
-- `GET /api/players/birthdays` — Players with birthdays in current month
-- `POST /api/votes/potm` — Cast a Player of the Month vote
-- `GET /api/votes/potm/results` — Current month voting leaderboard
-- `GET /api/votes/potm/check` — Check if visitor already voted
-- `GET /api/admin/votes/potm` — Admin: view voting stats
+- `POST /api/votes/potm` — Cast vote (requires voter_name, voter_email, player_id)
+- `POST /api/votes/potm/withdraw` — Withdraw vote (requires voter_email)
+- `GET /api/votes/potm/results` — Public leaderboard with voter names per player
+- `GET /api/votes/potm/check?email=xxx` — Check if email has voted this month
+- `GET /api/votes/potm/player/{player_id}` — Player detail with voter list
+- `GET /api/admin/votes/potm` — Admin: view voting stats with emails
 - `DELETE /api/admin/votes/potm/reset` — Admin: reset current month votes
+- `GET /api/players/birthdays` — Players with birthdays in current month
 
 ## Routes
 - `/` — Homepage (hero, fixtures, birthdays, POTM top 3, standings, news, academy CTA)
-- `/vote` — Dedicated Player of the Month voting page
+- `/vote` — Trustworthy POTM voting page (identity, leaderboard, player detail modal, withdraw)
 - `/team` — Team Hub (6 tabs)
 - `/player/:id` — Player profile
 - `/match/:id` — Match report
@@ -85,5 +87,6 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - Push notifications use VAPID keys in .env
 - server.py is ~2050 lines — consider splitting into FastAPI routers
 - Birthday endpoint registered before `/players/{player_id}` to avoid route conflict
-- POTM voting uses SHA-256(IP + User-Agent) fingerprint
+- POTM voting uses email-based uniqueness (unique index on voter_email + month_key)
+- Voter identity stored in localStorage (potm_voter_name, potm_voter_email)
 - Birthday ticker uses CSS @keyframes ticker-scroll animation
