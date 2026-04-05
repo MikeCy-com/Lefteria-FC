@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronRight, Users, Calendar, Clock, Image as ImageIcon, MapPin } from "lucide-react";
+import { ChevronRight, Users, Calendar, Clock, Image as ImageIcon, MapPin, BarChart3, Trophy, Target, Shield } from "lucide-react";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -63,8 +63,46 @@ const AcademyGroupPage = () => {
   const tabs = [
     { id: "roster", label: "Ρόστερ", count: players.length },
     { id: "schedule", label: "Πρόγραμμα", count: fixtures.length },
+    { id: "stats", label: "Στατιστικά", count: null },
     { id: "gallery", label: "Γκαλερί", count: gallery.length },
   ];
+
+  // ── Compute Season Statistics ──
+  const completedFixtures = fixtures.filter(f => f.status === "Completed");
+  const seasonStats = (() => {
+    let wins = 0, draws = 0, losses = 0, goalsFor = 0, goalsAgainst = 0;
+    completedFixtures.forEach(f => {
+      const hs = f.home_score ?? 0;
+      const as = f.away_score ?? 0;
+      const isHome = (f.home_team || "").toUpperCase().includes("LEFTERIA");
+      const ourScore = isHome ? hs : as;
+      const theirScore = isHome ? as : hs;
+      goalsFor += ourScore;
+      goalsAgainst += theirScore;
+      if (ourScore > theirScore) wins++;
+      else if (ourScore === theirScore) draws++;
+      else losses++;
+    });
+    const played = wins + draws + losses;
+    const points = wins * 3 + draws;
+    const winRate = played > 0 ? Math.round((wins / played) * 100) : 0;
+    return { played, wins, draws, losses, goalsFor, goalsAgainst, goalDiff: goalsFor - goalsAgainst, points, winRate };
+  })();
+
+  const topScorers = [...players]
+    .filter(p => (p.statistics?.goals || 0) > 0)
+    .sort((a, b) => (b.statistics?.goals || 0) - (a.statistics?.goals || 0))
+    .slice(0, 10);
+
+  const topAssisters = [...players]
+    .filter(p => (p.statistics?.assists || 0) > 0)
+    .sort((a, b) => (b.statistics?.assists || 0) - (a.statistics?.assists || 0))
+    .slice(0, 10);
+
+  const mostAppearances = [...players]
+    .filter(p => (p.statistics?.appearances || 0) > 0)
+    .sort((a, b) => (b.statistics?.appearances || 0) - (a.statistics?.appearances || 0))
+    .slice(0, 10);
 
   return (
     <div className="pt-24 min-h-screen" data-testid="academy-group-page">
@@ -136,7 +174,7 @@ const AcademyGroupPage = () => {
                 data-testid={`group-tab-${tab.id}`}
               >
                 <span className="font-['Bebas_Neue'] text-lg tracking-wide">{tab.label}</span>
-                <span className="text-xs text-zinc-500 ml-1.5">({tab.count})</span>
+                {tab.count !== null && <span className="text-xs text-zinc-500 ml-1.5">({tab.count})</span>}
                 {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />}
               </button>
             ))}
@@ -271,6 +309,221 @@ const AcademyGroupPage = () => {
                 <p className="text-zinc-500">Δεν υπάρχουν αγώνες για αυτή την ομάδα</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── STATISTICS ── */}
+        {activeTab === "stats" && (
+          <div data-testid="group-stats-section">
+            <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8">
+              Στατιστικά Σεζόν <span className="text-[#F5A623]">{group.season || "2025/26"}</span>
+            </h2>
+
+            {/* Season Record Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 mb-10">
+              {[
+                { label: "Αγώνες", value: seasonStats.played, color: "#F5A623" },
+                { label: "Νίκες", value: seasonStats.wins, color: "#10B981" },
+                { label: "Ισοπαλίες", value: seasonStats.draws, color: "#6B7280" },
+                { label: "Ήττες", value: seasonStats.losses, color: "#EF4444" },
+                { label: "Βαθμοί", value: seasonStats.points, color: "#F5A623" },
+              ].map((s, i) => (
+                <div key={i} className="card p-5 text-center" data-testid={`stat-${s.label}`}>
+                  <div className="font-['Bebas_Neue'] text-4xl" style={{ color: s.color }}>{s.value}</div>
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Win Rate & Goals Bar */}
+            {seasonStats.played > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+                {/* Win/Draw/Loss Bar */}
+                <div className="card p-6" data-testid="wdl-chart">
+                  <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
+                    <Trophy size={18} className="text-[#F5A623]" /> Αποτελέσματα
+                  </h3>
+                  <div className="flex h-8 rounded-lg overflow-hidden mb-4">
+                    {seasonStats.wins > 0 && (
+                      <div
+                        className="bg-emerald-500 flex items-center justify-center text-xs font-bold text-black transition-all"
+                        style={{ width: `${(seasonStats.wins / seasonStats.played) * 100}%` }}
+                        data-testid="wdl-wins-bar"
+                      >
+                        {seasonStats.wins}Ν
+                      </div>
+                    )}
+                    {seasonStats.draws > 0 && (
+                      <div
+                        className="bg-zinc-500 flex items-center justify-center text-xs font-bold text-white transition-all"
+                        style={{ width: `${(seasonStats.draws / seasonStats.played) * 100}%` }}
+                        data-testid="wdl-draws-bar"
+                      >
+                        {seasonStats.draws}Ι
+                      </div>
+                    )}
+                    {seasonStats.losses > 0 && (
+                      <div
+                        className="bg-red-500 flex items-center justify-center text-xs font-bold text-white transition-all"
+                        style={{ width: `${(seasonStats.losses / seasonStats.played) * 100}%` }}
+                        data-testid="wdl-losses-bar"
+                      >
+                        {seasonStats.losses}Η
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                      <span className="text-zinc-400">Νίκες ({seasonStats.winRate}%)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-sm bg-zinc-500"></div>
+                      <span className="text-zinc-400">Ισοπαλίες</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-sm bg-red-500"></div>
+                      <span className="text-zinc-400">Ήττες</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Goals Summary */}
+                <div className="card p-6" data-testid="goals-summary">
+                  <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
+                    <Target size={18} className="text-[#F5A623]" /> Τέρματα
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="font-['Bebas_Neue'] text-3xl text-emerald-400">{seasonStats.goalsFor}</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Υπέρ</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-['Bebas_Neue'] text-3xl text-red-400">{seasonStats.goalsAgainst}</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Κατά</div>
+                    </div>
+                    <div className="text-center">
+                      <div className={`font-['Bebas_Neue'] text-3xl ${seasonStats.goalDiff >= 0 ? 'text-[#F5A623]' : 'text-red-400'}`}>
+                        {seasonStats.goalDiff > 0 ? '+' : ''}{seasonStats.goalDiff}
+                      </div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Διαφορά</div>
+                    </div>
+                  </div>
+                  {seasonStats.played > 0 && (
+                    <div className="pt-3 border-t border-[#262626] text-center">
+                      <span className="text-zinc-400 text-sm">
+                        Μ.Ο. τερμάτων/αγώνα: <strong className="text-white">{(seasonStats.goalsFor / seasonStats.played).toFixed(1)}</strong>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="card p-8 text-center mb-10" data-testid="no-match-stats">
+                <Shield size={40} className="text-zinc-700 mx-auto mb-3" />
+                <p className="text-zinc-500">Δεν υπάρχουν ολοκληρωμένοι αγώνες για αυτή τη σεζόν</p>
+                <p className="text-zinc-600 text-sm mt-1">Τα στατιστικά θα ενημερωθούν μετά τους πρώτους αγώνες</p>
+              </div>
+            )}
+
+            {/* Player Leaders */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Top Scorers */}
+              <div className="card p-6" data-testid="top-scorers">
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
+                  <Target size={18} className="text-[#F5A623]" /> Σκόρερ
+                </h3>
+                {topScorers.length > 0 ? (
+                  <div className="space-y-2">
+                    {topScorers.map((p, i) => (
+                      <Link
+                        to={`/player/${p.id}`}
+                        key={p.id}
+                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
+                        data-testid={`scorer-${p.id}`}
+                      >
+                        <span className={`font-['Bebas_Neue'] text-lg w-6 text-center ${i === 0 ? 'text-[#F5A623]' : 'text-zinc-600'}`}>{i + 1}</span>
+                        <div className="w-8 h-8 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
+                          {p.image_url ? (
+                            <img src={resolveImg(p.image_url)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>
+                          )}
+                        </div>
+                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</span>
+                        <span className="font-['Bebas_Neue'] text-xl text-[#F5A623]">{p.statistics?.goals || 0}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-zinc-600 text-sm text-center py-6">Δεν υπάρχουν γκολ</p>
+                )}
+              </div>
+
+              {/* Top Assisters */}
+              <div className="card p-6" data-testid="top-assisters">
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
+                  <Users size={18} className="text-[#F5A623]" /> Ασίστ
+                </h3>
+                {topAssisters.length > 0 ? (
+                  <div className="space-y-2">
+                    {topAssisters.map((p, i) => (
+                      <Link
+                        to={`/player/${p.id}`}
+                        key={p.id}
+                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
+                        data-testid={`assister-${p.id}`}
+                      >
+                        <span className={`font-['Bebas_Neue'] text-lg w-6 text-center ${i === 0 ? 'text-[#F5A623]' : 'text-zinc-600'}`}>{i + 1}</span>
+                        <div className="w-8 h-8 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
+                          {p.image_url ? (
+                            <img src={resolveImg(p.image_url)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>
+                          )}
+                        </div>
+                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</span>
+                        <span className="font-['Bebas_Neue'] text-xl text-[#F5A623]">{p.statistics?.assists || 0}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-zinc-600 text-sm text-center py-6">Δεν υπάρχουν ασίστ</p>
+                )}
+              </div>
+
+              {/* Most Appearances */}
+              <div className="card p-6" data-testid="most-appearances">
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
+                  <BarChart3 size={18} className="text-[#F5A623]" /> Συμμετοχές
+                </h3>
+                {mostAppearances.length > 0 ? (
+                  <div className="space-y-2">
+                    {mostAppearances.map((p, i) => (
+                      <Link
+                        to={`/player/${p.id}`}
+                        key={p.id}
+                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
+                        data-testid={`appearance-${p.id}`}
+                      >
+                        <span className={`font-['Bebas_Neue'] text-lg w-6 text-center ${i === 0 ? 'text-[#F5A623]' : 'text-zinc-600'}`}>{i + 1}</span>
+                        <div className="w-8 h-8 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
+                          {p.image_url ? (
+                            <img src={resolveImg(p.image_url)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>
+                          )}
+                        </div>
+                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</span>
+                        <span className="font-['Bebas_Neue'] text-xl text-[#F5A623]">{p.statistics?.appearances || 0}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-zinc-600 text-sm text-center py-6">Δεν υπάρχουν συμμετοχές</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

@@ -273,7 +273,7 @@ const Footer = () => (
             </div>
           </div>
           <p className="text-zinc-400 text-sm leading-relaxed">
-            Dedicated to excellence on and off the pitch. Building champions through passion, discipline, and teamwork.
+            Αφοσιωμένοι στην αριστεία εντός και εκτός γηπέδου. Χτίζουμε πρωταθλητές μέσα από πάθος, πειθαρχία και ομαδικότητα.
           </p>
         </div>
 
