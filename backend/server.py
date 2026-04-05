@@ -221,6 +221,95 @@ class Team(BaseModel):
     description: str = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# Academy Registration Model
+class RegistrationCreate(BaseModel):
+    # Player Info
+    player_first_name: str
+    player_last_name: str
+    player_dob: str
+    player_gender: str
+    player_address: str
+    player_city: str
+    player_postal_code: str
+    # Parent/Guardian Info
+    parent_name: str
+    parent_relationship: str
+    parent_phone: str
+    parent_email: str
+    # Emergency Contact
+    emergency_name: str
+    emergency_phone: str
+    emergency_relationship: str
+    # Medical Info
+    has_allergies: bool = False
+    allergies_details: str = ""
+    has_conditions: bool = False
+    conditions_details: str = ""
+    has_medication: bool = False
+    medication_details: str = ""
+    # Consents
+    consent_participation: bool = False
+    consent_medical_auth: bool = False
+    consent_gdpr: bool = False
+    consent_media: Optional[bool] = None
+    consent_communications: bool = False
+    comm_email: bool = False
+    comm_sms: bool = False
+    consent_liability: bool = False
+    consent_financial: bool = False
+    # Payment
+    payment_method: str = "cash"
+    # Signature
+    signature_data: str = ""
+    signature_date: str = ""
+
+class Registration(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    # Player
+    player_first_name: str
+    player_last_name: str
+    player_dob: str
+    player_gender: str
+    player_address: str
+    player_city: str
+    player_postal_code: str
+    # Parent/Guardian
+    parent_name: str
+    parent_relationship: str
+    parent_phone: str
+    parent_email: str
+    # Emergency
+    emergency_name: str
+    emergency_phone: str
+    emergency_relationship: str
+    # Medical
+    has_allergies: bool = False
+    allergies_details: str = ""
+    has_conditions: bool = False
+    conditions_details: str = ""
+    has_medication: bool = False
+    medication_details: str = ""
+    # Consents
+    consent_participation: bool = False
+    consent_medical_auth: bool = False
+    consent_gdpr: bool = False
+    consent_media: Optional[bool] = None
+    consent_communications: bool = False
+    comm_email: bool = False
+    comm_sms: bool = False
+    consent_liability: bool = False
+    consent_financial: bool = False
+    # Payment & Signature
+    payment_method: str = "cash"
+    signature_data: str = ""
+    signature_date: str = ""
+    # Status
+    status: str = "pending"
+    assigned_group_id: Optional[str] = None
+    admin_notes: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Player Profile Model (Extended)
 class PlayerStatistics(BaseModel):
     appearances: int = 0
@@ -1683,6 +1772,7 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     groups_count = await db.academy_groups.count_documents({})
     gallery_count = await db.gallery.count_documents({})
     teams_count = await db.teams.count_documents({})
+    pending_registrations = await db.registrations.count_documents({"status": "pending"})
     
     return {
         "first_team_players": first_team_count,
@@ -1693,7 +1783,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "unread_messages": messages_count,
         "academy_groups": groups_count,
         "gallery_photos": gallery_count,
-        "teams_count": teams_count
+        "teams_count": teams_count,
+        "pending_registrations": pending_registrations
     }
 
 
@@ -2321,6 +2412,96 @@ async def customer_change_password(body: CustomerChangePassword, user: dict = De
         raise HTTPException(status_code=400, detail="Ο νέος κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες")
     await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
     return {"message": "Ο κωδικός άλλαξε επιτυχώς"}
+
+# ==================== ACADEMY REGISTRATIONS ====================
+@api_router.post("/registrations")
+async def create_registration(reg: RegistrationCreate):
+    reg_obj = Registration(**reg.model_dump())
+    doc = reg_obj.model_dump()
+    await db.registrations.insert_one(doc)
+    doc.pop("_id", None)
+    return {"message": "Η εγγραφή υποβλήθηκε επιτυχώς", "id": doc["id"]}
+
+@api_router.get("/admin/registrations")
+async def get_registrations(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {}
+    if status:
+        query["status"] = status
+    regs = await db.registrations.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return regs
+
+@api_router.get("/admin/registrations/{reg_id}")
+async def get_registration(reg_id: str, current_user: dict = Depends(get_current_user)):
+    reg = await db.registrations.find_one({"id": reg_id}, {"_id": 0})
+    if not reg:
+        raise HTTPException(status_code=404, detail="Η εγγραφή δεν βρέθηκε")
+    return reg
+
+@api_router.put("/admin/registrations/{reg_id}/status")
+async def update_registration_status(reg_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    status = body.get("status")
+    if status not in ["pending", "approved", "rejected"]:
+        raise HTTPException(status_code=400, detail="Μη έγκυρη κατάσταση")
+    update = {"status": status}
+    if "admin_notes" in body:
+        update["admin_notes"] = body["admin_notes"]
+    if "assigned_group_id" in body:
+        update["assigned_group_id"] = body["assigned_group_id"]
+    result = await db.registrations.update_one({"id": reg_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Η εγγραφή δεν βρέθηκε")
+    # If approved and group assigned, create a player
+    if status == "approved":
+        reg = await db.registrations.find_one({"id": reg_id}, {"_id": 0})
+        if reg:
+            existing = await db.players.find_one({
+                "name": f"{reg['player_first_name']} {reg['player_last_name']}",
+                "team_type": "Academy"
+            })
+            if not existing:
+                player_data = {
+                    "id": str(uuid.uuid4()),
+                    "name": f"{reg['player_first_name']} {reg['player_last_name']}",
+                    "number": 0,
+                    "position": "Midfielder",
+                    "nationality": "Cyprus",
+                    "age": 0,
+                    "team_type": "Academy",
+                    "academy_group_id": reg.get("assigned_group_id", ""),
+                    "academy_group_name": "",
+                    "is_active": True,
+                    "image_url": "",
+                    "bio": "",
+                    "height": "",
+                    "weight": "",
+                    "preferred_foot": "Right",
+                    "statistics": {"appearances": 0, "goals": 0, "assists": 0, "yellow_cards": 0, "red_cards": 0, "minutes_played": 0, "clean_sheets": 0},
+                    "previous_clubs": [],
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "parent_name": reg["parent_name"],
+                    "parent_phone": reg["parent_phone"],
+                    "parent_email": reg["parent_email"],
+                }
+                # Calculate age from DOB
+                try:
+                    dob = datetime.fromisoformat(reg["player_dob"])
+                    player_data["age"] = (datetime.now(timezone.utc) - dob.replace(tzinfo=timezone.utc)).days // 365
+                except:
+                    pass
+                # Get group name
+                if reg.get("assigned_group_id"):
+                    group = await db.academy_groups.find_one({"id": reg["assigned_group_id"]}, {"_id": 0})
+                    if group:
+                        player_data["academy_group_name"] = group["name"]
+                await db.players.insert_one(player_data)
+    return {"message": "Η κατάσταση ενημερώθηκε"}
+
+@api_router.delete("/admin/registrations/{reg_id}")
+async def delete_registration(reg_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.registrations.delete_one({"id": reg_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Η εγγραφή δεν βρέθηκε")
+    return {"message": "Η εγγραφή διαγράφηκε"}
 
 # ==================== PRODUCTS ====================
 @api_router.get("/products")

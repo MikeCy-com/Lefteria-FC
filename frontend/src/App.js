@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import RegistrationPage from "./pages/RegistrationPage";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
@@ -809,7 +810,7 @@ const HomePage = () => {
             <Link to="/academy" className="btn-primary">
               Εξερεύνησε την Ακαδημία <ArrowRight size={18} />
             </Link>
-            <Link to="/contact" className="btn-secondary">
+            <Link to="/academy/registration" className="btn-secondary">
               Δήλωσε Ενδιαφέρον
             </Link>
           </div>
@@ -1658,6 +1659,7 @@ function App() {
             <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
             <Route path="/team" element={<PublicLayout><TeamHubPage /></PublicLayout>} />
             <Route path="/academy" element={<PublicLayout><AcademyPage /></PublicLayout>} />
+            <Route path="/academy/registration" element={<PublicLayout><RegistrationPage /></PublicLayout>} />
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
