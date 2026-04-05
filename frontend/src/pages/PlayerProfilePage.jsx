@@ -42,13 +42,13 @@ const PlayerTabBar = ({ activeTab, setActiveTab }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-6 py-4 text-center whitespace-nowrap transition-colors ${
+              className={`relative px-3 sm:px-6 py-3 sm:py-4 text-center whitespace-nowrap transition-colors ${
                 activeTab === tab.id ? "text-[#F5A623]" : "text-zinc-500 hover:text-zinc-300"
               }`}
               data-testid={`player-tab-${tab.id}`}
             >
-              <span className="text-[10px] tracking-[0.2em] uppercase block">Παίκτης</span>
-              <span className="font-['Bebas_Neue'] text-lg tracking-wide">{tab.label}</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Παίκτης</span>
+              <span className="font-['Bebas_Neue'] text-base sm:text-lg tracking-wide">{tab.label}</span>
               {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />}
             </button>
           ))}

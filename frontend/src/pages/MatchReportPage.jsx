@@ -148,7 +148,7 @@ const MatchReportPage = () => {
       <div className="max-w-4xl mx-auto px-4 mb-8">
         <div className="card overflow-hidden" data-testid="match-header">
           {/* Competition / Date bar */}
-          <div className="bg-[#111] px-6 py-3 flex items-center justify-between text-xs text-zinc-500">
+          <div className="bg-[#111] px-3 sm:px-6 py-3 flex items-center justify-between text-xs text-zinc-500">
             <div className="flex items-center gap-2">
               <Trophy size={12} className="text-[#F5A623]" />
               <span>{fixture.competition || "—"}</span>
@@ -168,7 +168,7 @@ const MatchReportPage = () => {
           </div>
 
           {/* Score section */}
-          <div className="px-6 py-10">
+          <div className="px-4 sm:px-6 py-8 sm:py-10">
             <div className="flex items-center justify-center gap-6 sm:gap-10">
               {/* Home team */}
               <div className="flex-1 text-center sm:text-right">

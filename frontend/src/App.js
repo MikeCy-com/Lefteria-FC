@@ -259,8 +259,8 @@ const Navigation = () => {
 // Footer
 const Footer = () => (
   <footer className="bg-[#0a0a0a] border-t border-[#262626]" data-testid="footer">
-    <div className="max-w-7xl mx-auto px-6 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-12">
         {/* Club Info */}
         <div>
           <div className="flex items-center gap-3 mb-6">
@@ -442,7 +442,7 @@ const HomePage = () => {
         data-testid="hero-section"
       >
         <div className="absolute inset-0 hero-gradient"></div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-32">
           <div className="max-w-3xl">
             <span className="badge badge-primary mb-6 animate-fadeInUp">Ιδρ. 2024</span>
             <h1 className="font-['Bebas_Neue'] text-5xl md:text-6xl lg:text-7xl text-white mb-6 animate-fadeInUp animation-delay-200">
@@ -514,7 +514,7 @@ const HomePage = () => {
 
         {/* Stats Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {(() => {
               const us = standings.find(s => s.team_name === OUR_TEAM);
               const pos = standings.findIndex(s => s.team_name === OUR_TEAM) + 1;
@@ -535,7 +535,7 @@ const HomePage = () => {
       </section>
 
       {/* Latest Fixtures */}
-      <section className="py-16 px-6 bg-[#050505]" data-testid="fixtures-section">
+      <section className="py-10 md:py-16 px-4 md:px-6 bg-[#050505]" data-testid="fixtures-section">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-8">
             <div>
@@ -553,25 +553,25 @@ const HomePage = () => {
             {fixtures.slice(0, 4).map((fixture) => (
               <div 
                 key={fixture.id} 
-                className={`bg-[#111] rounded-lg border border-[#1a1a1a] px-5 py-4 hover:border-[#333] transition-colors ${fixture.status === 'Live' ? 'border-red-500/30' : ''}`}
+                className={`bg-[#111] rounded-lg border border-[#1a1a1a] px-3 sm:px-5 py-3 sm:py-4 hover:border-[#333] transition-colors ${fixture.status === 'Live' ? 'border-red-500/30' : ''}`}
                 data-testid={`fixture-${fixture.id}`}
               >
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-zinc-500 w-20 flex-shrink-0">
+                  <div className="flex items-center gap-4">
+                  <span className="text-xs text-zinc-500 w-16 sm:w-20 flex-shrink-0">
                     {new Date(fixture.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
                   </span>
-                  <div className="flex items-center justify-center flex-1 gap-3">
-                    <span className={`font-medium text-sm text-right flex-1 ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <div className="flex items-center justify-center flex-1 gap-2 sm:gap-3 min-w-0">
+                    <span className={`font-medium text-xs sm:text-sm text-right flex-1 truncate ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.home_team}
                     </span>
-                    <div className="bg-[#1a1a1a] rounded px-3 py-1 min-w-[60px] text-center">
+                    <div className="bg-[#1a1a1a] rounded px-2 sm:px-3 py-1 min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0">
                       {fixture.status === 'Completed' ? (
-                        <span className="font-['Bebas_Neue'] text-lg text-white">{fixture.home_score} - {fixture.away_score}</span>
+                        <span className="font-['Bebas_Neue'] text-base sm:text-lg text-white">{fixture.home_score} - {fixture.away_score}</span>
                       ) : (
                         <span className="text-xs text-zinc-500">VS</span>
                       )}
                     </div>
-                    <span className={`font-medium text-sm text-left flex-1 ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-medium text-xs sm:text-sm text-left flex-1 truncate ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.away_team}
                     </span>
                   </div>
@@ -683,11 +683,11 @@ const HomePage = () => {
       </section>
 
       {/* League Table */}
-      <section className="py-16 px-6 bg-[#0a0a0a]" data-testid="standings-section">
+      <section className="py-10 md:py-16 px-4 md:px-6 bg-[#0a0a0a]" data-testid="standings-section">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
             {/* Standings Table */}
-            <div>
+            <div className="min-w-0">
               <span className="badge badge-secondary mb-3">ΠΑΑΟΚ Α' Όμιλος</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
                 Βαθμολογία
@@ -823,7 +823,7 @@ const HomePage = () => {
 const AboutPage = () => (
   <div className="pt-24 min-h-screen" data-testid="about-page">
     {/* Hero */}
-    <section className="py-20 px-6 bg-[#0a0a0a]">
+    <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
         <span className="badge badge-secondary mb-4">Η Ιστορία μας</span>
         <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
@@ -837,8 +837,8 @@ const AboutPage = () => (
     </section>
 
     {/* History */}
-    <section className="py-20 px-6">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+    <section className="py-10 md:py-20 px-4 md:px-6">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
         <div>
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Η Ιστορία μας</h2>
           <div className="space-y-4 text-zinc-300">
@@ -871,7 +871,7 @@ const AboutPage = () => (
     </section>
 
     {/* Values */}
-    <section className="py-20 px-6 bg-[#0a0a0a]">
+    <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 text-center">Οι Αξίες μας</h2>
         <div className="grid md:grid-cols-3 gap-8">
@@ -891,9 +891,9 @@ const AboutPage = () => (
     </section>
 
     {/* Stadium */}
-    <section className="py-20 px-6">
+    <section className="py-10 md:py-20 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           <div>
             <span className="badge badge-secondary mb-4">Έδρα</span>
             <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Γήπεδο Αετού</h2>
@@ -967,7 +967,7 @@ const AcademyPage = () => {
     <div className="pt-24 min-h-screen" data-testid="academy-page">
       {/* Hero */}
       <section 
-        className="py-32 px-6 relative"
+        className="py-20 md:py-32 px-4 md:px-6 relative"
         style={{
           backgroundImage: `url(https://images.unsplash.com/photo-1622659097574-c814ee26068e?w=1600)`,
           backgroundSize: 'cover',
@@ -988,7 +988,7 @@ const AcademyPage = () => {
       </section>
 
       {/* Age Groups */}
-      <section className="py-20 px-6">
+      <section className="py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Ηλικιακές Κατηγορίες</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1014,9 +1014,9 @@ const AcademyPage = () => {
       </section>
 
       {/* Academy Philosophy */}
-      <section className="py-20 px-6 bg-[#0a0a0a]">
+      <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
             <div>
               <span className="badge badge-secondary mb-4">Φιλοσοφία</span>
               <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">
@@ -1072,7 +1072,7 @@ const AcademyPage = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6">
+      <section className="py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6">
             Έτοιμος να Ξεκινήσεις το Ταξίδι σου;
@@ -1118,7 +1118,7 @@ const FixturesPage = () => {
   return (
     <div className="pt-24 min-h-screen" data-testid="fixtures-page">
       {/* Hero */}
-      <section className="py-20 px-6 bg-[#0a0a0a]">
+      <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
@@ -1258,7 +1258,7 @@ const NewsPage = () => {
   return (
     <div className="pt-24 min-h-screen" data-testid="news-page">
       {/* Hero */}
-      <section className="py-20 px-6 bg-[#0a0a0a]">
+      <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Τελευταία Ενημέρωση</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
@@ -1269,7 +1269,7 @@ const NewsPage = () => {
 
       {/* Featured */}
       {featuredNews && (
-        <section className="py-12 px-6">
+        <section className="py-10 md:py-12 px-4 md:px-6">
           <div className="max-w-7xl mx-auto">
             <div 
               className="card group cursor-pointer overflow-hidden"
@@ -1368,7 +1368,7 @@ const ContactPage = () => {
   return (
     <div className="pt-24 min-h-screen" data-testid="contact-page">
       {/* Hero */}
-      <section className="py-20 px-6 bg-[#0a0a0a]">
+      <section className="py-10 md:py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Επικοινωνήστε Μαζί Μας</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
@@ -1377,9 +1377,9 @@ const ContactPage = () => {
         </div>
       </section>
 
-      <section className="py-20 px-6">
+      <section className="py-10 md:py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
             {/* Contact Info */}
             <div>
               <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8 section-heading">

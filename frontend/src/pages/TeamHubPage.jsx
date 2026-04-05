@@ -31,13 +31,13 @@ const TeamTabBar = ({ activeTab, setActiveTab }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-6 py-4 text-center whitespace-nowrap transition-colors ${
+              className={`relative px-3 sm:px-6 py-3 sm:py-4 text-center whitespace-nowrap transition-colors ${
                 activeTab === tab.id ? "text-[#F5A623]" : "text-zinc-500 hover:text-zinc-300"
               }`}
               data-testid={`team-tab-${tab.id}`}
             >
-              <span className="text-[10px] tracking-[0.2em] uppercase block">Η Ομάδα</span>
-              <span className="font-['Bebas_Neue'] text-lg tracking-wide">{tab.label}</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Η Ομάδα</span>
+              <span className="font-['Bebas_Neue'] text-base sm:text-lg tracking-wide">{tab.label}</span>
               {activeTab === tab.id && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />
               )}
@@ -345,11 +345,11 @@ const RosterTab = ({ players }) => {
           <table className="w-full text-sm" data-testid="full-roster-table">
             <thead>
               <tr className="text-left text-[10px] text-zinc-500 uppercase tracking-wider border-b border-[#1e1e1e]">
-                <th className="p-4">Παίκτης</th>
-                <th className="p-4 text-center">Θέση</th>
-                <th className="p-4 text-center">Γκολ</th>
-                <th className="p-4 text-center">Ασίστ</th>
-                <th className="p-4 text-center">Λεπτά</th>
+                <th className="p-2 sm:p-4">Παίκτης</th>
+                <th className="p-2 sm:p-4 text-center">Θέση</th>
+                <th className="p-2 sm:p-4 text-center">Γκολ</th>
+                <th className="p-2 sm:p-4 text-center">Ασίστ</th>
+                <th className="p-2 sm:p-4 text-center hidden sm:table-cell">Λεπτά</th>
               </tr>
             </thead>
             <tbody>
@@ -358,20 +358,20 @@ const RosterTab = ({ players }) => {
                 const stats = p.statistics || {};
                 return (
                   <tr key={p.id} className="border-b border-[#1a1a1a] hover:bg-[#111] transition-colors" data-testid={`roster-player-${p.id}`}>
-                    <td className="p-4">
-                      <Link to={`/player/${p.id}`} className="flex items-center gap-3 hover:text-[#F5A623] transition-colors">
-                        <div className="w-10 h-10 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    <td className="p-2 sm:p-4">
+                      <Link to={`/player/${p.id}`} className="flex items-center gap-2 sm:gap-3 hover:text-[#F5A623] transition-colors">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 flex items-center justify-center">
                           {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Users size={16} className="text-zinc-700" />}
                         </div>
                         <span className="text-white font-medium text-xs uppercase tracking-wide">{p.name}</span>
                       </Link>
                     </td>
-                    <td className="p-4 text-center text-zinc-400 text-xs">
+                    <td className="p-2 sm:p-4 text-center text-zinc-400 text-xs">
                       {p.position === 'Goalkeeper' ? 'Τερμ.' : p.position === 'Defender' ? 'Αμυν.' : p.position === 'Midfielder' ? 'Μέσος' : 'Επιθ.'}
                     </td>
-                    <td className="p-4 text-center text-zinc-300">{stats.goals || 0}</td>
-                    <td className="p-4 text-center text-zinc-300">{stats.assists || 0}</td>
-                    <td className="p-4 text-center text-zinc-300">{stats.minutes_played || 0}</td>
+                    <td className="p-2 sm:p-4 text-center text-zinc-300">{stats.goals || 0}</td>
+                    <td className="p-2 sm:p-4 text-center text-zinc-300">{stats.assists || 0}</td>
+                    <td className="p-2 sm:p-4 text-center text-zinc-300 hidden sm:table-cell">{stats.minutes_played || 0}</td>
                   </tr>
                 );
               })}
@@ -773,7 +773,7 @@ const TeamHubPage = () => {
   if (loading) {
     return (
       <div className="pt-24 min-h-screen">
-        <section className="py-16 px-6 bg-[#0a0a0a]">
+        <section className="py-10 md:py-16 px-4 md:px-6 bg-[#0a0a0a]">
           <div className="max-w-6xl mx-auto">
             <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζόν 2025/26</span>
             <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2">Πρώτη <span className="text-[#F5A623]">Ομάδα</span></h1>
