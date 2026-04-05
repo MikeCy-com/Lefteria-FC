@@ -45,6 +45,8 @@ Live Score
 - [x] **Full-Width Admin UI** (Feb 2026): Main content area uses full width next to fixed sidebar
 - [x] **Admin Player Profile View** (Feb 2026): Clicking player name in any roster opens full profile with view/edit modes, personal info, team info, parent info cards
 - [x] **Public Academy Group Pages** (Feb 2026): /academy/:groupId route with hero, breadcrumb, Ρόστερ/Πρόγραμμα/Γκαλερί tabs, clickable player cards
+- [x] **Academy Season Statistics** (Feb 2026): New Στατιστικά tab on academy group pages with W/D/L record, goals summary (for/against/diff), win rate bar chart, top scorers/assisters/appearances leaderboards
+- [x] **Footer Greek Text** (Feb 2026): Replaced English footer text with Greek equivalent
 
 ## Key API Endpoints
 - POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
