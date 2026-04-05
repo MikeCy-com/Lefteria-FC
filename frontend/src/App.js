@@ -578,36 +578,36 @@ const HomePage = () => {
 
       {/* Birthday Celebrations — Compact Rotating Ticker */}
       {birthdayPlayers.length > 0 && (
-        <section className="py-4 px-6 bg-[#0a0a0a] border-t border-b border-[#1a1a1a] overflow-hidden" data-testid="birthday-section">
+        <section className="py-10 px-6 bg-[#0a0a0a] border-t border-[#1a1a1a]" data-testid="birthday-section">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-base" role="img" aria-label="cake">&#x1F382;</span>
-                <span className="text-xs text-[#F5A623] tracking-widest uppercase font-semibold whitespace-nowrap">Γενέθλια {currentMonthName}</span>
-              </div>
-              <div className="relative flex-1 overflow-hidden">
-                <div className="birthday-ticker flex gap-8 items-center">
-                  {[...birthdayPlayers, ...birthdayPlayers].map((p, i) => (
-                    <Link
-                      key={`${p.id}-${i}`}
-                      to={`/player/${p.id}`}
-                      className="flex items-center gap-3 flex-shrink-0 group"
-                      data-testid={`birthday-player-${p.id}`}
-                    >
-                      <div className="w-9 h-9 rounded-full bg-[#1a1a1a] overflow-hidden border border-[#333] group-hover:border-[#F5A623] transition-colors flex-shrink-0">
-                        {p.image_url ? (
-                          <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-[#F5A623]/40 font-bold">{p.number}</div>
-                        )}
-                      </div>
-                      <div className="whitespace-nowrap">
-                        <span className="text-sm text-white group-hover:text-[#F5A623] transition-colors font-medium">{p.name}</span>
-                        <span className="text-xs text-zinc-500 ml-2">{p.birthday_day}/{String(new Date().getMonth() + 1).padStart(2, '0')} — {p.age} ετών</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            <div className="mb-4">
+              <span className="badge badge-secondary mb-3">Γενέθλια {currentMonthName}</span>
+              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
+                Χρόνια <span className="text-[#F5A623]">Πολλά!</span>
+              </h2>
+            </div>
+            <div className="relative overflow-hidden">
+              <div className="birthday-ticker flex gap-8 items-center">
+                {[...birthdayPlayers, ...birthdayPlayers].map((p, i) => (
+                  <Link
+                    key={`${p.id}-${i}`}
+                    to={`/player/${p.id}`}
+                    className="flex items-center gap-3 flex-shrink-0 group"
+                    data-testid={`birthday-player-${p.id}`}
+                  >
+                    <div className="w-9 h-9 rounded-full bg-[#1a1a1a] overflow-hidden border border-[#333] group-hover:border-[#F5A623] transition-colors flex-shrink-0">
+                      {p.image_url ? (
+                        <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-[#F5A623]/40 font-bold">{p.number}</div>
+                      )}
+                    </div>
+                    <div className="whitespace-nowrap">
+                      <span className="text-sm text-white group-hover:text-[#F5A623] transition-colors font-medium">{p.name}</span>
+                      <span className="text-xs text-zinc-500 ml-2">{p.birthday_day}/{String(new Date().getMonth() + 1).padStart(2, '0')} — {p.age} ετών</span>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
@@ -619,7 +619,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <span className="badge badge-primary mb-3">Ψηφοφορία</span>
+              <span className="badge badge-secondary mb-3">Ψηφοφορία</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
                 Παίκτης του <span className="text-[#F5A623]">Μήνα</span>
               </h2>
