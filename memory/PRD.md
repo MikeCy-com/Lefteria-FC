@@ -1,74 +1,61 @@
-# Lefteria FC / ΛΕΥΤΕΡΙΑ 2024 — PRD
+# Lefteria FC / ΛΕΥΤΕΡΙΑ FC - Product Requirements
 
 ## Original Problem Statement
-Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑΑΟΚ league) with academy section, SportsPress-style design, full CMS admin panel with live match management. Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded.
-
-## Core Requirements
-- Club branding: Orange/gold (#F5A623), Black, White
-- WordPress/SportsPress-style design, entire website in Greek
-- Hidden admin panel at /admin/login (JWT protected)
-- MongoDB database, real official ΠΑΑΟΚ data (105 fixtures, 11 teams)
-- Fully responsive on all screen sizes
+Build a complete football club CMS and public-facing website for "Lefteria FC" (ΛΕΥΤΕΡΙΑ FC). Features include a centralized Team Hub, Player Profiles, Gallery, Web Push Notifications, Match Reports, Player Transfer History, Shop/Tickets page, POTM voting, and seeded data. All frontend UI text must be in Greek.
 
 ## Architecture
-```
-/app/
-├── backend/
-│   ├── server.py              # FastAPI monolith (~2800 lines)
-│   ├── uploads/               # Player images, gallery photos
-│   └── .env
-├── frontend/src/
-│   ├── App.js                 # Routes, Nav (Κατάστημα + cart/profile icons), HomePage
-│   ├── context/CustomerAuth.jsx  # Customer auth context
-│   ├── pages/
-│   │   ├── AdminPanel.jsx     # CMS (16 tabs: + Προϊόντα, Εισιτήρια, Παραγγελίες)
-│   │   ├── NewShopPage.jsx    # Shop with tabs: Εισιτήρια + Ρουχισμός
-│   │   ├── VotePage.jsx       # Login-required POTM voting
-│   │   ├── LoginPage/RegisterPage/ProfilePage/CartPage/CheckoutPage
-│   │   └── TeamHubPage, PlayerProfilePage, MatchReportPage
-```
+- **Frontend**: React + Tailwind CSS + lucide-react, Shadcn/UI components
+- **Backend**: FastAPI + MongoDB (Motor) + PyJWT
+- **Auth**: Dual auth - Admin CMS (`useAdminAuth`) and Customer (`CustomerAuth.jsx`)
+- **Push**: Native VAPID Web Push Notifications
 
-## What's Been Implemented
-- Full Admin CMS (16 tabs including Products, Tickets, Orders management)
-- Customer Auth (registration, login, profile, change password)
-- **Shop with Tickets + Merchandise** — Two tabs: match/seasonal tickets (buy online) + merchandise products from lefteriafc.cy
-- **Admin Product CRUD** — Add/edit/delete products, set prices, sizes, delivery options
-- **Admin Ticket CRUD** — Match tickets (linked to fixtures) + seasonal tickets
-- **Admin Orders** — View all orders, update status (pending→processing→shipped→completed→cancelled)
-- Shopping cart (products + tickets), Checkout with shipping, Order history
-- Login-based POTM Voting, Birthday ticker, Web Push Notifications
-- Full mobile responsiveness
-- Official ΠΑΑΟΚ data seeded (105 fixtures, 11 teams, 6 products, 1 seasonal ticket)
+## Completed Features
+- [x] Public-facing club website (Team Hub, Fixtures, Standings, News, Gallery, Contact)
+- [x] Admin CMS with login
+- [x] Player Profiles with transfer history
+- [x] Match Reports & Live Score control
+- [x] Configurable Standings
+- [x] Web Push Notifications
+- [x] Customer Authentication (Login/Register/Profile)
+- [x] POTM Voting (restricted to authenticated users, with social sharing)
+- [x] E-Commerce: Products, Cart, Checkout, Orders
+- [x] Tickets integrated with Shop
+- [x] Admin management for Orders, Products, Tickets
+- [x] Full Mobile Responsiveness audit
+- [x] Auto Scroll-to-Top on page navigation
+- [x] Match-day reminder push notification (backend endpoint + background task)
+- [x] Social media sharing for POTM votes (Facebook, Twitter, Copy Link)
+- [x] **Admin Panel Restructuring** (Feb 2026):
+  - Sidebar reorganized into collapsible groups: ΣΥΛΛΟΓΟΣ, ΑΚΑΔΗΜΙΑ, ΚΑΤΑΣΤΗΜΑ, ΡΥΘΜΙΣΕΙΣ
+  - Teams management with CRUD (create/edit/delete teams)
+  - Team drill-down: Ρόστερ (Roster), Πρόγραμμα (Schedule), Staff sub-tabs
+  - Academy enhanced with drill-down into players per group
+  - Club Profile moved to Settings > Πληροφορίες
+  - Seasons moved to Settings > Σεζόν
+  - Venues moved to Settings > Γήπεδα
+  - Shop items (Products, Tickets, Orders) grouped under ΚΑΤΑΣΤΗΜΑ
+  - Current season auto-detection endpoint
+  - Dashboard stats updated with Teams count
 
 ## Key API Endpoints
-### Admin Management
-- `GET/POST /api/admin/products` — List/Create products
-- `PUT/DELETE /api/admin/products/{id}` — Update/Delete product
-- `GET/POST /api/admin/tickets` — List/Create tickets
-- `PUT/DELETE /api/admin/tickets/{id}` — Update/Delete ticket
-- `GET /api/admin/orders` — List all orders
-- `PUT /api/admin/orders/{id}/status` — Update order status
-
-### Public
-- `GET /api/products` — List products
-- `GET /api/tickets` — List available tickets (enriched with fixture info)
-- `POST /api/cart/add-ticket` — Add ticket to cart (auth required)
-
-## Routes
-- `/` — Homepage
-- `/shop` — Shop (Εισιτήρια + Ρουχισμός tabs)
-- `/login`, `/register`, `/profile`, `/cart`, `/checkout`
-- `/vote` — POTM voting (requires login)
-- `/team`, `/player/:id`, `/match/:id`
-- `/about`, `/academy`, `/news`, `/contact`
-- `/admin/login` — Admin CMS
+- `POST /api/auth/login` & `POST /api/auth/register` (Customer)
+- `POST /api/admin/login` (Admin CMS)
+- `GET /api/teams` & `POST/PUT/DELETE /api/admin/teams/{id}` (Teams CRUD)
+- `GET /api/current-season` (Auto season detection)
+- `GET /api/players`, `GET /api/fixtures`, `GET /api/standings`
+- `GET /api/products`, `GET /api/tickets`
+- `POST /api/cart/add`, `GET /api/cart`
+- `POST /api/admin/push/match-reminder`
 
 ## DB Collections
-- `admin_users`, `users`, `products`, `tickets`, `carts`, `orders`
-- `potm_votes`, `players`, `fixtures`, `standings`, `news`, `gallery`
+- admins, users (customers), players, teams (NEW), fixtures, standings
+- academy_groups, staff, news, gallery, venues, seasons
+- products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages
 
-## Backlog (P3)
-- Video uploads in gallery
-- AI-generated match report narratives
-- Multi-language support (English toggle)
-- Refactor server.py into FastAPI routers (~2800 lines)
+## Backlog
+- P3: Video uploads in gallery
+- P3: AI-generated match report narratives
+- P3: Multi-language support (English toggle)
+- Refactor: server.py (2800+ lines) into FastAPI routers
+- Refactor: App.js (1600+ lines) - extract Homepage components
+- Refactor: AdminPanel.jsx (2200+ lines) - extract tab components to separate files
