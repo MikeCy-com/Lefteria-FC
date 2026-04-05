@@ -22,13 +22,13 @@ const authH = getAuthHeaders;
 // ==================== SHARED UI COMPONENTS ====================
 const FormModal = ({ title, onClose, onSave, children, saving }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" data-testid="form-modal" onClick={onClose}>
-    <div className="bg-[#141414] border border-[#2a2a2a] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-      <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#141414] z-10 rounded-t-lg">
-        <h2 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">{title}</h2>
-        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10" data-testid="modal-close"><X size={18} /></button>
+    <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#161616] z-10 rounded-t-lg">
+        <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">{title}</h2>
+        <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10" data-testid="modal-close"><X size={18} /></button>
       </div>
-      <div className="p-6 space-y-4">{children}</div>
-      <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a] sticky bottom-0 bg-[#141414] rounded-b-lg">
+      <div className="p-6 space-y-5">{children}</div>
+      <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a] sticky bottom-0 bg-[#161616] rounded-b-lg">
         <button onClick={onSave} disabled={saving} className="admin-btn-primary flex-1" data-testid="modal-save">
           {saving ? <><RefreshCw size={14} className="animate-spin" /> Αποθήκευση...</> : <><Save size={14} /> Αποθήκευση</>}
         </button>
@@ -40,7 +40,7 @@ const FormModal = ({ title, onClose, onSave, children, saving }) => (
 
 const Field = ({ label, children }) => (
   <div>
-    <label className="block text-xs font-medium text-zinc-500 mb-1.5 uppercase tracking-wider">{label}</label>
+    <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">{label}</label>
     {children}
   </div>
 );
@@ -60,17 +60,17 @@ const AdminTextarea = ({ className = "", ...props }) => (
 const TabHeader = ({ title, count, children }) => (
   <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
     <div>
-      <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">{title}</h2>
-      {count !== undefined && <span className="text-xs text-zinc-500">{count} εγγραφές</span>}
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">{title}</h2>
+      {count !== undefined && <span className="text-sm text-zinc-400">{count} εγγραφές</span>}
     </div>
     <div className="flex gap-2 items-center">{children}</div>
   </div>
 );
 
 const EmptyState = ({ icon: Icon, text }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-zinc-600">
+  <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
     <Icon size={48} strokeWidth={1} />
-    <p className="mt-3 text-sm">{text}</p>
+    <p className="mt-3 text-base">{text}</p>
   </div>
 );
 
@@ -87,18 +87,18 @@ const DashboardTab = ({ stats, onTabChange }) => {
 
   return (
     <div data-testid="admin-dashboard">
-      <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide mb-6">Πίνακας Ελέγχου</h2>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide mb-6">Πίνακας Ελέγχου</h2>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((c, i) => (
           <button key={i} onClick={() => onTabChange(c.tab)} className="admin-stat-card group text-left" data-testid={`stat-${c.label}`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{backgroundColor: c.color + '18'}}>
-                <c.icon size={18} style={{color: c.color}} />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: c.color + '18'}}>
+                <c.icon size={20} style={{color: c.color}} />
               </div>
-              <ChevronRight size={14} className="text-zinc-700 group-hover:text-zinc-400 transition-colors" />
+              <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-300 transition-colors" />
             </div>
-            <div className="font-['Bebas_Neue'] text-3xl text-white">{c.value ?? 0}</div>
-            <div className="text-xs text-zinc-500 mt-0.5">{c.label}</div>
+            <div className="font-['Bebas_Neue'] text-4xl text-white">{c.value ?? 0}</div>
+            <div className="text-sm text-zinc-300 mt-1">{c.label}</div>
           </button>
         ))}
       </div>
@@ -1383,7 +1383,7 @@ const GalleryTab = ({ onRefresh: parentRefresh }) => {
 };
 
 // ==================== TEAMS TAB (with drill-down) ====================
-const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
+const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTabChange }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editTeam, setEditTeam] = useState(null);
@@ -1396,6 +1396,12 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
   const [savingPlayer, setSavingPlayer] = useState(false);
   const emptyPlayer = { name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "", image_url: "", bio: "", height: "", weight: "", preferred_foot: "Right" };
   const [playerForm, setPlayerForm] = useState(emptyPlayer);
+  // Gallery state
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [showGalleryForm, setShowGalleryForm] = useState(false);
+  const [galleryForm, setGalleryForm] = useState({ title: "", image_url: "", category: "Match Day", description: "" });
+  const [savingGallery, setSavingGallery] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const openCreateTeam = () => { setForm(emptyForm); setEditTeam(null); setShowForm(true); };
   const openEditTeam = (t) => { setForm({ name: t.name, level: t.level, description: t.description || "" }); setEditTeam(t); setShowForm(true); };
@@ -1437,7 +1443,43 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
     try { await axios.delete(`${API}/admin/players/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
-  // Refresh team data when teams list changes
+  // Gallery functions
+  const fetchGallery = useCallback(async () => {
+    if (!selectedTeam) return;
+    try {
+      const res = await axios.get(`${API}/gallery?team_id=${selectedTeam.id}`);
+      setGalleryItems(res.data);
+    } catch (e) { console.error(e); }
+  }, [selectedTeam]);
+
+  useEffect(() => { if (detailTab === "gallery" && selectedTeam) fetchGallery(); }, [detailTab, selectedTeam, fetchGallery]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await axios.post(`${API}/admin/gallery/upload`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      setGalleryForm(prev => ({ ...prev, image_url: res.data.url }));
+    } catch (e) { alert("Σφάλμα μεταφόρτωσης"); } finally { setUploadingFile(false); }
+  };
+
+  const handleSaveGallery = async () => {
+    setSavingGallery(true);
+    try {
+      const headers = getAuthHeaders();
+      await axios.post(`${API}/admin/gallery`, { ...galleryForm, team_id: selectedTeam.id }, { headers });
+      setShowGalleryForm(false); fetchGallery();
+      setGalleryForm({ title: "", image_url: "", category: "Match Day", description: "" });
+    } catch (e) { alert("Σφάλμα"); } finally { setSavingGallery(false); }
+  };
+
+  const handleDeleteGallery = async (id) => {
+    if (!window.confirm("Διαγραφή;")) return;
+    try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); }
+  };
+
   useEffect(() => {
     if (selectedTeam) {
       const updated = teams.find(t => t.id === selectedTeam.id);
@@ -1452,30 +1494,32 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
 
     return (
       <div data-testid="team-detail-view">
-        <button onClick={() => setSelectedTeam(null)} className="admin-btn-ghost text-xs mb-4" data-testid="back-to-teams">
+        <button onClick={() => setSelectedTeam(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-teams">
           <ChevronRight size={14} className="rotate-180" /> Πίσω στις ομάδες
         </button>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-['Bebas_Neue'] text-3xl text-[#F5A623] tracking-wide">{selectedTeam.name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="admin-badge admin-badge-gold text-[10px]">{selectedTeam.level}</span>
-              {selectedTeam.description && <span className="text-zinc-500 text-xs">{selectedTeam.description}</span>}
+            <h2 className="font-['Bebas_Neue'] text-4xl text-[#F5A623] tracking-wide">{selectedTeam.name}</h2>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="admin-badge admin-badge-gold">{selectedTeam.level}</span>
+              {selectedTeam.description && <span className="text-zinc-300 text-sm">{selectedTeam.description}</span>}
             </div>
           </div>
         </div>
-        <div className="flex gap-1 mb-6 border-b border-[#222] pb-0">
+        <div className="flex gap-1 mb-6 border-b border-[#262626] pb-0 overflow-x-auto">
           {[
             { id: "roster", label: "Ρόστερ", icon: Users, count: teamPlayers.length },
             { id: "schedule", label: "Πρόγραμμα", icon: Calendar, count: teamFixtures.length },
             { id: "team_staff", label: "Staff", icon: UserCog, count: teamStaff.length },
+            { id: "standings_tab", label: "Βαθμολογία", icon: Trophy, count: standings?.length || 0 },
+            { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDetailTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors -mb-[1px] ${
-                detailTab === tab.id ? 'border-[#F5A623] text-[#F5A623]' : 'border-transparent text-zinc-500 hover:text-white'
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
+                detailTab === tab.id ? 'border-[#F5A623] text-[#F5A623]' : 'border-transparent text-zinc-400 hover:text-white'
               }`} data-testid={`team-tab-${tab.id}`}>
-              <tab.icon size={14} /> {tab.label}
-              <span className="text-[10px] ml-1 opacity-60">({tab.count})</span>
+              <tab.icon size={15} /> {tab.label}
+              <span className="text-xs ml-1 opacity-60">({tab.count})</span>
             </button>
           ))}
         </div>
@@ -1491,15 +1535,15 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
                 <tbody>
                   {teamPlayers.map(p => (
                     <tr key={p.id}>
-                      <td className="font-mono text-zinc-500">{p.number}</td>
-                      <td>{p.image_url ? <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>}</td>
+                      <td className="font-mono text-zinc-400">{p.number}</td>
+                      <td>{p.image_url ? <img src={p.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={14} className="text-zinc-600" /></div>}</td>
                       <td className="font-medium text-white">{p.name}</td>
-                      <td className="text-zinc-400">{p.position}</td>
-                      <td className="text-zinc-400">{p.age}</td>
+                      <td className="text-zinc-300">{p.position}</td>
+                      <td className="text-zinc-300">{p.age}</td>
                       <td>
                         <div className="flex gap-1">
-                          <button onClick={() => openEditPlayer(p)} className="admin-icon-btn" data-testid={`edit-team-player-${p.id}`}><Edit2 size={13} /></button>
-                          <button onClick={() => handleDeletePlayer(p.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-player-${p.id}`}><Trash2 size={13} /></button>
+                          <button onClick={() => openEditPlayer(p)} className="admin-icon-btn" data-testid={`edit-team-player-${p.id}`}><Edit2 size={14} /></button>
+                          <button onClick={() => handleDeletePlayer(p.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-team-player-${p.id}`}><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -1542,10 +1586,10 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
                 <tbody>
                   {teamFixtures.map(f => (
                     <tr key={f.id}>
-                      <td className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
-                      <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.home_team}</td>
-                      <td className="font-['Bebas_Neue'] text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
-                      <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.away_team}</td>
+                      <td className="text-sm text-zinc-400">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
+                      <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-200'}>{f.home_team}</td>
+                      <td className="font-['Bebas_Neue'] text-lg text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
+                      <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-200'}>{f.away_team}</td>
                       <td><span className={f.status === 'Completed' ? 'badge-completed' : f.status === 'Live' ? 'badge-live' : 'admin-badge admin-badge-default'}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span></td>
                     </tr>
                   ))}
@@ -1564,15 +1608,64 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
                 <tbody>
                   {teamStaff.map(s => (
                     <tr key={s.id}>
-                      <td>{s.image_url ? <img src={s.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><UserCog size={12} className="text-zinc-700" /></div>}</td>
+                      <td>{s.image_url ? <img src={s.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><UserCog size={14} className="text-zinc-600" /></div>}</td>
                       <td className="font-medium text-white">{s.name}</td>
-                      <td className="text-zinc-400">{s.role}</td>
+                      <td className="text-zinc-300">{s.role}</td>
                     </tr>
                   ))}
                   {teamStaff.length === 0 && <tr><td colSpan={3}><EmptyState icon={UserCog} text="Δεν υπάρχουν μέλη staff" /></td></tr>}
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {detailTab === "standings_tab" && (
+          <StandingsTab standings={standings} onRefresh={onRefresh} />
+        )}
+
+        {detailTab === "gallery" && (
+          <div>
+            <div className="flex justify-end mb-4">
+              <button onClick={() => setShowGalleryForm(true)} className="admin-btn-primary" data-testid="add-team-gallery-btn"><Plus size={14} /> Νέα Φωτογραφία</button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {galleryItems.map(item => (
+                <div key={item.id} className="bg-[#151515] border border-[#262626] rounded-lg overflow-hidden group" data-testid={`gallery-item-${item.id}`}>
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-white text-sm font-medium truncate">{item.title}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="admin-badge admin-badge-default text-xs">{item.category}</span>
+                      <button onClick={() => handleDeleteGallery(item.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {galleryItems.length === 0 && <div className="col-span-full"><EmptyState icon={Image} text="Δεν υπάρχουν φωτογραφίες" /></div>}
+            </div>
+            {showGalleryForm && (
+              <FormModal title="Νέα Φωτογραφία" onClose={() => setShowGalleryForm(false)} onSave={handleSaveGallery} saving={savingGallery}>
+                <Field label="Τίτλος *"><AdminInput value={galleryForm.title} onChange={e => setGalleryForm({...galleryForm, title: e.target.value})} /></Field>
+                <Field label="Εικόνα *">
+                  <div className="flex gap-2">
+                    <AdminInput value={galleryForm.image_url} onChange={e => setGalleryForm({...galleryForm, image_url: e.target.value})} placeholder="URL εικόνας" className="flex-1" />
+                    <label className="admin-btn-ghost cursor-pointer flex items-center">
+                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      {uploadingFile ? <RefreshCw size={14} className="animate-spin" /> : "Upload"}
+                    </label>
+                  </div>
+                </Field>
+                <Field label="Κατηγορία">
+                  <AdminSelect value={galleryForm.category} onChange={e => setGalleryForm({...galleryForm, category: e.target.value})}>
+                    <option value="Match Day">Match Day</option><option value="Training">Training</option><option value="Team Events">Team Events</option><option value="Fans">Fans</option><option value="Other">Other</option>
+                  </AdminSelect>
+                </Field>
+                <Field label="Περιγραφή"><AdminInput value={galleryForm.description} onChange={e => setGalleryForm({...galleryForm, description: e.target.value})} /></Field>
+              </FormModal>
+            )}
           </div>
         )}
       </div>
@@ -1584,23 +1677,23 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
       <TabHeader title="Ομάδες" count={teams.length}>
         <button onClick={openCreateTeam} className="admin-btn-primary" data-testid="add-team-btn"><Plus size={14} /> Νέα Ομάδα</button>
       </TabHeader>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.map(team => (
-          <div key={team.id} className="admin-card p-5 cursor-pointer hover:border-[#F5A623]/40 transition-colors group" onClick={() => { setSelectedTeam(team); setDetailTab("roster"); }} data-testid={`team-card-${team.id}`}>
+          <div key={team.id} className="admin-card p-6 cursor-pointer hover:border-[#F5A623]/40 transition-colors group" onClick={() => { setSelectedTeam(team); setDetailTab("roster"); }} data-testid={`team-card-${team.id}`}>
             <div className="flex justify-between items-start mb-3">
               <div>
-                <h3 className="font-['Bebas_Neue'] text-xl text-white group-hover:text-[#F5A623] transition-colors">{team.name}</h3>
-                <span className="admin-badge admin-badge-gold text-[10px] mt-1">{team.level}</span>
+                <h3 className="font-['Bebas_Neue'] text-2xl text-white group-hover:text-[#F5A623] transition-colors">{team.name}</h3>
+                <span className="admin-badge admin-badge-gold mt-1">{team.level}</span>
               </div>
               <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                <button onClick={() => openEditTeam(team)} className="admin-icon-btn" data-testid={`edit-team-${team.id}`}><Edit2 size={13} /></button>
-                <button onClick={() => handleDeleteTeam(team.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-${team.id}`}><Trash2 size={13} /></button>
+                <button onClick={() => openEditTeam(team)} className="admin-icon-btn" data-testid={`edit-team-${team.id}`}><Edit2 size={14} /></button>
+                <button onClick={() => handleDeleteTeam(team.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-${team.id}`}><Trash2 size={14} /></button>
               </div>
             </div>
-            {team.description && <p className="text-zinc-500 text-xs mb-2">{team.description}</p>}
-            <div className="flex gap-3 text-xs text-zinc-600">
-              <span className="flex items-center gap-1"><Users size={11} /> {team.player_count || 0} παίκτες</span>
-              <ChevronRight size={14} className="text-zinc-700 group-hover:text-[#F5A623] ml-auto transition-colors" />
+            {team.description && <p className="text-zinc-400 text-sm mb-3">{team.description}</p>}
+            <div className="flex gap-3 text-sm text-zinc-400">
+              <span className="flex items-center gap-1"><Users size={14} /> {team.player_count || 0} παίκτες</span>
+              <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#F5A623] ml-auto transition-colors" />
             </div>
           </div>
         ))}
@@ -1623,14 +1716,21 @@ const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
   );
 };
 
-// ==================== ENHANCED ACADEMY TAB (with drill-down) ====================
+// ==================== ENHANCED ACADEMY TAB (with drill-down + gallery) ====================
 const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editGroup, setEditGroup] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [detailTab, setDetailTab] = useState("roster");
   const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26" };
   const [form, setForm] = useState(emptyGroup);
+  // Gallery state
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [showGalleryForm, setShowGalleryForm] = useState(false);
+  const [galleryForm, setGalleryForm] = useState({ title: "", image_url: "", category: "Training", description: "" });
+  const [savingGallery, setSavingGallery] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const openCreate = () => { setForm(emptyGroup); setEditGroup(null); setShowForm(true); };
   const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26" }); setEditGroup(g); setShowForm(true); };
@@ -1651,39 +1751,132 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
     try { await axios.delete(`${API}/admin/academy-groups/${id}`, { headers: getAuthHeaders() }); if (selectedGroup?.id === id) setSelectedGroup(null); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
+  // Gallery functions
+  const fetchGallery = useCallback(async () => {
+    if (!selectedGroup) return;
+    try {
+      const res = await axios.get(`${API}/gallery?academy_group_id=${selectedGroup.id}`);
+      setGalleryItems(res.data);
+    } catch (e) { console.error(e); }
+  }, [selectedGroup]);
+
+  useEffect(() => { if (detailTab === "gallery" && selectedGroup) fetchGallery(); }, [detailTab, selectedGroup, fetchGallery]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await axios.post(`${API}/admin/gallery/upload`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      setGalleryForm(prev => ({ ...prev, image_url: res.data.url }));
+    } catch (e) { alert("Σφάλμα μεταφόρτωσης"); } finally { setUploadingFile(false); }
+  };
+
+  const handleSaveGallery = async () => {
+    setSavingGallery(true);
+    try {
+      const headers = getAuthHeaders();
+      await axios.post(`${API}/admin/gallery`, { ...galleryForm, academy_group_id: selectedGroup.id }, { headers });
+      setShowGalleryForm(false); fetchGallery();
+      setGalleryForm({ title: "", image_url: "", category: "Training", description: "" });
+    } catch (e) { alert("Σφάλμα"); } finally { setSavingGallery(false); }
+  };
+
+  const handleDeleteGallery = async (id) => {
+    if (!window.confirm("Διαγραφή;")) return;
+    try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); }
+  };
+
   if (selectedGroup) {
     const groupPlayers = players.filter(p => p.academy_group_id === selectedGroup.id);
     return (
       <div data-testid="academy-detail-view">
-        <button onClick={() => setSelectedGroup(null)} className="admin-btn-ghost text-xs mb-4" data-testid="back-to-academy">
+        <button onClick={() => setSelectedGroup(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-academy">
           <ChevronRight size={14} className="rotate-180" /> Πίσω στις ομάδες
         </button>
         <div className="mb-6">
-          <h2 className="font-['Bebas_Neue'] text-3xl text-[#10B981] tracking-wide">{selectedGroup.name}</h2>
-          <div className="flex items-center gap-3 mt-1 text-sm text-zinc-400">
-            <span className="admin-badge admin-badge-green text-[10px]">{selectedGroup.age_range}</span>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-[#10B981] tracking-wide">{selectedGroup.name}</h2>
+          <div className="flex items-center gap-3 mt-2 text-sm text-zinc-300">
+            <span className="admin-badge admin-badge-green">{selectedGroup.age_range}</span>
             {selectedGroup.coach_name && <span>Προπονητής: {selectedGroup.coach_name}</span>}
-            {selectedGroup.training_schedule && <span className="flex items-center gap-1"><Clock size={12} /> {selectedGroup.training_schedule}</span>}
+            {selectedGroup.training_schedule && <span className="flex items-center gap-1"><Clock size={14} /> {selectedGroup.training_schedule}</span>}
           </div>
         </div>
-        <TabHeader title="Παίκτες Ακαδημίας" count={groupPlayers.length} />
-        <div className="admin-table-wrap">
-          <table className="admin-table" data-testid="academy-players-table">
-            <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th></tr></thead>
-            <tbody>
-              {groupPlayers.map(p => (
-                <tr key={p.id}>
-                  <td className="font-mono text-zinc-500">{p.number}</td>
-                  <td>{p.image_url ? <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>}</td>
-                  <td className="font-medium text-white">{p.name}</td>
-                  <td className="text-zinc-400">{p.position}</td>
-                  <td className="text-zinc-400">{p.age}</td>
-                </tr>
-              ))}
-              {groupPlayers.length === 0 && <tr><td colSpan={5}><EmptyState icon={Users} text="Δεν υπάρχουν παίκτες σε αυτή την ομάδα" /></td></tr>}
-            </tbody>
-          </table>
+        <div className="flex gap-1 mb-6 border-b border-[#262626] pb-0">
+          {[
+            { id: "roster", label: "Παίκτες", icon: Users, count: groupPlayers.length },
+            { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setDetailTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
+                detailTab === tab.id ? 'border-[#10B981] text-[#10B981]' : 'border-transparent text-zinc-400 hover:text-white'
+              }`} data-testid={`academy-tab-${tab.id}`}>
+              <tab.icon size={15} /> {tab.label}
+              <span className="text-xs ml-1 opacity-60">({tab.count})</span>
+            </button>
+          ))}
         </div>
+
+        {detailTab === "roster" && (
+          <div className="admin-table-wrap">
+            <table className="admin-table" data-testid="academy-players-table">
+              <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th></tr></thead>
+              <tbody>
+                {groupPlayers.map(p => (
+                  <tr key={p.id}>
+                    <td className="font-mono text-zinc-400">{p.number}</td>
+                    <td>{p.image_url ? <img src={p.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={14} className="text-zinc-600" /></div>}</td>
+                    <td className="font-medium text-white">{p.name}</td>
+                    <td className="text-zinc-300">{p.position}</td>
+                    <td className="text-zinc-300">{p.age}</td>
+                  </tr>
+                ))}
+                {groupPlayers.length === 0 && <tr><td colSpan={5}><EmptyState icon={Users} text="Δεν υπάρχουν παίκτες" /></td></tr>}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {detailTab === "gallery" && (
+          <div>
+            <div className="flex justify-end mb-4">
+              <button onClick={() => setShowGalleryForm(true)} className="admin-btn-primary" data-testid="add-academy-gallery-btn"><Plus size={14} /> Νέα Φωτογραφία</button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {galleryItems.map(item => (
+                <div key={item.id} className="bg-[#151515] border border-[#262626] rounded-lg overflow-hidden group">
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-white text-sm font-medium truncate">{item.title}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="admin-badge admin-badge-default text-xs">{item.category}</span>
+                      <button onClick={() => handleDeleteGallery(item.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {galleryItems.length === 0 && <div className="col-span-full"><EmptyState icon={Image} text="Δεν υπάρχουν φωτογραφίες" /></div>}
+            </div>
+            {showGalleryForm && (
+              <FormModal title="Νέα Φωτογραφία" onClose={() => setShowGalleryForm(false)} onSave={handleSaveGallery} saving={savingGallery}>
+                <Field label="Τίτλος *"><AdminInput value={galleryForm.title} onChange={e => setGalleryForm({...galleryForm, title: e.target.value})} /></Field>
+                <Field label="Εικόνα *">
+                  <div className="flex gap-2">
+                    <AdminInput value={galleryForm.image_url} onChange={e => setGalleryForm({...galleryForm, image_url: e.target.value})} placeholder="URL εικόνας" className="flex-1" />
+                    <label className="admin-btn-ghost cursor-pointer flex items-center">
+                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      {uploadingFile ? <RefreshCw size={14} className="animate-spin" /> : "Upload"}
+                    </label>
+                  </div>
+                </Field>
+                <Field label="Περιγραφή"><AdminInput value={galleryForm.description} onChange={e => setGalleryForm({...galleryForm, description: e.target.value})} /></Field>
+              </FormModal>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -1693,22 +1886,22 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
       <TabHeader title="Ομάδες Ακαδημίας" count={groups.length}>
         <button onClick={openCreate} className="admin-btn-primary" data-testid="add-academy-group-btn"><Plus size={14} /> Νέα Ομάδα</button>
       </TabHeader>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {groups.map(g => (
-          <div key={g.id} className="admin-card p-5 cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => setSelectedGroup(g)} data-testid={`academy-group-${g.id}`}>
+          <div key={g.id} className="admin-card p-6 cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => { setSelectedGroup(g); setDetailTab("roster"); }} data-testid={`academy-group-${g.id}`}>
             <div className="flex justify-between items-start mb-2">
               <span className="font-['Bebas_Neue'] text-2xl text-[#10B981] group-hover:text-white transition-colors">{g.name}</span>
               <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={13} /></button>
-                <button onClick={() => handleDelete(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
+                <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={14} /></button>
+                <button onClick={() => handleDelete(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={14} /></button>
               </div>
             </div>
-            <span className="admin-badge admin-badge-green text-[10px] mb-2">{g.age_range}</span>
-            <p className="text-zinc-300 text-sm mb-1">{g.coach_name}</p>
-            <p className="text-zinc-600 text-xs flex items-center gap-1"><Clock size={11} /> {g.training_schedule}</p>
-            <div className="flex items-center mt-2 text-xs text-zinc-600">
-              <Users size={11} className="mr-1" /> {players.filter(p => p.academy_group_id === g.id).length} παίκτες
-              <ChevronRight size={14} className="text-zinc-700 group-hover:text-[#10B981] ml-auto transition-colors" />
+            <span className="admin-badge admin-badge-green mb-2">{g.age_range}</span>
+            <p className="text-zinc-200 text-sm mb-1">{g.coach_name}</p>
+            <p className="text-zinc-400 text-sm flex items-center gap-1"><Clock size={13} /> {g.training_schedule}</p>
+            <div className="flex items-center mt-3 text-sm text-zinc-400">
+              <Users size={13} className="mr-1" /> {players.filter(p => p.academy_group_id === g.id).length} παίκτες
+              <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] ml-auto transition-colors" />
             </div>
           </div>
         ))}
@@ -2069,14 +2262,12 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "divider" },
     { type: "group", id: "club_section", label: "Συλλόγος", icon: Building2, items: [
       { id: "teams", label: "Ομάδες", icon: Shield },
-      { id: "standings", label: "Βαθμολογία", icon: Trophy },
     ]},
     { type: "group", id: "academy_section", label: "Ακαδημία", icon: GraduationCap, items: [
       { id: "academy", label: "Ομάδες", icon: Users },
     ]},
     { type: "divider" },
     { type: "item", id: "news", label: "Νέα", icon: Newspaper },
-    { type: "item", id: "gallery", label: "Γκαλερί", icon: Image },
     { type: "item", id: "messages", label: "Μηνύματα", icon: Mail },
     { type: "divider" },
     { type: "group", id: "shop_section", label: "Κατάστημα", icon: ShoppingCart, items: [
@@ -2111,7 +2302,7 @@ const AdminPanel = ({ user, onLogout }) => {
     switch (activeTab) {
       case "dashboard": return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
       case "livescore": return <LiveScoreTab fixtures={data.fixtures} players={data.players} onRefresh={fetchAll} />;
-      case "teams": return <TeamsTab teams={data.teams} players={data.players} fixtures={data.fixtures} staff={data.staff} onRefresh={fetchAll} />;
+      case "teams": return <TeamsTab teams={data.teams} players={data.players} fixtures={data.fixtures} staff={data.staff} standings={data.standings} onRefresh={fetchAll} onTabChange={setActiveTab} />;
       case "standings": return <StandingsTab standings={data.standings} onRefresh={fetchAll} />;
       case "academy": return <EnhancedAcademyTab groups={data.academyGroups} players={data.players} onRefresh={fetchAll} />;
       case "news": return <NewsTab news={data.news} onRefresh={fetchAll} />;
@@ -2142,40 +2333,40 @@ const AdminPanel = ({ user, onLogout }) => {
   return (
     <div className="min-h-screen bg-[#0a0a0a]" data-testid="admin-page">
       {/* Admin Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#111111] border-b border-[#1e1e1e] flex items-center px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#121212] border-b border-[#262626] flex items-center px-4">
         <div className="flex items-center gap-3">
           <img src={CLUB_LOGO} alt="" className="w-8 h-8" />
           <div>
-            <span className="font-['Bebas_Neue'] text-base text-white tracking-wide">LEFTERIA FC</span>
-            <span className="text-[10px] text-[#F5A623] ml-2 tracking-widest">CMS</span>
+            <span className="font-['Bebas_Neue'] text-lg text-white tracking-wide">LEFTERIA FC</span>
+            <span className="text-[11px] text-[#F5A623] ml-2 tracking-widest font-medium">CMS</span>
           </div>
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-zinc-500 hidden sm:block">{user?.username}</span>
-          <button onClick={onLogout} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid="admin-logout"><LogOut size={16} /></button>
+          <span className="text-sm text-zinc-400 hidden sm:block">{user?.username}</span>
+          <button onClick={onLogout} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid="admin-logout"><LogOut size={16} /></button>
         </div>
       </header>
 
       <div className="flex pt-14">
         {/* Sidebar - Grouped */}
-        <aside className="w-52 fixed left-0 top-14 bottom-0 bg-[#111111] border-r border-[#1e1e1e] hidden lg:flex flex-col overflow-y-auto">
+        <aside className="w-56 fixed left-0 top-14 bottom-0 bg-[#121212] border-r border-[#262626] hidden lg:flex flex-col overflow-y-auto">
           <nav className="py-2 flex-1">
             {sidebarConfig.map((item, idx) => {
-              if (item.type === "divider") return <div key={idx} className="h-px bg-[#1e1e1e] my-2 mx-3" />;
+              if (item.type === "divider") return <div key={idx} className="h-px bg-[#262626] my-3 mx-3" />;
 
               if (item.type === "item") return (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all ${
                     activeTab === item.id
-                      ? 'text-[#F5A623] bg-[#F5A623]/8 border-r-2 border-[#F5A623]'
-                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
+                      ? 'text-[#F5A623] bg-[#F5A623]/10 border-r-2 border-[#F5A623]'
+                      : 'text-zinc-300 hover:text-white hover:bg-white/5'
                   }`}
                   data-testid={`admin-tab-${item.id}`}
                 >
-                  <item.icon size={16} />
-                  <span>{item.label}</span>
+                  <item.icon size={17} />
+                  <span className="font-medium">{item.label}</span>
                   {item.id === "livescore" && liveCount > 0 && (
                     <span className="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                   )}
@@ -2192,14 +2383,14 @@ const AdminPanel = ({ user, onLogout }) => {
                   <div key={item.id}>
                     <button
                       onClick={() => toggleGroup(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium uppercase tracking-wider transition-all ${
-                        hasActiveChild ? 'text-[#F5A623]' : 'text-zinc-500 hover:text-zinc-300'
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all ${
+                        hasActiveChild ? 'text-[#F5A623]' : 'text-zinc-400 hover:text-zinc-200'
                       }`}
                       data-testid={`admin-group-${item.id}`}
                     >
-                      <item.icon size={14} />
+                      <item.icon size={15} />
                       <span className="flex-1 text-left">{item.label}</span>
-                      <ChevronDown size={12} className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                      <ChevronDown size={13} className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
                     </button>
                     {isExpanded && (
                       <div className="pb-1">
@@ -2207,14 +2398,14 @@ const AdminPanel = ({ user, onLogout }) => {
                           <button
                             key={sub.id}
                             onClick={() => setActiveTab(sub.id)}
-                            className={`w-full flex items-center gap-2 pl-9 pr-3 py-2 text-sm transition-all ${
+                            className={`w-full flex items-center gap-2.5 pl-10 pr-3 py-2.5 text-sm transition-all ${
                               activeTab === sub.id
-                                ? 'text-[#F5A623] bg-[#F5A623]/8 border-r-2 border-[#F5A623]'
-                                : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
+                                ? 'text-[#F5A623] bg-[#F5A623]/10 border-r-2 border-[#F5A623]'
+                                : 'text-zinc-400 hover:text-white hover:bg-white/5'
                             }`}
                             data-testid={`admin-tab-${sub.id}`}
                           >
-                            <sub.icon size={14} />
+                            <sub.icon size={15} />
                             <span>{sub.label}</span>
                           </button>
                         ))}
@@ -2229,21 +2420,21 @@ const AdminPanel = ({ user, onLogout }) => {
         </aside>
 
         {/* Mobile Tab Bar */}
-        <div className="lg:hidden fixed top-14 left-0 right-0 bg-[#111111] border-b border-[#1e1e1e] z-40 overflow-x-auto">
-          <div className="flex p-1.5 gap-1">
+        <div className="lg:hidden fixed top-14 left-0 right-0 bg-[#121212] border-b border-[#262626] z-40 overflow-x-auto">
+          <div className="flex p-2 gap-1">
             {mobileTabs.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap rounded flex items-center gap-1 ${
-                  activeTab === tab.id ? 'bg-[#F5A623]/15 text-[#F5A623]' : 'text-zinc-600 hover:text-zinc-400'
+                className={`px-3 py-2 text-xs whitespace-nowrap rounded flex items-center gap-1.5 font-medium ${
+                  activeTab === tab.id ? 'bg-[#F5A623]/15 text-[#F5A623]' : 'text-zinc-400 hover:text-zinc-200'
                 }`}>
-                <tab.icon size={12} /> {tab.label}
+                <tab.icon size={13} /> {tab.label}
               </button>
             ))}
           </div>
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-52 p-5 pt-16 lg:pt-5 min-h-[calc(100vh-56px)]">
+        <main className="flex-1 lg:ml-56 p-6 pt-18 lg:pt-6 min-h-[calc(100vh-56px)]">
           <div className="max-w-6xl mx-auto">
             {renderTab()}
           </div>

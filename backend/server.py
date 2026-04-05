@@ -671,6 +671,8 @@ class GalleryItem(BaseModel):
     description: Optional[str] = None
     match_id: Optional[str] = None
     player_id: Optional[str] = None
+    team_id: Optional[str] = None
+    academy_group_id: Optional[str] = None
     tags: List[str] = []
     is_featured: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -682,6 +684,8 @@ class GalleryItemCreate(BaseModel):
     description: Optional[str] = None
     match_id: Optional[str] = None
     player_id: Optional[str] = None
+    team_id: Optional[str] = None
+    academy_group_id: Optional[str] = None
     tags: List[str] = []
     is_featured: bool = False
 
@@ -1728,7 +1732,7 @@ async def update_standings_columns(config: StandingsColumnConfig, current_user: 
 # ==================== GALLERY ====================
 # Public: Get gallery items
 @api_router.get("/gallery", response_model=List[GalleryItem])
-async def get_gallery(category: Optional[str] = None, player_id: Optional[str] = None, match_id: Optional[str] = None, featured: Optional[bool] = None, limit: int = 50):
+async def get_gallery(category: Optional[str] = None, player_id: Optional[str] = None, match_id: Optional[str] = None, featured: Optional[bool] = None, team_id: Optional[str] = None, academy_group_id: Optional[str] = None, limit: int = 50):
     query = {}
     if category:
         query["category"] = category
@@ -1738,6 +1742,10 @@ async def get_gallery(category: Optional[str] = None, player_id: Optional[str] =
         query["match_id"] = match_id
     if featured is not None:
         query["is_featured"] = featured
+    if team_id:
+        query["team_id"] = team_id
+    if academy_group_id:
+        query["academy_group_id"] = academy_group_id
     items = await db.gallery.find(query, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
     return [GalleryItem(**item) for item in items]
 
