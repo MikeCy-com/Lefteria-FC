@@ -207,6 +207,20 @@ class AcademyGroupCreate(BaseModel):
     max_players: int = 25
     season: str = "2025/26"
 
+# Team Model (Senior Teams)
+class TeamCreate(BaseModel):
+    name: str
+    level: str = "Α' Ομάδα"
+    description: str = ""
+
+class Team(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    level: str = "Α' Ομάδα"
+    description: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Player Profile Model (Extended)
 class PlayerStatistics(BaseModel):
     appearances: int = 0
@@ -241,6 +255,7 @@ class Player(BaseModel):
     team_type: TeamType = TeamType.FIRST_TEAM
     academy_group_id: Optional[str] = None
     academy_group_name: Optional[str] = None
+    team_id: Optional[str] = None
     # Profile
     image_url: Optional[str] = None
     bio: Optional[str] = None
@@ -272,6 +287,7 @@ class PlayerCreate(BaseModel):
     preferred_foot: Optional[str] = None
     team_type: TeamType = TeamType.FIRST_TEAM
     academy_group_id: Optional[str] = None
+    team_id: Optional[str] = None
     image_url: Optional[str] = None
     bio: Optional[str] = None
     previous_clubs: List[PreviousClub] = Field(default_factory=list)
@@ -293,6 +309,7 @@ class PlayerUpdate(BaseModel):
     preferred_foot: Optional[str] = None
     team_type: Optional[TeamType] = None
     academy_group_id: Optional[str] = None
+    team_id: Optional[str] = None
     image_url: Optional[str] = None
     bio: Optional[str] = None
     previous_clubs: Optional[List[PreviousClub]] = None
@@ -904,6 +921,17 @@ async def get_seasons():
     seasons = await db.seasons.find({}, {"_id": 0}).sort("start_date", -1).to_list(100)
     return [Season(**s) for s in seasons]
 
+@api_router.get("/current-season")
+async def get_current_season():
+    season = await db.seasons.find_one({"is_current": True}, {"_id": 0})
+    if season:
+        return season
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    season = await db.seasons.find_one(
+        {"start_date": {"$lte": now_str}, "end_date": {"$gte": now_str}}, {"_id": 0}
+    )
+    return season or {"name": "2025/26", "is_current": True}
+
 # News (Public Read)
 @api_router.get("/news", response_model=List[News])
 async def get_news(
@@ -1197,6 +1225,40 @@ async def remove_player_from_group(group_id: str, player_id: str, current_user: 
         {"$set": {"academy_group_id": None, "academy_group_name": None}}
     )
     return {"message": "Ο παίκτης αφαιρέθηκε από την ομάδα"}
+
+# ==================== TEAM MANAGEMENT ====================
+@api_router.get("/teams")
+async def get_teams():
+    teams = await db.teams.find({}, {"_id": 0}).sort("created_at", 1).to_list(50)
+    for team in teams:
+        team["player_count"] = await db.players.count_documents({"team_id": team["id"], "is_active": True})
+    return teams
+
+@api_router.post("/admin/teams")
+async def create_team(team: TeamCreate, current_user: dict = Depends(get_current_user)):
+    team_obj = Team(**team.model_dump())
+    doc = team_obj.model_dump()
+    await db.teams.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.put("/admin/teams/{team_id}")
+async def update_team(team_id: str, team: TeamCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.teams.find_one({"id": team_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Η ομάδα δεν βρέθηκε")
+    update_data = team.model_dump()
+    await db.teams.update_one({"id": team_id}, {"$set": update_data})
+    updated = await db.teams.find_one({"id": team_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/teams/{team_id}")
+async def delete_team(team_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.teams.delete_one({"id": team_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Η ομάδα δεν βρέθηκε")
+    await db.players.update_many({"team_id": team_id}, {"$unset": {"team_id": ""}})
+    return {"message": "Η ομάδα διαγράφηκε"}
 
 # Staff Admin
 @api_router.post("/admin/staff", response_model=Staff)
@@ -1616,6 +1678,7 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     messages_count = await db.contact_messages.count_documents({})
     groups_count = await db.academy_groups.count_documents({})
     gallery_count = await db.gallery.count_documents({})
+    teams_count = await db.teams.count_documents({})
     
     return {
         "first_team_players": first_team_count,
@@ -1625,7 +1688,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "news_articles": news_count,
         "unread_messages": messages_count,
         "academy_groups": groups_count,
-        "gallery_photos": gallery_count
+        "gallery_photos": gallery_count,
+        "teams_count": teams_count
     }
 
 
@@ -2758,6 +2822,32 @@ async def startup_tasks():
         if tickets:
             await db.tickets.insert_many(tickets)
             logger.info(f"Seeded {len(tickets)} tickets")
+
+    # Seed default team if none exist
+    team_count = await db.teams.count_documents({})
+    if team_count == 0:
+        default_team_id = str(uuid.uuid4())
+        default_team = {
+            "id": default_team_id,
+            "name": "LEFTERIA FC - Α' Ομάδα",
+            "level": "Α' Ομάδα",
+            "description": "Η πρώτη ομάδα του ΛΕΥΤΕΡΙΑ FC",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.teams.insert_one(default_team)
+        assigned = await db.players.update_many(
+            {"team_type": "First Team"},
+            {"$set": {"team_id": default_team_id}}
+        )
+        logger.info(f"Seeded default team, assigned {assigned.modified_count} players")
+
+    # Assign team_id to First Team players that don't have one
+    first_team = await db.teams.find_one({"level": "Α' Ομάδα"}, {"_id": 0})
+    if first_team:
+        await db.players.update_many(
+            {"team_type": "First Team", "$or": [{"team_id": None}, {"team_id": {"$exists": False}}]},
+            {"$set": {"team_id": first_team["id"]}}
+        )
 
     # Start match-day reminder background task
     import asyncio

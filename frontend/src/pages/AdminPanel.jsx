@@ -4,8 +4,8 @@ import {
   Users, Calendar, Newspaper, Trophy, GraduationCap, Mail,
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
-  Check, Clock, ChevronRight, Settings, Image, ArrowLeftRight,
-  Package, ShoppingCart, Ticket
+  Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
+  Package, ShoppingCart, Ticket, Shield
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -77,10 +77,10 @@ const EmptyState = ({ icon: Icon, text }) => (
 // ==================== DASHBOARD TAB ====================
 const DashboardTab = ({ stats, onTabChange }) => {
   const cards = [
-    { label: "Α' Ομάδα", value: stats.first_team_players, icon: Users, color: "#3B82F6", tab: "players" },
+    { label: "Ομάδες", value: stats.teams_count, icon: Shield, color: "#F5A623", tab: "teams" },
+    { label: "Α' Ομάδα", value: stats.first_team_players, icon: Users, color: "#3B82F6", tab: "teams" },
     { label: "Ακαδημία", value: stats.academy_players, icon: GraduationCap, color: "#10B981", tab: "academy" },
-    { label: "Staff", value: stats.staff_members, icon: UserCog, color: "#8B5CF6", tab: "staff" },
-    { label: "Αγώνες", value: stats.total_fixtures, icon: Calendar, color: "#F5A623", tab: "fixtures" },
+    { label: "Αγώνες", value: stats.total_fixtures, icon: Calendar, color: "#F5A623", tab: "teams" },
     { label: "Νέα", value: stats.news_articles, icon: Newspaper, color: "#06B6D4", tab: "news" },
     { label: "Μηνύματα", value: stats.unread_messages, icon: Mail, color: "#EF4444", tab: "messages" },
   ];
@@ -1382,6 +1382,353 @@ const GalleryTab = ({ onRefresh: parentRefresh }) => {
   );
 };
 
+// ==================== TEAMS TAB (with drill-down) ====================
+const TeamsTab = ({ teams, players, fixtures, staff, onRefresh }) => {
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editTeam, setEditTeam] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [detailTab, setDetailTab] = useState("roster");
+  const emptyForm = { name: "", level: "Α' Ομάδα", description: "" };
+  const [form, setForm] = useState(emptyForm);
+  const [showPlayerForm, setShowPlayerForm] = useState(false);
+  const [editPlayer, setEditPlayer] = useState(null);
+  const [savingPlayer, setSavingPlayer] = useState(false);
+  const emptyPlayer = { name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "", image_url: "", bio: "", height: "", weight: "", preferred_foot: "Right" };
+  const [playerForm, setPlayerForm] = useState(emptyPlayer);
+
+  const openCreateTeam = () => { setForm(emptyForm); setEditTeam(null); setShowForm(true); };
+  const openEditTeam = (t) => { setForm({ name: t.name, level: t.level, description: t.description || "" }); setEditTeam(t); setShowForm(true); };
+
+  const handleSaveTeam = async () => {
+    setSaving(true);
+    try {
+      const headers = getAuthHeaders();
+      if (editTeam) await axios.put(`${API}/admin/teams/${editTeam.id}`, form, { headers });
+      else await axios.post(`${API}/admin/teams`, form, { headers });
+      setShowForm(false); setEditTeam(null); onRefresh();
+    } catch (e) { alert("Σφάλμα"); } finally { setSaving(false); }
+  };
+
+  const handleDeleteTeam = async (id) => {
+    if (!window.confirm("Διαγραφή ομάδας; Οι παίκτες θα αφαιρεθούν.")) return;
+    try { await axios.delete(`${API}/admin/teams/${id}`, { headers: getAuthHeaders() }); if (selectedTeam?.id === id) setSelectedTeam(null); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  const openCreatePlayer = () => { setPlayerForm({...emptyPlayer}); setEditPlayer(null); setShowPlayerForm(true); };
+  const openEditPlayer = (p) => {
+    setPlayerForm({ name: p.name || "", number: p.number || "", position: p.position || "Midfielder", nationality: p.nationality || "Cyprus", age: p.age || "", image_url: p.image_url || "", bio: p.bio || "", height: p.height || "", weight: p.weight || "", preferred_foot: p.preferred_foot || "Right" });
+    setEditPlayer(p); setShowPlayerForm(true);
+  };
+
+  const handleSavePlayer = async () => {
+    setSavingPlayer(true);
+    try {
+      const headers = getAuthHeaders();
+      const payload = { ...playerForm, number: parseInt(playerForm.number) || 0, age: parseInt(playerForm.age) || 0, team_type: "First Team", team_id: selectedTeam.id };
+      if (editPlayer) await axios.put(`${API}/admin/players/${editPlayer.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/players`, payload, { headers });
+      setShowPlayerForm(false); onRefresh();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSavingPlayer(false); }
+  };
+
+  const handleDeletePlayer = async (id) => {
+    if (!window.confirm("Διαγραφή παίκτη;")) return;
+    try { await axios.delete(`${API}/admin/players/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  // Refresh team data when teams list changes
+  useEffect(() => {
+    if (selectedTeam) {
+      const updated = teams.find(t => t.id === selectedTeam.id);
+      if (updated) setSelectedTeam(updated);
+    }
+  }, [teams]);
+
+  if (selectedTeam) {
+    const teamPlayers = players.filter(p => p.team_id === selectedTeam.id);
+    const teamFixtures = fixtures.sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
+    const teamStaff = staff.filter(s => s.team_type === "First Team");
+
+    return (
+      <div data-testid="team-detail-view">
+        <button onClick={() => setSelectedTeam(null)} className="admin-btn-ghost text-xs mb-4" data-testid="back-to-teams">
+          <ChevronRight size={14} className="rotate-180" /> Πίσω στις ομάδες
+        </button>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-['Bebas_Neue'] text-3xl text-[#F5A623] tracking-wide">{selectedTeam.name}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="admin-badge admin-badge-gold text-[10px]">{selectedTeam.level}</span>
+              {selectedTeam.description && <span className="text-zinc-500 text-xs">{selectedTeam.description}</span>}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-1 mb-6 border-b border-[#222] pb-0">
+          {[
+            { id: "roster", label: "Ρόστερ", icon: Users, count: teamPlayers.length },
+            { id: "schedule", label: "Πρόγραμμα", icon: Calendar, count: teamFixtures.length },
+            { id: "team_staff", label: "Staff", icon: UserCog, count: teamStaff.length },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setDetailTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors -mb-[1px] ${
+                detailTab === tab.id ? 'border-[#F5A623] text-[#F5A623]' : 'border-transparent text-zinc-500 hover:text-white'
+              }`} data-testid={`team-tab-${tab.id}`}>
+              <tab.icon size={14} /> {tab.label}
+              <span className="text-[10px] ml-1 opacity-60">({tab.count})</span>
+            </button>
+          ))}
+        </div>
+
+        {detailTab === "roster" && (
+          <div>
+            <div className="flex justify-end mb-4">
+              <button onClick={openCreatePlayer} className="admin-btn-primary" data-testid="add-team-player-btn"><Plus size={14} /> Νέος Παίκτης</button>
+            </div>
+            <div className="admin-table-wrap">
+              <table className="admin-table" data-testid="team-players-table">
+                <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th></th></tr></thead>
+                <tbody>
+                  {teamPlayers.map(p => (
+                    <tr key={p.id}>
+                      <td className="font-mono text-zinc-500">{p.number}</td>
+                      <td>{p.image_url ? <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>}</td>
+                      <td className="font-medium text-white">{p.name}</td>
+                      <td className="text-zinc-400">{p.position}</td>
+                      <td className="text-zinc-400">{p.age}</td>
+                      <td>
+                        <div className="flex gap-1">
+                          <button onClick={() => openEditPlayer(p)} className="admin-icon-btn" data-testid={`edit-team-player-${p.id}`}><Edit2 size={13} /></button>
+                          <button onClick={() => handleDeletePlayer(p.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-player-${p.id}`}><Trash2 size={13} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {teamPlayers.length === 0 && <tr><td colSpan={6}><EmptyState icon={Users} text="Δεν υπάρχουν παίκτες" /></td></tr>}
+                </tbody>
+              </table>
+            </div>
+            {showPlayerForm && (
+              <FormModal title={editPlayer ? "Επεξεργασία Παίκτη" : "Νέος Παίκτης"} onClose={() => setShowPlayerForm(false)} onSave={handleSavePlayer} saving={savingPlayer}>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Όνομα *"><AdminInput value={playerForm.name} onChange={e => setPlayerForm({...playerForm, name: e.target.value})} data-testid="team-player-name" /></Field>
+                  <Field label="Αριθμός *"><AdminInput type="number" value={playerForm.number} onChange={e => setPlayerForm({...playerForm, number: e.target.value})} data-testid="team-player-number" /></Field>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Θέση *">
+                    <AdminSelect value={playerForm.position} onChange={e => setPlayerForm({...playerForm, position: e.target.value})}>
+                      <option value="Goalkeeper">Τερματοφύλακας</option><option value="Defender">Αμυντικός</option><option value="Midfielder">Μέσος</option><option value="Forward">Επιθετικός</option>
+                    </AdminSelect>
+                  </Field>
+                  <Field label="Εθνικότητα"><AdminInput value={playerForm.nationality} onChange={e => setPlayerForm({...playerForm, nationality: e.target.value})} /></Field>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <Field label="Ηλικία *"><AdminInput type="number" value={playerForm.age} onChange={e => setPlayerForm({...playerForm, age: e.target.value})} /></Field>
+                  <Field label="Ύψος"><AdminInput placeholder="1.85m" value={playerForm.height} onChange={e => setPlayerForm({...playerForm, height: e.target.value})} /></Field>
+                  <Field label="Βάρος"><AdminInput placeholder="78kg" value={playerForm.weight} onChange={e => setPlayerForm({...playerForm, weight: e.target.value})} /></Field>
+                </div>
+                <ImageUpload currentUrl={playerForm.image_url} onImageChange={url => setPlayerForm({...playerForm, image_url: url})} playerId={editPlayer?.id} />
+                <Field label="Βιογραφικό"><AdminTextarea rows={2} value={playerForm.bio} onChange={e => setPlayerForm({...playerForm, bio: e.target.value})} /></Field>
+              </FormModal>
+            )}
+          </div>
+        )}
+
+        {detailTab === "schedule" && (
+          <div>
+            <div className="admin-table-wrap">
+              <table className="admin-table" data-testid="team-fixtures-table">
+                <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Κατάσταση</th></tr></thead>
+                <tbody>
+                  {teamFixtures.map(f => (
+                    <tr key={f.id}>
+                      <td className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
+                      <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.home_team}</td>
+                      <td className="font-['Bebas_Neue'] text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
+                      <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.away_team}</td>
+                      <td><span className={f.status === 'Completed' ? 'badge-completed' : f.status === 'Live' ? 'badge-live' : 'admin-badge admin-badge-default'}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span></td>
+                    </tr>
+                  ))}
+                  {teamFixtures.length === 0 && <tr><td colSpan={5}><EmptyState icon={Calendar} text="Δεν υπάρχουν αγώνες" /></td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {detailTab === "team_staff" && (
+          <div>
+            <div className="admin-table-wrap">
+              <table className="admin-table" data-testid="team-staff-table">
+                <thead><tr><th></th><th>Όνομα</th><th>Ρόλος</th></tr></thead>
+                <tbody>
+                  {teamStaff.map(s => (
+                    <tr key={s.id}>
+                      <td>{s.image_url ? <img src={s.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><UserCog size={12} className="text-zinc-700" /></div>}</td>
+                      <td className="font-medium text-white">{s.name}</td>
+                      <td className="text-zinc-400">{s.role}</td>
+                    </tr>
+                  ))}
+                  {teamStaff.length === 0 && <tr><td colSpan={3}><EmptyState icon={UserCog} text="Δεν υπάρχουν μέλη staff" /></td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="admin-teams-tab">
+      <TabHeader title="Ομάδες" count={teams.length}>
+        <button onClick={openCreateTeam} className="admin-btn-primary" data-testid="add-team-btn"><Plus size={14} /> Νέα Ομάδα</button>
+      </TabHeader>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {teams.map(team => (
+          <div key={team.id} className="admin-card p-5 cursor-pointer hover:border-[#F5A623]/40 transition-colors group" onClick={() => { setSelectedTeam(team); setDetailTab("roster"); }} data-testid={`team-card-${team.id}`}>
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white group-hover:text-[#F5A623] transition-colors">{team.name}</h3>
+                <span className="admin-badge admin-badge-gold text-[10px] mt-1">{team.level}</span>
+              </div>
+              <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                <button onClick={() => openEditTeam(team)} className="admin-icon-btn" data-testid={`edit-team-${team.id}`}><Edit2 size={13} /></button>
+                <button onClick={() => handleDeleteTeam(team.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-${team.id}`}><Trash2 size={13} /></button>
+              </div>
+            </div>
+            {team.description && <p className="text-zinc-500 text-xs mb-2">{team.description}</p>}
+            <div className="flex gap-3 text-xs text-zinc-600">
+              <span className="flex items-center gap-1"><Users size={11} /> {team.player_count || 0} παίκτες</span>
+              <ChevronRight size={14} className="text-zinc-700 group-hover:text-[#F5A623] ml-auto transition-colors" />
+            </div>
+          </div>
+        ))}
+        {teams.length === 0 && <EmptyState icon={Shield} text="Δεν υπάρχουν ομάδες" />}
+      </div>
+      {showForm && (
+        <FormModal title={editTeam ? "Επεξεργασία Ομάδας" : "Νέα Ομάδα"} onClose={() => setShowForm(false)} onSave={handleSaveTeam} saving={saving}>
+          <Field label="Όνομα *"><AdminInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="team-name-input" /></Field>
+          <Field label="Επίπεδο">
+            <AdminSelect value={form.level} onChange={e => setForm({...form, level: e.target.value})} data-testid="team-level-select">
+              <option value="Α' Ομάδα">Α' Ομάδα</option>
+              <option value="Εφεδρική">Εφεδρική</option>
+              <option value="Νέων">Νέων</option>
+            </AdminSelect>
+          </Field>
+          <Field label="Περιγραφή"><AdminTextarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} data-testid="team-desc-input" /></Field>
+        </FormModal>
+      )}
+    </div>
+  );
+};
+
+// ==================== ENHANCED ACADEMY TAB (with drill-down) ====================
+const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editGroup, setEditGroup] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26" };
+  const [form, setForm] = useState(emptyGroup);
+
+  const openCreate = () => { setForm(emptyGroup); setEditGroup(null); setShowForm(true); };
+  const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26" }); setEditGroup(g); setShowForm(true); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const headers = getAuthHeaders();
+      const payload = { ...form, max_players: parseInt(form.max_players) || 25 };
+      if (editGroup) await axios.put(`${API}/admin/academy-groups/${editGroup.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/academy-groups`, payload, { headers });
+      setShowForm(false); onRefresh();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Διαγραφή ομάδας;")) return;
+    try { await axios.delete(`${API}/admin/academy-groups/${id}`, { headers: getAuthHeaders() }); if (selectedGroup?.id === id) setSelectedGroup(null); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  if (selectedGroup) {
+    const groupPlayers = players.filter(p => p.academy_group_id === selectedGroup.id);
+    return (
+      <div data-testid="academy-detail-view">
+        <button onClick={() => setSelectedGroup(null)} className="admin-btn-ghost text-xs mb-4" data-testid="back-to-academy">
+          <ChevronRight size={14} className="rotate-180" /> Πίσω στις ομάδες
+        </button>
+        <div className="mb-6">
+          <h2 className="font-['Bebas_Neue'] text-3xl text-[#10B981] tracking-wide">{selectedGroup.name}</h2>
+          <div className="flex items-center gap-3 mt-1 text-sm text-zinc-400">
+            <span className="admin-badge admin-badge-green text-[10px]">{selectedGroup.age_range}</span>
+            {selectedGroup.coach_name && <span>Προπονητής: {selectedGroup.coach_name}</span>}
+            {selectedGroup.training_schedule && <span className="flex items-center gap-1"><Clock size={12} /> {selectedGroup.training_schedule}</span>}
+          </div>
+        </div>
+        <TabHeader title="Παίκτες Ακαδημίας" count={groupPlayers.length} />
+        <div className="admin-table-wrap">
+          <table className="admin-table" data-testid="academy-players-table">
+            <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th></tr></thead>
+            <tbody>
+              {groupPlayers.map(p => (
+                <tr key={p.id}>
+                  <td className="font-mono text-zinc-500">{p.number}</td>
+                  <td>{p.image_url ? <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>}</td>
+                  <td className="font-medium text-white">{p.name}</td>
+                  <td className="text-zinc-400">{p.position}</td>
+                  <td className="text-zinc-400">{p.age}</td>
+                </tr>
+              ))}
+              {groupPlayers.length === 0 && <tr><td colSpan={5}><EmptyState icon={Users} text="Δεν υπάρχουν παίκτες σε αυτή την ομάδα" /></td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="admin-academy-enhanced-tab">
+      <TabHeader title="Ομάδες Ακαδημίας" count={groups.length}>
+        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-academy-group-btn"><Plus size={14} /> Νέα Ομάδα</button>
+      </TabHeader>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {groups.map(g => (
+          <div key={g.id} className="admin-card p-5 cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => setSelectedGroup(g)} data-testid={`academy-group-${g.id}`}>
+            <div className="flex justify-between items-start mb-2">
+              <span className="font-['Bebas_Neue'] text-2xl text-[#10B981] group-hover:text-white transition-colors">{g.name}</span>
+              <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={13} /></button>
+                <button onClick={() => handleDelete(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
+              </div>
+            </div>
+            <span className="admin-badge admin-badge-green text-[10px] mb-2">{g.age_range}</span>
+            <p className="text-zinc-300 text-sm mb-1">{g.coach_name}</p>
+            <p className="text-zinc-600 text-xs flex items-center gap-1"><Clock size={11} /> {g.training_schedule}</p>
+            <div className="flex items-center mt-2 text-xs text-zinc-600">
+              <Users size={11} className="mr-1" /> {players.filter(p => p.academy_group_id === g.id).length} παίκτες
+              <ChevronRight size={14} className="text-zinc-700 group-hover:text-[#10B981] ml-auto transition-colors" />
+            </div>
+          </div>
+        ))}
+        {groups.length === 0 && <EmptyState icon={GraduationCap} text="Δεν υπάρχουν ομάδες ακαδημίας" />}
+      </div>
+      {showForm && (
+        <FormModal title={editGroup ? "Επεξεργασία" : "Νέα Ομάδα"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Όνομα *"><AdminInput placeholder="U18" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
+            <Field label="Ηλικίες *"><AdminInput placeholder="16-18 ετών" value={form.age_range} onChange={e => setForm({...form, age_range: e.target.value})} /></Field>
+          </div>
+          <Field label="Προπονητής"><AdminInput value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
+          <Field label="Πρόγραμμα"><AdminInput value={form.training_schedule} onChange={e => setForm({...form, training_schedule: e.target.value})} /></Field>
+          <Field label="Περιγραφή"><AdminTextarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></Field>
+        </FormModal>
+      )}
+    </div>
+  );
+};
+
 // ==================== MAIN ADMIN PANEL ====================
 
 // ==================== ADMIN PRODUCTS TAB ====================
@@ -1674,15 +2021,21 @@ const AdminOrdersTab = () => {
 const AdminPanel = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
+  const [expandedGroups, setExpandedGroups] = useState(["club_section", "academy_section", "shop_section", "settings_section"]);
   const [data, setData] = useState({
     stats: {}, players: [], fixtures: [], news: [], standings: [],
-    academyGroups: [], staff: [], venues: [], seasons: [], messages: [], club: {}
+    academyGroups: [], staff: [], venues: [], seasons: [], messages: [], club: {},
+    teams: []
   });
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups(prev => prev.includes(groupId) ? prev.filter(g => g !== groupId) : [...prev, groupId]);
+  };
 
   const fetchAll = useCallback(async () => {
     try {
       const headers = getAuthHeaders();
-      const [stats, players, fixtures, news, standings, groups, staffRes, venues, seasons, messages, club] = await Promise.all([
+      const [stats, players, fixtures, news, standings, groups, staffRes, venues, seasons, messages, club, teamsRes] = await Promise.all([
         axios.get(`${API}/admin/dashboard`, { headers }),
         axios.get(`${API}/players?is_active=true`),
         axios.get(`${API}/fixtures`),
@@ -1694,12 +2047,13 @@ const AdminPanel = ({ user, onLogout }) => {
         axios.get(`${API}/seasons`),
         axios.get(`${API}/admin/contact`, { headers }),
         axios.get(`${API}/club`),
+        axios.get(`${API}/teams`),
       ]);
       setData({
         stats: stats.data, players: players.data, fixtures: fixtures.data,
         news: news.data, standings: standings.data, academyGroups: groups.data,
         staff: staffRes.data, venues: venues.data, seasons: seasons.data,
-        messages: messages.data, club: club.data
+        messages: messages.data, club: club.data, teams: teamsRes.data
       });
     } catch (e) {
       console.error("Error fetching admin data:", e);
@@ -1708,24 +2062,41 @@ const AdminPanel = ({ user, onLogout }) => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const tabs = [
-    { id: "dashboard", label: "Πίνακας", icon: BarChart3 },
-    { id: "livescore", label: "Live Score", icon: Zap },
-    { id: "club", label: "Σύλλογος", icon: Building2 },
-    { id: "players", label: "Παίκτες", icon: Users },
-    { id: "academy", label: "Ακαδημία", icon: GraduationCap },
-    { id: "staff", label: "Staff", icon: UserCog },
-    { id: "fixtures", label: "Αγώνες", icon: Calendar },
-    { id: "standings", label: "Βαθμολογία", icon: Trophy },
-    { id: "news", label: "Νέα", icon: Newspaper },
-    { id: "venues", label: "Γήπεδα", icon: MapPin },
-    { id: "seasons", label: "Σεζόν", icon: Archive },
-    { id: "gallery", label: "Γκαλερί", icon: Image },
-    { id: "messages", label: "Μηνύματα", icon: Mail },
-    { id: "shop_products", label: "Προϊόντα", icon: ShoppingCart },
-    { id: "shop_tickets", label: "Εισιτήρια", icon: Ticket },
-    { id: "shop_orders", label: "Παραγγελίες", icon: Package },
+  // Grouped sidebar config
+  const sidebarConfig = [
+    { type: "item", id: "dashboard", label: "Πίνακας", icon: BarChart3 },
+    { type: "item", id: "livescore", label: "Live Score", icon: Zap },
+    { type: "divider" },
+    { type: "group", id: "club_section", label: "Συλλόγος", icon: Building2, items: [
+      { id: "teams", label: "Ομάδες", icon: Shield },
+      { id: "standings", label: "Βαθμολογία", icon: Trophy },
+    ]},
+    { type: "group", id: "academy_section", label: "Ακαδημία", icon: GraduationCap, items: [
+      { id: "academy", label: "Ομάδες", icon: Users },
+    ]},
+    { type: "divider" },
+    { type: "item", id: "news", label: "Νέα", icon: Newspaper },
+    { type: "item", id: "gallery", label: "Γκαλερί", icon: Image },
+    { type: "item", id: "messages", label: "Μηνύματα", icon: Mail },
+    { type: "divider" },
+    { type: "group", id: "shop_section", label: "Κατάστημα", icon: ShoppingCart, items: [
+      { id: "shop_products", label: "Προϊόντα", icon: Package },
+      { id: "shop_tickets", label: "Εισιτήρια", icon: Ticket },
+      { id: "shop_orders", label: "Παραγγελίες", icon: ShoppingCart },
+    ]},
+    { type: "group", id: "settings_section", label: "Ρυθμίσεις", icon: Settings, items: [
+      { id: "settings_club", label: "Πληροφορίες", icon: Building2 },
+      { id: "settings_seasons", label: "Σεζόν", icon: Archive },
+      { id: "settings_venues", label: "Γήπεδα", icon: MapPin },
+    ]},
   ];
+
+  // Flat tabs for mobile
+  const mobileTabs = sidebarConfig.flatMap(item => {
+    if (item.type === "item") return [item];
+    if (item.type === "group") return item.items;
+    return [];
+  });
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]" data-testid="admin-loading">
@@ -1740,25 +2111,33 @@ const AdminPanel = ({ user, onLogout }) => {
     switch (activeTab) {
       case "dashboard": return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
       case "livescore": return <LiveScoreTab fixtures={data.fixtures} players={data.players} onRefresh={fetchAll} />;
-      case "club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
-      case "players": return <PlayersTab players={data.players} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
-      case "academy": return <AcademyGroupsTab groups={data.academyGroups} onRefresh={fetchAll} />;
-      case "staff": return <StaffTab staff={data.staff} onRefresh={fetchAll} />;
-      case "fixtures": return <FixturesTab fixtures={data.fixtures} onRefresh={fetchAll} />;
+      case "teams": return <TeamsTab teams={data.teams} players={data.players} fixtures={data.fixtures} staff={data.staff} onRefresh={fetchAll} />;
       case "standings": return <StandingsTab standings={data.standings} onRefresh={fetchAll} />;
+      case "academy": return <EnhancedAcademyTab groups={data.academyGroups} players={data.players} onRefresh={fetchAll} />;
       case "news": return <NewsTab news={data.news} onRefresh={fetchAll} />;
-      case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
-      case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
       case "gallery": return <GalleryTab onRefresh={fetchAll} />;
       case "messages": return <MessagesTab messages={data.messages} onRefresh={fetchAll} />;
       case "shop_products": return <AdminProductsTab />;
       case "shop_tickets": return <AdminTicketsTab />;
       case "shop_orders": return <AdminOrdersTab />;
+      case "settings_club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
+      case "settings_seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
+      case "settings_venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
+      // Legacy tabs (accessible from dashboard stats)
+      case "players": return <PlayersTab players={data.players} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
+      case "staff": return <StaffTab staff={data.staff} onRefresh={fetchAll} />;
+      case "fixtures": return <FixturesTab fixtures={data.fixtures} onRefresh={fetchAll} />;
+      case "club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
+      case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
+      case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
       default: return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
     }
   };
 
   const liveCount = data.fixtures.filter(f => f.status === 'Live').length;
+
+  // Check if a tab is active within a group
+  const isTabInGroup = (groupItems) => groupItems.some(sub => activeTab === sub.id);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]" data-testid="admin-page">
@@ -1778,37 +2157,81 @@ const AdminPanel = ({ user, onLogout }) => {
       </header>
 
       <div className="flex pt-14">
-        {/* Sidebar */}
+        {/* Sidebar - Grouped */}
         <aside className="w-52 fixed left-0 top-14 bottom-0 bg-[#111111] border-r border-[#1e1e1e] hidden lg:flex flex-col overflow-y-auto">
           <nav className="py-2 flex-1">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all ${
-                  activeTab === tab.id
-                    ? 'text-[#F5A623] bg-[#F5A623]/8 border-r-2 border-[#F5A623]'
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
-                }`}
-                data-testid={`admin-tab-${tab.id}`}
-              >
-                <tab.icon size={16} />
-                <span>{tab.label}</span>
-                {tab.id === "livescore" && liveCount > 0 && (
-                  <span className="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                )}
-                {tab.id === "messages" && data.messages.length > 0 && (
-                  <span className="ml-auto text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">{data.messages.length}</span>
-                )}
-              </button>
-            ))}
+            {sidebarConfig.map((item, idx) => {
+              if (item.type === "divider") return <div key={idx} className="h-px bg-[#1e1e1e] my-2 mx-3" />;
+
+              if (item.type === "item") return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all ${
+                    activeTab === item.id
+                      ? 'text-[#F5A623] bg-[#F5A623]/8 border-r-2 border-[#F5A623]'
+                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
+                  }`}
+                  data-testid={`admin-tab-${item.id}`}
+                >
+                  <item.icon size={16} />
+                  <span>{item.label}</span>
+                  {item.id === "livescore" && liveCount > 0 && (
+                    <span className="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  )}
+                  {item.id === "messages" && data.messages.length > 0 && (
+                    <span className="ml-auto text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">{data.messages.length}</span>
+                  )}
+                </button>
+              );
+
+              if (item.type === "group") {
+                const isExpanded = expandedGroups.includes(item.id);
+                const hasActiveChild = isTabInGroup(item.items);
+                return (
+                  <div key={item.id}>
+                    <button
+                      onClick={() => toggleGroup(item.id)}
+                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium uppercase tracking-wider transition-all ${
+                        hasActiveChild ? 'text-[#F5A623]' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                      data-testid={`admin-group-${item.id}`}
+                    >
+                      <item.icon size={14} />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      <ChevronDown size={12} className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                    </button>
+                    {isExpanded && (
+                      <div className="pb-1">
+                        {item.items.map(sub => (
+                          <button
+                            key={sub.id}
+                            onClick={() => setActiveTab(sub.id)}
+                            className={`w-full flex items-center gap-2 pl-9 pr-3 py-2 text-sm transition-all ${
+                              activeTab === sub.id
+                                ? 'text-[#F5A623] bg-[#F5A623]/8 border-r-2 border-[#F5A623]'
+                                : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/3'
+                            }`}
+                            data-testid={`admin-tab-${sub.id}`}
+                          >
+                            <sub.icon size={14} />
+                            <span>{sub.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })}
           </nav>
         </aside>
 
         {/* Mobile Tab Bar */}
         <div className="lg:hidden fixed top-14 left-0 right-0 bg-[#111111] border-b border-[#1e1e1e] z-40 overflow-x-auto">
           <div className="flex p-1.5 gap-1">
-            {tabs.map(tab => (
+            {mobileTabs.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap rounded flex items-center gap-1 ${
                   activeTab === tab.id ? 'bg-[#F5A623]/15 text-[#F5A623]' : 'text-zinc-600 hover:text-zinc-400'
