@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/CustomerAuth";
 import axios from "axios";
-import { Trophy, ArrowLeft, Vote, Undo2, Users, X, ChevronRight, LogIn } from "lucide-react";
+import { Trophy, ArrowLeft, Vote, Undo2, Users, X, ChevronRight, LogIn, Share2, Check } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -10,12 +10,62 @@ const API = `${BACKEND_URL}/api`;
 const posLabels = { Goalkeeper: "Τερμ.", Defender: "Αμυν.", Midfielder: "Μέσος", Forward: "Επιθ." };
 const monthNames = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
 
+const VoteShareSection = ({ playerName }) => {
+  const [copied, setCopied] = useState(false);
+  const shareText = `Ψήφισα τον ${playerName} ως Παίκτη του Μήνα στη ΛΕΥΤΕΡΙΑ FC!`;
+  const shareUrl = window.location.href;
+
+  const handleFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`, "_blank", "width=600,height=400");
+  };
+
+  const handleTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, "_blank", "width=600,height=400");
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  return (
+    <div className="mb-8 p-4 bg-gradient-to-r from-[#F5A623]/5 via-[#111] to-[#111] border border-[#F5A623]/20 rounded-lg" data-testid="vote-share-section">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Share2 size={16} className="text-[#F5A623] flex-shrink-0" />
+          <span className="text-sm text-zinc-300 truncate">Μοιράσου ότι ψήφισες τον <strong className="text-white">{playerName}</strong>!</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={handleFacebook}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/20 rounded-lg hover:bg-[#1877F2]/20 transition-colors" data-testid="share-facebook">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+          </button>
+          <button onClick={handleTwitter}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/5 text-white border border-white/10 rounded-lg hover:bg-white/10 transition-colors" data-testid="share-twitter">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            X
+          </button>
+          <button onClick={handleCopy}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg transition-colors ${copied ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10"}`} data-testid="share-copy">
+            {copied ? <><Check size={12} /> Αντιγράφηκε</> : "Αντιγραφή"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const VotePage = () => {
   const { user, getAuthHeaders } = useAuth();
   const [players, setPlayers] = useState([]);
   const [results, setResults] = useState({ results: [], total_votes: 0, month_key: "" });
   const [hasVoted, setHasVoted] = useState(false);
   const [votedId, setVotedId] = useState(null);
+  const [votedPlayerName, setVotedPlayerName] = useState("");
   const [voting, setVoting] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,6 +90,10 @@ const VotePage = () => {
       setResults(responses[1].data);
       setHasVoted(responses[2].data.has_voted);
       setVotedId(responses[2].data.voted_player_id);
+      if (responses[2].data.voted_player_id) {
+        const vp = responses[0].data.find(p => p.id === responses[2].data.voted_player_id);
+        setVotedPlayerName(vp?.name || responses[2].data.voter_name || "");
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -57,6 +111,8 @@ const VotePage = () => {
       await axios.post(`${API}/votes/potm`, { player_id: playerId }, { headers: getAuthHeaders() });
       setHasVoted(true);
       setVotedId(playerId);
+      const votedP = players.find(p => p.id === playerId);
+      setVotedPlayerName(votedP?.name || "");
       const res = await axios.get(`${API}/votes/potm/results`);
       setResults(res.data);
     } catch (e) {
@@ -153,6 +209,9 @@ const VotePage = () => {
               )}
             </div>
           )}
+
+          {/* Share Section - shown after voting */}
+          {user && hasVoted && votedPlayerName && <VoteShareSection playerName={votedPlayerName} />}
 
           {/* Leaderboard */}
           {results.results.length > 0 && (

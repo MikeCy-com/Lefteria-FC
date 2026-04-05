@@ -1808,6 +1808,32 @@ async def get_push_stats(current_user: dict = Depends(get_current_user)):
     count = await db.push_subscriptions.count_documents({})
     return {"subscribers": count}
 
+# Admin: Trigger match-day reminder manually
+@api_router.post("/admin/push/match-reminder")
+async def trigger_match_reminder(current_user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc)
+    tomorrow = now + timedelta(days=1)
+    tomorrow_str = tomorrow.strftime("%Y-%m-%d")
+
+    fixtures = await db.fixtures.find({"status": "Scheduled"}, {"_id": 0}).to_list(200)
+    tomorrow_matches = [f for f in fixtures if f.get("match_date", "").startswith(tomorrow_str)]
+
+    if not tomorrow_matches:
+        return {"message": "Δεν υπάρχουν αγώνες αύριο", "matches": 0, "sent": 0}
+
+    total_sent = 0
+    for match in tomorrow_matches:
+        home = match.get("home_team", "")
+        away = match.get("away_team", "")
+        sent = await send_push_to_all(
+            title="Αύριο παίζουμε!",
+            body=f"{home} vs {away} — Αγόρασε εισιτήριο τώρα!",
+            url="/shop"
+        )
+        total_sent += sent
+
+    return {"message": f"Ειδοποιήσεις στάλθηκαν", "matches": len(tomorrow_matches), "sent": total_sent}
+
 # Seed Data
 @api_router.post("/seed")
 async def seed_data():
@@ -2732,6 +2758,53 @@ async def startup_tasks():
         if tickets:
             await db.tickets.insert_many(tickets)
             logger.info(f"Seeded {len(tickets)} tickets")
+
+    # Start match-day reminder background task
+    import asyncio
+    asyncio.create_task(match_day_reminder_loop())
+
+async def match_day_reminder_loop():
+    """Background task that checks every hour for tomorrow's matches and sends reminders."""
+    import asyncio
+    while True:
+        try:
+            await check_and_send_match_reminders()
+        except Exception as e:
+            logger.error(f"Match reminder error: {e}")
+        await asyncio.sleep(3600)  # Check every hour
+
+async def check_and_send_match_reminders():
+    """Check for matches happening tomorrow and send push if not already sent."""
+    now = datetime.now(timezone.utc)
+    tomorrow = now + timedelta(days=1)
+    tomorrow_str = tomorrow.strftime("%Y-%m-%d")
+
+    # Check if we already sent for this date
+    already_sent = await db.reminder_log.find_one({"date": tomorrow_str})
+    if already_sent:
+        return
+
+    # Find matches scheduled for tomorrow
+    fixtures = await db.fixtures.find({"status": "Scheduled"}, {"_id": 0}).to_list(200)
+    tomorrow_matches = []
+    for f in fixtures:
+        match_date_str = f.get("match_date", "")
+        if match_date_str and match_date_str.startswith(tomorrow_str):
+            tomorrow_matches.append(f)
+
+    if not tomorrow_matches:
+        return
+
+    for match in tomorrow_matches:
+        home = match.get("home_team", "")
+        away = match.get("away_team", "")
+        title = "Αύριο παίζουμε!"
+        body = f"{home} vs {away} — Αγόρασε εισιτήριο τώρα!"
+        sent = await send_push_to_all(title=title, body=body, url="/shop")
+        logger.info(f"Match reminder sent for {home} vs {away}: {sent} subscribers")
+
+    # Log that we sent for this date
+    await db.reminder_log.insert_one({"date": tomorrow_str, "sent_at": now.isoformat(), "matches": len(tomorrow_matches)})
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
