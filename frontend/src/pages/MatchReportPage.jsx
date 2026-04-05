@@ -4,6 +4,7 @@ import { ChevronRight, Clock, MapPin, Trophy, Flag, AlertTriangle, ArrowLeftRigh
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
 
 // Event type config: icon, color, label
 const eventConfig = {
@@ -171,7 +172,7 @@ const MatchReportPage = () => {
             <div className="flex items-center justify-center gap-6 sm:gap-10">
               {/* Home team */}
               <div className="flex-1 text-center sm:text-right">
-                <div className={`font-['Bebas_Neue'] text-2xl sm:text-3xl ${fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                <div className={`font-['Bebas_Neue'] text-2xl sm:text-3xl ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                   {fixture.home_team}
                 </div>
                 {/* Home scorers */}
@@ -204,7 +205,7 @@ const MatchReportPage = () => {
 
               {/* Away team */}
               <div className="flex-1 text-center sm:text-left">
-                <div className={`font-['Bebas_Neue'] text-2xl sm:text-3xl ${fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                <div className={`font-['Bebas_Neue'] text-2xl sm:text-3xl ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                   {fixture.away_team}
                 </div>
                 {/* Away scorers */}
@@ -241,8 +242,8 @@ const MatchReportPage = () => {
               <div className="card p-6" data-testid="event-timeline">
                 {/* Team labels */}
                 <div className="flex justify-between text-xs text-zinc-500 uppercase tracking-wider mb-6 px-2">
-                  <span className={fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : ''}>{fixture.home_team}</span>
-                  <span className={fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : ''}>{fixture.away_team}</span>
+                  <span className={fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : ''}>{fixture.home_team}</span>
+                  <span className={fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : ''}>{fixture.away_team}</span>
                 </div>
 
                 {/* First half events */}
@@ -306,8 +307,8 @@ const MatchReportPage = () => {
               <div className="card p-6" data-testid="match-statistics">
                 {/* Team headers */}
                 <div className="flex justify-between text-xs uppercase tracking-wider mb-4">
-                  <span className={fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-zinc-400'}>{fixture.home_team.length > 12 ? fixture.home_team.substring(0, 12) + '.' : fixture.home_team}</span>
-                  <span className={fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-zinc-400'}>{fixture.away_team.length > 12 ? fixture.away_team.substring(0, 12) + '.' : fixture.away_team}</span>
+                  <span className={fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-400'}>{fixture.home_team.length > 12 ? fixture.home_team.substring(0, 12) + '.' : fixture.home_team}</span>
+                  <span className={fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-400'}>{fixture.away_team.length > 12 ? fixture.away_team.substring(0, 12) + '.' : fixture.away_team}</span>
                 </div>
 
                 <div className="divide-y divide-[#1e1e1e]">

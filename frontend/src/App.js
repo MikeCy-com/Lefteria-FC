@@ -2,16 +2,18 @@ import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
-import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff } from "lucide-react";
+import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
 import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import MatchReportPage from "./pages/MatchReportPage";
+import ShopPage from "./pages/ShopPage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
 
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
@@ -124,6 +126,7 @@ const Navigation = () => {
     { path: "/team", label: "Ομάδα", icon: Users },
     { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
     { path: "/news", label: "Νέα", icon: Newspaper },
+    { path: "/shop", label: "Εισιτήρια", icon: Ticket },
     { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
 
@@ -250,6 +253,7 @@ const Footer = () => (
               { name: "Πρόγραμμα", path: "/team?tab=schedule" },
               { name: "Γήπεδα", path: "/team?tab=venues" },
               { name: "Νέα", path: "/news" },
+              { name: "Εισιτήρια", path: "/shop" },
               { name: "Επικοινωνία", path: "/contact" },
             ].map((item) => (
               <li key={item.name}>
@@ -427,7 +431,7 @@ const HomePage = () => {
               </div>
               <div className="flex items-center justify-center gap-5">
                 <div className="flex-1 text-right">
-                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                     {liveMatch.fixture.home_team}
                   </span>
                 </div>
@@ -437,7 +441,7 @@ const HomePage = () => {
                   </span>
                 </div>
                 <div className="flex-1">
-                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                     {liveMatch.fixture.away_team}
                   </span>
                 </div>
@@ -464,12 +468,16 @@ const HomePage = () => {
         {/* Stats Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { label: "Θέση Πρωταθλήματος", value: "3η" },
-              { label: "Αγώνες", value: "18" },
-              { label: "Γκολ", value: "60" },
-              { label: "Βαθμοί", value: "41" },
-            ].map((stat, i) => (
+            {(() => {
+              const us = standings.find(s => s.team_name === OUR_TEAM);
+              const pos = standings.findIndex(s => s.team_name === OUR_TEAM) + 1;
+              return [
+                { label: "Θέση Πρωταθλήματος", value: pos > 0 ? `${pos}η` : "-" },
+                { label: "Αγώνες", value: us ? us.played : "-" },
+                { label: "Γκολ", value: us ? us.goals_for : "-" },
+                { label: "Βαθμοί", value: us ? us.points : "-" },
+              ];
+            })().map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="font-['Bebas_Neue'] text-3xl md:text-4xl text-[#F5A623]">{stat.value}</div>
                 <div className="text-sm text-zinc-400 tracking-wider uppercase">{stat.label}</div>
@@ -512,7 +520,7 @@ const HomePage = () => {
                   </div>
                   
                   <div className="flex items-center gap-6 justify-center flex-1">
-                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.home_team}
                     </span>
                     <div className="match-score bg-[#1F1F1F] px-4 py-2">
@@ -522,7 +530,7 @@ const HomePage = () => {
                         <span className="text-zinc-400 text-lg">VS</span>
                       )}
                     </div>
-                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.away_team}
                     </span>
                   </div>
@@ -570,7 +578,7 @@ const HomePage = () => {
                     {standings.map((team, idx) => (
                       <tr 
                         key={team.id} 
-                        className={team.team_name === 'LEFTERIA FC' ? 'team-highlight' : ''}
+                        className={team.team_name === OUR_TEAM ? 'team-highlight' : ''}
                       >
                         <td className="font-bold">{idx + 1}</td>
                         <td className="font-semibold">
@@ -1018,11 +1026,11 @@ const FixturesPage = () => {
                 {/* Home Team */}
                 <div className="text-center md:text-right">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    fixture.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'
+                    fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.home_team}
                   </h3>
-                  {fixture.home_team === 'LEFTERIA FC' && (
+                  {fixture.home_team === OUR_TEAM && (
                     <span className="text-xs text-zinc-500">ΕΝΤΟΣ</span>
                   )}
                 </div>
@@ -1052,11 +1060,11 @@ const FixturesPage = () => {
                 {/* Away Team */}
                 <div className="text-center md:text-left">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    fixture.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'
+                    fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.away_team}
                   </h3>
-                  {fixture.away_team === 'LEFTERIA FC' && (
+                  {fixture.away_team === OUR_TEAM && (
                     <span className="text-xs text-zinc-500">ΕΚΤΟΣ</span>
                   )}
                 </div>
@@ -1506,6 +1514,7 @@ function App() {
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/shop" element={<PublicLayout><ShopPage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
             <Route path="/match/:fixtureId" element={<PublicLayout><MatchReportPage /></PublicLayout>} />
             {/* Legacy redirects */}

@@ -754,7 +754,7 @@ async def get_fixtures(
     status: Optional[MatchStatus] = None,
     competition: Optional[str] = None,
     season: Optional[str] = None,
-    limit: int = Query(default=50, le=100)
+    limit: int = Query(default=50, le=500)
 ):
     query = {}
     if status:
