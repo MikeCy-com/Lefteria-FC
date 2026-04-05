@@ -1934,6 +1934,188 @@ async def seed_data():
     
     return {"message": "Τα δεδομένα φορτώθηκαν επιτυχώς"}
 
+# ==================== ADMIN PRODUCT MANAGEMENT ====================
+class ProductCreate(BaseModel):
+    name: str
+    description: str = ""
+    price: float
+    image_url: str = ""
+    category: str = "clothing"
+    sizes: list = []
+    in_stock: bool = True
+    product_type: str = "merchandise"  # merchandise or ticket
+    delivery_options: list = []
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    image_url: Optional[str] = None
+    category: Optional[str] = None
+    sizes: Optional[list] = None
+    in_stock: Optional[bool] = None
+    product_type: Optional[str] = None
+    delivery_options: Optional[list] = None
+
+@api_router.get("/admin/products")
+async def admin_get_products(current_user: dict = Depends(get_current_user)):
+    products = await db.products.find({}, {"_id": 0}).sort("name", 1).to_list(200)
+    return products
+
+@api_router.post("/admin/products")
+async def admin_create_product(body: ProductCreate, current_user: dict = Depends(get_current_user)):
+    product = {
+        "id": str(uuid.uuid4()),
+        "name": body.name,
+        "description": body.description,
+        "price": body.price,
+        "image_url": body.image_url,
+        "category": body.category,
+        "sizes": body.sizes,
+        "in_stock": body.in_stock,
+        "product_type": body.product_type,
+        "delivery_options": body.delivery_options or ["Παραλαβή", "Αποστολή"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.products.insert_one(product)
+    return {"id": product["id"], "message": "Το προϊόν δημιουργήθηκε"}
+
+@api_router.put("/admin/products/{product_id}")
+async def admin_update_product(product_id: str, body: ProductUpdate, current_user: dict = Depends(get_current_user)):
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No updates provided")
+    result = await db.products.update_one({"id": product_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"message": "Ενημερώθηκε"}
+
+@api_router.delete("/admin/products/{product_id}")
+async def admin_delete_product(product_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.products.delete_one({"id": product_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"message": "Διαγράφηκε"}
+
+# ==================== TICKETS ====================
+class TicketCreate(BaseModel):
+    name: str
+    description: str = ""
+    price: float
+    ticket_type: str = "match"  # match or seasonal
+    fixture_id: Optional[str] = None
+    available: bool = True
+    max_quantity: int = 100
+
+class TicketUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    ticket_type: Optional[str] = None
+    fixture_id: Optional[str] = None
+    available: Optional[bool] = None
+    max_quantity: Optional[int] = None
+
+@api_router.get("/tickets")
+async def get_tickets():
+    tickets = await db.tickets.find({"available": True}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    # Enrich match tickets with fixture info
+    for t in tickets:
+        if t.get("fixture_id"):
+            fixture = await db.fixtures.find_one({"id": t["fixture_id"]}, {"_id": 0, "home_team": 1, "away_team": 1, "match_date": 1, "venue": 1, "status": 1})
+            t["fixture"] = fixture
+    return tickets
+
+@api_router.get("/admin/tickets")
+async def admin_get_tickets(current_user: dict = Depends(get_current_user)):
+    tickets = await db.tickets.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    for t in tickets:
+        if t.get("fixture_id"):
+            fixture = await db.fixtures.find_one({"id": t["fixture_id"]}, {"_id": 0, "home_team": 1, "away_team": 1, "match_date": 1})
+            t["fixture"] = fixture
+    return tickets
+
+@api_router.post("/admin/tickets")
+async def admin_create_ticket(body: TicketCreate, current_user: dict = Depends(get_current_user)):
+    ticket = {
+        "id": str(uuid.uuid4()),
+        "name": body.name,
+        "description": body.description,
+        "price": body.price,
+        "ticket_type": body.ticket_type,
+        "fixture_id": body.fixture_id,
+        "available": body.available,
+        "max_quantity": body.max_quantity,
+        "sold": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.tickets.insert_one(ticket)
+    return {"id": ticket["id"], "message": "Το εισιτήριο δημιουργήθηκε"}
+
+@api_router.put("/admin/tickets/{ticket_id}")
+async def admin_update_ticket(ticket_id: str, body: TicketUpdate, current_user: dict = Depends(get_current_user)):
+    updates = {k: v for k, v in body.dict().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No updates provided")
+    result = await db.tickets.update_one({"id": ticket_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return {"message": "Ενημερώθηκε"}
+
+@api_router.delete("/admin/tickets/{ticket_id}")
+async def admin_delete_ticket(ticket_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.tickets.delete_one({"id": ticket_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return {"message": "Διαγράφηκε"}
+
+# Cart: add ticket to cart
+class CartTicketAdd(BaseModel):
+    ticket_id: str
+    quantity: int = 1
+
+@api_router.post("/cart/add-ticket")
+async def add_ticket_to_cart(body: CartTicketAdd, user: dict = Depends(get_current_customer)):
+    ticket = await db.tickets.find_one({"id": body.ticket_id, "available": True}, {"_id": 0})
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Εισιτήριο μη διαθέσιμο")
+
+    cart = await db.carts.find_one({"user_id": user["id"]})
+    item = {
+        "product_id": body.ticket_id,
+        "quantity": body.quantity,
+        "size": "",
+        "item_type": "ticket",
+        "name": ticket["name"],
+        "price": ticket["price"]
+    }
+
+    if not cart:
+        await db.carts.insert_one({
+            "user_id": user["id"],
+            "items": [item],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        })
+    else:
+        # Check if ticket already in cart
+        existing = None
+        for ci in cart.get("items", []):
+            if ci["product_id"] == body.ticket_id:
+                existing = ci
+                break
+        if existing:
+            await db.carts.update_one(
+                {"user_id": user["id"], "items.product_id": body.ticket_id},
+                {"$inc": {"items.$.quantity": body.quantity}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+        else:
+            await db.carts.update_one(
+                {"user_id": user["id"]},
+                {"$push": {"items": item}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+
+    return {"message": "Το εισιτήριο προστέθηκε στο καλάθι"}
+
 # ==================== CUSTOMER AUTH MODELS ====================
 class CustomerRegister(BaseModel):
     name: str
@@ -2073,19 +2255,37 @@ async def get_cart(user: dict = Depends(get_current_customer)):
     enriched_items = []
     total = 0
     for item in cart.get("items", []):
-        product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
-        if product:
-            subtotal = product["price"] * item["quantity"]
-            total += subtotal
-            enriched_items.append({
-                "product_id": item["product_id"],
-                "name": product["name"],
-                "price": product["price"],
-                "image_url": product.get("image_url", ""),
-                "quantity": item["quantity"],
-                "size": item.get("size", ""),
-                "subtotal": subtotal
-            })
+        item_type = item.get("item_type", "product")
+        if item_type == "ticket":
+            ticket = await db.tickets.find_one({"id": item["product_id"]}, {"_id": 0})
+            if ticket:
+                subtotal = ticket["price"] * item["quantity"]
+                total += subtotal
+                enriched_items.append({
+                    "product_id": item["product_id"],
+                    "name": ticket["name"],
+                    "price": ticket["price"],
+                    "image_url": "",
+                    "quantity": item["quantity"],
+                    "size": "",
+                    "item_type": "ticket",
+                    "subtotal": subtotal
+                })
+        else:
+            product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
+            if product:
+                subtotal = product["price"] * item["quantity"]
+                total += subtotal
+                enriched_items.append({
+                    "product_id": item["product_id"],
+                    "name": product["name"],
+                    "price": product["price"],
+                    "image_url": product.get("image_url", ""),
+                    "quantity": item["quantity"],
+                    "size": item.get("size", ""),
+                    "item_type": "product",
+                    "subtotal": subtotal
+                })
 
     return {"user_id": user["id"], "items": enriched_items, "total": round(total, 2)}
 
@@ -2492,6 +2692,46 @@ async def startup_tasks():
         ]
         await db.products.insert_many(products)
         logger.info(f"Seeded {len(products)} products")
+
+    # Add delivery_options to existing products that don't have it
+    await db.products.update_many(
+        {"delivery_options": {"$exists": False}},
+        {"$set": {"delivery_options": ["Παραλαβή", "Αποστολή"], "product_type": "merchandise"}}
+    )
+
+    # Seed tickets if empty
+    ticket_count = await db.tickets.count_documents({})
+    if ticket_count == 0:
+        upcoming = await db.fixtures.find({"status": "Scheduled"}, {"_id": 0, "id": 1, "home_team": 1, "away_team": 1, "match_date": 1}).sort("match_date", 1).to_list(3)
+        tickets = []
+        for f in upcoming:
+            tickets.append({
+                "id": str(uuid.uuid4()),
+                "name": f"{f['home_team']} vs {f['away_team']}",
+                "description": f"Αγώνας πρωταθλήματος",
+                "price": 5.00,
+                "ticket_type": "match",
+                "fixture_id": f["id"],
+                "available": True,
+                "max_quantity": 200,
+                "sold": 0,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+        tickets.append({
+            "id": str(uuid.uuid4()),
+            "name": "Εισιτήριο Διαρκείας 2025-2026",
+            "description": "Πρόσβαση σε όλους τους εντός έδρας αγώνες της σεζόν",
+            "price": 50.00,
+            "ticket_type": "seasonal",
+            "fixture_id": None,
+            "available": True,
+            "max_quantity": 100,
+            "sold": 0,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        if tickets:
+            await db.tickets.insert_many(tickets)
+            logger.info(f"Seeded {len(tickets)} tickets")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

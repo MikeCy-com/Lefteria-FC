@@ -134,7 +134,7 @@ const Navigation = () => {
     { path: "/team", label: "Ομάδα", icon: Users },
     { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
     { path: "/news", label: "Νέα", icon: Newspaper },
-    { path: "/shop", label: "Εισιτήρια", icon: Ticket },
+    { path: "/shop", label: "Κατάστημα", icon: ShoppingCart },
     { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
 
