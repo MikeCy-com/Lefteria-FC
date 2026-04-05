@@ -16,7 +16,7 @@ Live Score
 ─── ΣΥΛΛΟΓΟΣ ───
     Ομάδες → drill-down: Ρόστερ, Πρόγραμμα, Staff, Βαθμολογία, Γκαλερί
 ─── ΑΚΑΔΗΜΙΑ ───
-    Ομάδες → drill-down: Παίκτες, Γκαλερί
+    Ομάδες → drill-down: Ρόστερ (full CRUD + transfer), Αγώνες (CRUD), Γκαλερί
     Εγγραφές → list with filter, detail, approve/reject
 ─── Standalone ───
     Νέα, Μηνύματα
@@ -27,8 +27,8 @@ Live Score
 ```
 
 ## Completed Features
-- [x] Public-facing club website (Team Hub, Fixtures, Standings, News, Gallery, Contact)
-- [x] Admin CMS with login + design overhaul (high contrast, bigger fonts, professional look)
+- [x] Public-facing club website
+- [x] Admin CMS with login + professional dark design
 - [x] Player Profiles with transfer history
 - [x] Match Reports & Live Score control
 - [x] Configurable Standings (inside team drill-down)
@@ -36,28 +36,37 @@ Live Score
 - [x] Customer Authentication (Login/Register/Profile)
 - [x] POTM Voting (with social sharing)
 - [x] E-Commerce: Products, Cart, Checkout, Orders
-- [x] Tickets integrated with Shop
 - [x] Admin: Orders, Products, Tickets management
 - [x] Full Mobile Responsiveness
-- [x] Auto Scroll-to-Top on navigation
 - [x] Admin Panel Restructuring: grouped sidebar, Teams CRUD with drill-down
-- [x] Per-team/academy Gallery with team_id/academy_group_id filtering
-- [x] **Academy Registration** (Feb 2026):
-  - Multi-step form (5 steps): Player, Parent, Medical, Terms/Consents, Payment/Signature
-  - Digital signature pad (canvas-based, draw with mouse/touch)
-  - Full validation per step
-  - Homepage "Δήλωσε Ενδιαφέρον" button links to /academy/registration
-  - Admin "Εγγραφές" tab under ΑΚΑΔΗΜΙΑ with status filter, detail view, approve/reject
-  - Approved registrations auto-create academy player with parent contact info
-  - Sidebar badge shows pending registration count
+- [x] Per-team/academy Gallery
+- [x] Academy Registration (5-step wizard with digital signature)
+- [x] **Full Academy Player Management** (Feb 2026):
+  - Full CRUD: Add, edit, delete academy players within groups
+  - Rich player profiles: DOB (auto-age), parent contact (name/phone/email), all profile fields
+  - Multi-group support: Transfer/assign players to multiple academy groups
+  - Academy fixtures per group: Create, complete (score entry), delete
+  - Academy group drill-down: Ρόστερ, Αγώνες, Γκαλερί (no standings for grassroots)
+  - Public academy player profiles with academy breadcrumb
+  - Transfer modal with multi-group checkbox selection
+
+## Key API Endpoints
+- POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
+- POST `/api/admin/players/{id}/transfer` (Multi-group assignment)
+- GET `/api/academy-groups/{id}/players` (Multi-group aware)
+- POST/GET `/api/admin/academy-groups/{id}/fixtures` (Academy fixtures)
+- GET `/api/gallery?academy_group_id={id}` (Per-group gallery)
 
 ## Key DB Collections
-admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, **registrations**
+admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, registrations
+
+## Player Model Fields
+name, number, position, nationality, age, date_of_birth, team_type, team_id, academy_group_id, academy_group_ids (multi-group), academy_group_name, image_url, bio, height, weight, preferred_foot, statistics, previous_clubs, parent_name, parent_phone, parent_email, is_active
 
 ## Backlog
 - P3: Video uploads in gallery
 - P3: AI-generated match report narratives
 - P3: Multi-language support (English toggle)
-- Refactor: server.py (3000+ lines) into FastAPI routers
+- Refactor: server.py (3100+ lines) into FastAPI routers
 - Refactor: App.js (1700+ lines) - extract Homepage components
-- Refactor: AdminPanel.jsx (2600+ lines) - extract tab components
+- Refactor: AdminPanel.jsx (2700+ lines) - extract tab components
