@@ -5,7 +5,7 @@ import {
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
-  Package, ShoppingCart, Ticket, Shield, ClipboardList
+  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -73,6 +73,215 @@ const EmptyState = ({ icon: Icon, text }) => (
     <p className="mt-3 text-base">{text}</p>
   </div>
 );
+
+// ==================== ADMIN PLAYER PROFILE VIEW ====================
+const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) => {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const isAcademy = player.team_type === "Academy";
+  const calcAge = (dob) => { if (!dob) return ""; try { return Math.floor((new Date() - new Date(dob)) / 31557600000); } catch { return ""; } };
+  const positionGr = { Goalkeeper: "Τερματοφύλακας", Defender: "Αμυντικός", Midfielder: "Μέσος", Forward: "Επιθετικός" };
+  const resolveImg = (url) => { if (!url) return null; return url.startsWith("http") ? url : `${process.env.REACT_APP_BACKEND_URL}${url}`; };
+
+  const [form, setForm] = useState({
+    name: player.name || "", number: player.number || "", position: player.position || "Midfielder",
+    nationality: player.nationality || "Cyprus", age: player.age || "",
+    team_type: player.team_type || "First Team", academy_group_id: player.academy_group_id || "",
+    image_url: player.image_url || "", bio: player.bio || "", height: player.height || "",
+    weight: player.weight || "", preferred_foot: player.preferred_foot || "Right",
+    date_of_birth: player.date_of_birth || "", joined_date: player.joined_date || "",
+    contract_until: player.contract_until || "",
+    parent_name: player.parent_name || "", parent_phone: player.parent_phone || "",
+    parent_email: player.parent_email || "",
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const age = isAcademy ? calcAge(form.date_of_birth) : form.age;
+      const payload = { ...form, number: parseInt(form.number) || 0, age: parseInt(age) || 0 };
+      if (isAcademy) {
+        payload.academy_group_ids = player.academy_group_ids?.length ? player.academy_group_ids : (player.academy_group_id ? [player.academy_group_id] : []);
+      }
+      await axios.put(`${API}/admin/players/${player.id}`, payload, { headers: getAuthHeaders() });
+      onRefresh(); setEditing(false);
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Διαγραφή παίκτη;")) return;
+    try { await axios.delete(`${API}/admin/players/${player.id}`, { headers: getAuthHeaders() }); onBack(); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  const imgUrl = resolveImg(editing ? form.image_url : player.image_url);
+  const groupName = player.academy_group_name || academyGroups.find(g => g.id === player.academy_group_id)?.name || "";
+
+  const InfoRow = ({ label, value }) => value ? (
+    <div className="flex justify-between items-center py-2.5 border-b border-[#1e1e1e] last:border-0">
+      <span className="text-sm text-zinc-500">{label}</span>
+      <span className="text-sm text-white font-medium">{value}</span>
+    </div>
+  ) : null;
+
+  return (
+    <div data-testid="admin-player-profile">
+      <button onClick={onBack} className="admin-btn-ghost text-sm mb-6" data-testid="back-to-players">
+        <ChevronRight size={14} className="rotate-180" /> Πίσω στη λίστα
+      </button>
+
+      {/* Hero Header */}
+      <div className="bg-[#121212] border border-[#262626] rounded-xl overflow-hidden mb-6">
+        <div className="relative h-28 bg-gradient-to-r from-[#F5A623]/20 via-[#0a0a0a] to-[#0a0a0a]">
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#121212] to-transparent" />
+        </div>
+        <div className="px-6 lg:px-8 pb-6 -mt-14 relative z-10">
+          <div className="flex flex-col lg:flex-row gap-5 items-start">
+            <div className="w-28 h-28 rounded-xl bg-[#1a1a1a] border-4 border-[#121212] overflow-hidden flex-shrink-0">
+              {imgUrl ? (
+                <img src={imgUrl} alt="" className="w-full h-full object-cover" data-testid="admin-player-photo" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"><Users size={36} className="text-zinc-700" /></div>
+              )}
+            </div>
+            <div className="flex-1 pt-1">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <span className="font-['Bebas_Neue'] text-5xl text-[#F5A623] leading-none">{player.number}</span>
+                <h1 className="font-['Bebas_Neue'] text-3xl lg:text-4xl text-white leading-none" data-testid="admin-player-name">{player.name}</h1>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="admin-badge admin-badge-default">{positionGr[player.position] || player.position}</span>
+                <span className={`admin-badge ${isAcademy ? 'admin-badge-green' : 'admin-badge-blue'}`}>{isAcademy ? 'Ακαδημία' : "Α' Ομάδα"}</span>
+                {isAcademy && groupName && <span className="admin-badge admin-badge-default">{groupName}</span>}
+                {player.nationality && <span className="text-sm text-zinc-400 ml-1">{player.nationality}</span>}
+              </div>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              {!editing ? (
+                <>
+                  <button onClick={() => setEditing(true)} className="admin-btn-primary" data-testid="edit-profile-btn"><Edit2 size={14} /> Επεξεργασία</button>
+                  <button onClick={handleDelete} className="admin-btn-ghost text-red-400 border-red-500/30 hover:border-red-500/50" data-testid="delete-profile-btn"><Trash2 size={14} /></button>
+                </>
+              ) : (
+                <>
+                  <button onClick={handleSave} disabled={saving} className="admin-btn-primary" data-testid="save-profile-btn">
+                    {saving ? <><RefreshCw size={14} className="animate-spin" /> Αποθήκευση...</> : <><Save size={14} /> Αποθήκευση</>}
+                  </button>
+                  <button onClick={() => { setForm({ name: player.name || "", number: player.number || "", position: player.position || "Midfielder", nationality: player.nationality || "Cyprus", age: player.age || "", team_type: player.team_type || "First Team", academy_group_id: player.academy_group_id || "", image_url: player.image_url || "", bio: player.bio || "", height: player.height || "", weight: player.weight || "", preferred_foot: player.preferred_foot || "Right", date_of_birth: player.date_of_birth || "", joined_date: player.joined_date || "", contract_until: player.contract_until || "", parent_name: player.parent_name || "", parent_phone: player.parent_phone || "", parent_email: player.parent_email || "" }); setEditing(false); }} className="admin-btn-ghost" data-testid="cancel-edit-btn">Ακύρωση</button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {!editing ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-personal-info">
+            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Προσωπικά Στοιχεία</h3>
+            <InfoRow label="Ονοματεπώνυμο" value={player.name} />
+            <InfoRow label="Αριθμός" value={String(player.number)} />
+            <InfoRow label="Θέση" value={positionGr[player.position] || player.position} />
+            <InfoRow label="Εθνικότητα" value={player.nationality} />
+            {player.date_of_birth && <InfoRow label="Ημ. Γέννησης" value={new Date(player.date_of_birth).toLocaleDateString('el-GR')} />}
+            <InfoRow label="Ηλικία" value={player.age ? `${player.age} ετών` : calcAge(player.date_of_birth) ? `${calcAge(player.date_of_birth)} ετών` : null} />
+            <InfoRow label="Ύψος" value={player.height} />
+            <InfoRow label="Βάρος" value={player.weight} />
+            <InfoRow label="Πόδι" value={player.preferred_foot === 'Right' ? 'Δεξί' : player.preferred_foot === 'Left' ? 'Αριστερό' : player.preferred_foot} />
+          </div>
+
+          <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-team-info">
+            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Πληροφορίες Ομάδας</h3>
+            <InfoRow label="Τύπος" value={isAcademy ? "Ακαδημία" : "Α' Ομάδα"} />
+            {isAcademy && <InfoRow label="Ομάδα Ακαδημίας" value={groupName} />}
+            {player.academy_group_ids?.length > 1 && (
+              <div className="py-2.5 border-b border-[#1e1e1e]">
+                <span className="text-sm text-zinc-500 block mb-2">Εγγεγραμμένος σε:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {player.academy_group_ids.map(gid => {
+                    const g = academyGroups.find(ag => ag.id === gid);
+                    return g ? <span key={gid} className="admin-badge admin-badge-green text-xs">{g.name}</span> : null;
+                  })}
+                </div>
+              </div>
+            )}
+            {player.joined_date && <InfoRow label="Ημ. Ένταξης" value={player.joined_date} />}
+            {player.contract_until && <InfoRow label="Συμβόλαιο έως" value={player.contract_until} />}
+          </div>
+
+          {isAcademy && (player.parent_name || player.parent_phone || player.parent_email) && (
+            <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-parent-info">
+              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Γονέας / Κηδεμόνας</h3>
+              <InfoRow label="Ονοματεπώνυμο" value={player.parent_name} />
+              <InfoRow label="Τηλέφωνο" value={player.parent_phone} />
+              <InfoRow label="Email" value={player.parent_email} />
+            </div>
+          )}
+
+          {player.bio && (
+            <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:col-span-2 xl:col-span-3" data-testid="player-bio-section">
+              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Βιογραφικό</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">{player.bio}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:p-8" data-testid="player-edit-form">
+          <h3 className="font-['Bebas_Neue'] text-xl text-white mb-6">Επεξεργασία Στοιχείων</h3>
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <Field label="Ονοματεπώνυμο *"><AdminInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="profile-name-input" /></Field>
+              <Field label="Αριθμός *"><AdminInput type="number" value={form.number} onChange={e => setForm({...form, number: e.target.value})} data-testid="profile-number-input" /></Field>
+              <Field label="Θέση">
+                <AdminSelect value={form.position} onChange={e => setForm({...form, position: e.target.value})}>
+                  <option value="Goalkeeper">Τερματοφύλακας</option><option value="Defender">Αμυντικός</option><option value="Midfielder">Μέσος</option><option value="Forward">Επιθετικός</option>
+                </AdminSelect>
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <Field label="Εθνικότητα"><AdminInput value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
+              {isAcademy ? (
+                <Field label="Ημ. Γέννησης">
+                  <AdminInput type="date" value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} />
+                  {form.date_of_birth && <span className="text-xs text-[#10B981] mt-1 block">Ηλικία: {calcAge(form.date_of_birth)} ετών</span>}
+                </Field>
+              ) : (
+                <Field label="Ηλικία"><AdminInput type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} /></Field>
+              )}
+              <Field label="Πόδι">
+                <AdminSelect value={form.preferred_foot} onChange={e => setForm({...form, preferred_foot: e.target.value})}>
+                  <option value="Right">Δεξί</option><option value="Left">Αριστερό</option><option value="Both">Αμφίπλευρο</option>
+                </AdminSelect>
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <Field label="Ύψος"><AdminInput placeholder="1.85m" value={form.height} onChange={e => setForm({...form, height: e.target.value})} /></Field>
+              <Field label="Βάρος"><AdminInput placeholder="78kg" value={form.weight} onChange={e => setForm({...form, weight: e.target.value})} /></Field>
+              {!isAcademy && (
+                <Field label="Ομάδα">
+                  <AdminSelect value={form.team_type} onChange={e => setForm({...form, team_type: e.target.value})}>
+                    <option value="First Team">Α' Ομάδα</option><option value="Academy">Ακαδημία</option>
+                  </AdminSelect>
+                </Field>
+              )}
+            </div>
+            {isAcademy && (
+              <div className="border-t border-[#262626] pt-5">
+                <h4 className="text-white text-sm font-semibold mb-4">Γονέας / Κηδεμόνας</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <Field label="Ονοματεπώνυμο"><AdminInput value={form.parent_name} onChange={e => setForm({...form, parent_name: e.target.value})} /></Field>
+                  <Field label="Τηλέφωνο"><AdminInput value={form.parent_phone} onChange={e => setForm({...form, parent_phone: e.target.value})} /></Field>
+                  <Field label="Email"><AdminInput type="email" value={form.parent_email} onChange={e => setForm({...form, parent_email: e.target.value})} /></Field>
+                </div>
+              </div>
+            )}
+            <ImageUpload currentUrl={form.image_url} onImageChange={url => setForm({...form, image_url: url})} playerId={player.id} />
+            <Field label="Βιογραφικό"><AdminTextarea rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ==================== DASHBOARD TAB ====================
 const DashboardTab = ({ stats, onTabChange }) => {
@@ -489,6 +698,7 @@ const LiveScoreTab = ({ fixtures, players, onRefresh }) => {
 
 // ==================== PLAYERS TAB ====================
 const PlayersTab = ({ players, academyGroups, onRefresh }) => {
+  const [viewingPlayer, setViewingPlayer] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editPlayer, setEditPlayer] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -555,6 +765,12 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
 
   const filtered = filter === "all" ? players : filter === "first_team" ? players.filter(p => p.team_type === "First Team") : players.filter(p => p.team_type === "Academy");
 
+  // If viewing a player, show profile
+  if (viewingPlayer) {
+    const freshPlayer = players.find(p => p.id === viewingPlayer.id) || viewingPlayer;
+    return <AdminPlayerProfile player={freshPlayer} academyGroups={academyGroups} onBack={() => setViewingPlayer(null)} onRefresh={onRefresh} />;
+  }
+
   return (
     <div data-testid="admin-players-tab">
       <TabHeader title="Παίκτες" count={players.length}>
@@ -571,15 +787,15 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
           <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th>Ομάδα</th><th></th></tr></thead>
           <tbody>
             {filtered.map(p => (
-              <tr key={p.id}>
+              <tr key={p.id} className="cursor-pointer hover:bg-white/[0.03]" onClick={() => setViewingPlayer(p)}>
                 <td className="font-mono text-zinc-500">{p.number}</td>
                 <td>{p.image_url ? <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>}</td>
-                <td className="font-medium text-white">{p.name}</td>
+                <td className="font-medium text-[#F5A623] hover:underline" data-testid={`view-player-${p.id}`}>{p.name}</td>
                 <td className="text-zinc-400">{p.position}</td>
                 <td className="text-zinc-400">{p.age}</td>
                 <td><span className={`admin-badge ${p.team_type === 'Academy' ? 'admin-badge-green' : 'admin-badge-blue'}`}>{p.team_type === 'First Team' ? "Α'" : 'Ακαδ.'}</span></td>
                 <td>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                     <button onClick={() => openEdit(p)} className="admin-icon-btn" data-testid={`edit-player-${p.id}`}><Edit2 size={13} /></button>
                     <button onClick={() => openTransfer(p)} className="admin-icon-btn text-blue-500/60 hover:text-blue-400" data-testid={`transfer-player-${p.id}`} title="Μεταγραφή"><ArrowLeftRight size={13} /></button>
                     <button onClick={() => handleDelete(p.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-player-${p.id}`}><Trash2 size={13} /></button>
@@ -1385,6 +1601,7 @@ const GalleryTab = ({ onRefresh: parentRefresh }) => {
 // ==================== TEAMS TAB (with drill-down) ====================
 const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTabChange }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [viewingPlayer, setViewingPlayer] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editTeam, setEditTeam] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -1492,6 +1709,16 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
     const teamFixtures = fixtures.sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
     const teamStaff = staff.filter(s => s.team_type === "First Team");
 
+    // Player profile view within team drill-down
+    if (viewingPlayer) {
+      const freshPlayer = players.find(p => p.id === viewingPlayer.id) || viewingPlayer;
+      return (
+        <div data-testid="team-detail-view">
+          <AdminPlayerProfile player={freshPlayer} onBack={() => setViewingPlayer(null)} onRefresh={onRefresh} />
+        </div>
+      );
+    }
+
     return (
       <div data-testid="team-detail-view">
         <button onClick={() => setSelectedTeam(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-teams">
@@ -1534,14 +1761,14 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
                 <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th></th></tr></thead>
                 <tbody>
                   {teamPlayers.map(p => (
-                    <tr key={p.id}>
+                    <tr key={p.id} className="cursor-pointer hover:bg-white/[0.03]" onClick={() => setViewingPlayer(p)}>
                       <td className="font-mono text-zinc-400">{p.number}</td>
                       <td>{p.image_url ? <img src={p.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={14} className="text-zinc-600" /></div>}</td>
-                      <td className="font-medium text-white">{p.name}</td>
+                      <td className="font-medium text-[#F5A623] hover:underline" data-testid={`view-team-player-${p.id}`}>{p.name}</td>
                       <td className="text-zinc-300">{p.position}</td>
                       <td className="text-zinc-300">{p.age}</td>
                       <td>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                           <button onClick={() => openEditPlayer(p)} className="admin-icon-btn" data-testid={`edit-team-player-${p.id}`}><Edit2 size={14} /></button>
                           <button onClick={() => handleDeletePlayer(p.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-team-player-${p.id}`}><Trash2 size={14} /></button>
                         </div>
@@ -1719,6 +1946,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
 // ==================== ENHANCED ACADEMY TAB (full CRUD + drill-down) ====================
 const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [viewingPlayer, setViewingPlayer] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editGroup, setEditGroup] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -1873,6 +2101,16 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
       (p.academy_group_ids && p.academy_group_ids.includes(selectedGroup.id))
     );
 
+    // Player profile view within academy drill-down
+    if (viewingPlayer) {
+      const freshPlayer = players.find(p => p.id === viewingPlayer.id) || viewingPlayer;
+      return (
+        <div data-testid="academy-detail-view">
+          <AdminPlayerProfile player={freshPlayer} academyGroups={groups} onBack={() => setViewingPlayer(null)} onRefresh={onRefresh} />
+        </div>
+      );
+    }
+
     return (
       <div data-testid="academy-detail-view">
         <button onClick={() => setSelectedGroup(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-academy">
@@ -1915,16 +2153,16 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
                 <thead><tr><th>#</th><th></th><th>Όνομα</th><th>Θέση</th><th>Ηλικία</th><th>Γονέας</th><th>Τηλ.</th><th></th></tr></thead>
                 <tbody>
                   {groupPlayers.map(p => (
-                    <tr key={p.id}>
+                    <tr key={p.id} className="cursor-pointer hover:bg-white/[0.03]" onClick={() => setViewingPlayer(p)}>
                       <td className="font-mono text-zinc-400">{p.number}</td>
                       <td>{p.image_url ? <img src={p.image_url} alt="" className="w-9 h-9 object-cover rounded-full" /> : <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center"><Users size={14} className="text-zinc-600" /></div>}</td>
-                      <td className="font-medium text-white">{p.name}</td>
+                      <td className="font-medium text-[#10B981] hover:underline" data-testid={`view-academy-player-${p.id}`}>{p.name}</td>
                       <td className="text-zinc-300">{p.position}</td>
                       <td className="text-zinc-300">{p.age || calcAge(p.date_of_birth) || "-"}</td>
                       <td className="text-zinc-400 text-sm">{p.parent_name || "-"}</td>
                       <td className="text-zinc-400 text-sm">{p.parent_phone || "-"}</td>
                       <td>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                           <button onClick={() => openEditPlayer(p)} className="admin-icon-btn" data-testid={`edit-academy-player-${p.id}`}><Edit2 size={14} /></button>
                           <button onClick={() => openTransfer(p)} className="admin-icon-btn text-blue-400/70 hover:text-blue-300" title="Μεταφορά" data-testid={`transfer-player-${p.id}`}><ArrowLeftRight size={14} /></button>
                           <button onClick={() => handleDeletePlayer(p.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-academy-player-${p.id}`}><Trash2 size={14} /></button>
@@ -2867,7 +3105,7 @@ const AdminPanel = ({ user, onLogout }) => {
 
         {/* Main Content */}
         <main className="flex-1 lg:ml-56 p-6 pt-18 lg:pt-6 min-h-[calc(100vh-56px)]">
-          <div className="max-w-6xl mx-auto">
+          <div>
             {renderTab()}
           </div>
         </main>

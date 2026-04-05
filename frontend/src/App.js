@@ -15,6 +15,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import RegistrationPage from "./pages/RegistrationPage";
+import AcademyGroupPage from "./pages/AcademyGroupPage";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
@@ -994,7 +995,7 @@ const AcademyPage = () => {
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Ηλικιακές Κατηγορίες</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {academyInfo.map((group) => (
-              <div key={group.id} className="card p-6" data-testid={`academy-${group.name}`}>
+              <Link to={`/academy/${group.id}`} key={group.id} className="card p-6 hover:border-[#F5A623]/30 transition-all duration-300 group" data-testid={`academy-${group.name}`}>
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-['Bebas_Neue'] text-4xl text-[#F5A623]">{group.name}</span>
                   <span className="badge badge-secondary">{group.age_range}</span>
@@ -1005,10 +1006,13 @@ const AcademyPage = () => {
                   <Clock size={14} />
                   <span>{group.training_schedule}</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#262626]">
+                <div className="mt-4 pt-3 border-t border-[#262626] flex items-center justify-between">
                   <span className="text-xs text-zinc-500">Σεζόν {group.season}</span>
+                  <span className="text-xs text-[#F5A623] group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                    Δες περισσότερα <ChevronRight size={12} />
+                  </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -1660,6 +1664,7 @@ function App() {
             <Route path="/team" element={<PublicLayout><TeamHubPage /></PublicLayout>} />
             <Route path="/academy" element={<PublicLayout><AcademyPage /></PublicLayout>} />
             <Route path="/academy/registration" element={<PublicLayout><RegistrationPage /></PublicLayout>} />
+            <Route path="/academy/:groupId" element={<PublicLayout><AcademyGroupPage /></PublicLayout>} />
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
