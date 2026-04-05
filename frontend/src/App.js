@@ -8,6 +8,7 @@ import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import MatchReportPage from "./pages/MatchReportPage";
 import ShopPage from "./pages/ShopPage";
+import VotePage from "./pages/VotePage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
 
@@ -437,11 +438,11 @@ const HomePage = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-32">
           <div className="max-w-3xl">
             <span className="badge badge-primary mb-6 animate-fadeInUp">Ιδρ. 2024</span>
-            <h1 className="font-['Bebas_Neue'] text-6xl md:text-7xl lg:text-8xl text-white mb-6 animate-fadeInUp animation-delay-200">
+            <h1 className="font-['Bebas_Neue'] text-5xl md:text-6xl lg:text-7xl text-white mb-6 animate-fadeInUp animation-delay-200">
               Καλώς Ήρθατε στην<br/>
               <span className="text-[#F5A623]">LEFTERIA FC</span>
             </h1>
-            <p className="text-xl text-zinc-300 mb-8 animate-fadeInUp animation-delay-400 max-w-xl">
+            <p className="text-lg text-zinc-300 mb-8 animate-fadeInUp animation-delay-400 max-w-xl">
               Χτίζουμε πρωταθλητές μέσα από το πάθος, την πειθαρχία και την ομαδικότητα. Ελάτε μαζί μας στο ταξίδι προς την κορυφή.
             </p>
             <div className="flex flex-wrap gap-4 animate-fadeInUp animation-delay-600">
@@ -527,57 +528,47 @@ const HomePage = () => {
       </section>
 
       {/* Latest Fixtures */}
-      <section className="py-20 px-6 bg-[#050505]" data-testid="fixtures-section">
+      <section className="py-16 px-6 bg-[#050505]" data-testid="fixtures-section">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-12">
+          <div className="flex justify-between items-end mb-8">
             <div>
-              <span className="badge badge-secondary mb-4">Πρόγραμμα</span>
-              <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading">
-                Τελευταίοι Αγώνες
+              <span className="badge badge-secondary mb-3">Πρόγραμμα</span>
+              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
+                Τελευταίοι <span className="text-[#F5A623]">Αγώνες</span>
               </h2>
             </div>
-            <Link to="/fixtures" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline">
-              Όλοι οι Αγώνες <ArrowRight size={16} />
+            <Link to="/team?tab=results" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline text-sm">
+              Όλοι οι Αγώνες <ArrowRight size={14} />
             </Link>
           </div>
 
-          <div className="grid gap-4">
+          <div className="space-y-2">
             {fixtures.slice(0, 4).map((fixture) => (
               <div 
                 key={fixture.id} 
-                className={`card p-6 fixture-card ${fixture.status === 'Live' ? 'live' : ''}`}
+                className={`bg-[#111] rounded-lg border border-[#1a1a1a] px-5 py-4 hover:border-[#333] transition-colors ${fixture.status === 'Live' ? 'border-red-500/30' : ''}`}
                 data-testid={`fixture-${fixture.id}`}
               >
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-4 flex-1 min-w-[200px]">
-                    <span className="badge badge-secondary">{fixture.competition}</span>
-                    <span className="text-zinc-400 text-sm">
-                      {new Date(fixture.match_date).toLocaleDateString('en-GB', { 
-                        day: 'numeric', month: 'short', year: 'numeric' 
-                      })}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-6 justify-center flex-1">
-                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-zinc-500 w-20 flex-shrink-0">
+                    {new Date(fixture.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
+                  </span>
+                  <div className="flex items-center justify-center flex-1 gap-3">
+                    <span className={`font-medium text-sm text-right flex-1 ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.home_team}
                     </span>
-                    <div className="match-score bg-[#1F1F1F] px-4 py-2">
+                    <div className="bg-[#1a1a1a] rounded px-3 py-1 min-w-[60px] text-center">
                       {fixture.status === 'Completed' ? (
-                        `${fixture.home_score} - ${fixture.away_score}`
+                        <span className="font-['Bebas_Neue'] text-lg text-white">{fixture.home_score} - {fixture.away_score}</span>
                       ) : (
-                        <span className="text-zinc-400 text-lg">VS</span>
+                        <span className="text-xs text-zinc-500">VS</span>
                       )}
                     </div>
-                    <span className={`font-['Bebas_Neue'] text-xl ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-medium text-sm text-left flex-1 ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.away_team}
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-3 flex-1 justify-end min-w-[150px]">
-                    <MapPin size={16} className="text-zinc-500" />
-                    <span className="text-zinc-400 text-sm">{fixture.venue}</span>
-                  </div>
+                  <span className="text-xs text-zinc-600 w-24 text-right flex-shrink-0 hidden sm:block truncate">{fixture.venue}</span>
                 </div>
               </div>
             ))}
@@ -585,112 +576,68 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Birthday Celebrations */}
+      {/* Birthday Celebrations — Compact Rotating Ticker */}
       {birthdayPlayers.length > 0 && (
-        <section className="py-16 px-6 bg-[#0a0a0a] border-t border-[#1a1a1a]" data-testid="birthday-section">
+        <section className="py-4 px-6 bg-[#0a0a0a] border-t border-b border-[#1a1a1a] overflow-hidden" data-testid="birthday-section">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-full bg-[#F5A623]/10 flex items-center justify-center">
-                <span className="text-lg" role="img" aria-label="cake">&#x1F382;</span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-base" role="img" aria-label="cake">&#x1F382;</span>
+                <span className="text-xs text-[#F5A623] tracking-widest uppercase font-semibold whitespace-nowrap">Γενέθλια {currentMonthName}</span>
               </div>
-              <div>
-                <span className="badge badge-primary mb-1">Γενέθλια {currentMonthName}</span>
-                <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
-                  Χρόνια <span className="text-[#F5A623]">Πολλά!</span>
-                </h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {birthdayPlayers.map((p) => (
-                <Link 
-                  key={p.id} 
-                  to={`/player/${p.id}`} 
-                  className="group relative bg-[#111] border border-[#222] rounded-lg overflow-hidden hover:border-[#F5A623]/40 transition-all"
-                  data-testid={`birthday-player-${p.id}`}
-                >
-                  <div className="aspect-square bg-[#1a1a1a] overflow-hidden">
-                    {p.image_url ? (
-                      <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="font-['Bebas_Neue'] text-4xl text-[#F5A623]/30">#{p.number}</span>
+              <div className="relative flex-1 overflow-hidden">
+                <div className="birthday-ticker flex gap-8 items-center">
+                  {[...birthdayPlayers, ...birthdayPlayers].map((p, i) => (
+                    <Link
+                      key={`${p.id}-${i}`}
+                      to={`/player/${p.id}`}
+                      className="flex items-center gap-3 flex-shrink-0 group"
+                      data-testid={`birthday-player-${p.id}`}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-[#1a1a1a] overflow-hidden border border-[#333] group-hover:border-[#F5A623] transition-colors flex-shrink-0">
+                        {p.image_url ? (
+                          <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-[#F5A623]/40 font-bold">{p.number}</div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#F5A623] flex items-center justify-center shadow-lg">
-                    <span className="text-xs text-black font-bold">{p.birthday_day}</span>
-                  </div>
-                  <div className="p-3">
-                    <div className="font-['Bebas_Neue'] text-base text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-500">{posLabels[p.position] || p.position}</span>
-                      <span className="text-xs text-[#F5A623]">{p.age} ετών</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                      <div className="whitespace-nowrap">
+                        <span className="text-sm text-white group-hover:text-[#F5A623] transition-colors font-medium">{p.name}</span>
+                        <span className="text-xs text-zinc-500 ml-2">{p.birthday_day}/{String(new Date().getMonth() + 1).padStart(2, '0')} — {p.age} ετών</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* Player of the Month Voting */}
-      <section className="py-20 px-6 bg-[#050505]" data-testid="potm-section">
+      {/* Player of the Month — Compact Top 3 */}
+      <section className="py-14 px-6 bg-[#050505]" data-testid="potm-section">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <span className="badge badge-primary mb-4">Ψηφοφορία</span>
-              <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading">
+              <span className="badge badge-primary mb-3">Ψηφοφορία</span>
+              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
                 Παίκτης του <span className="text-[#F5A623]">Μήνα</span>
               </h2>
-              <p className="text-zinc-400 text-sm mt-2">
-                {potmHasVoted 
-                  ? "Ευχαριστούμε για την ψήφο σας! Δείτε τα αποτελέσματα." 
-                  : "Ψηφίστε τον αγαπημένο σας παίκτη για τον μήνα " + currentMonthName + "."
-                }
-              </p>
             </div>
-            {potmResults.total_votes > 0 && (
-              <div className="mt-4 md:mt-0 text-sm text-zinc-500">
-                Σύνολο ψήφων: <span className="text-[#F5A623] font-semibold">{potmResults.total_votes}</span>
-              </div>
-            )}
+            <Link to="/vote" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline text-sm" data-testid="potm-vote-link">
+              {potmHasVoted ? "Αποτελέσματα" : "Ψήφισε"} <ArrowRight size={14} />
+            </Link>
           </div>
 
-          {/* Leader Card */}
-          {potmResults.results.length > 0 && potmHasVoted && (
-            <div className="mb-10 p-6 bg-gradient-to-r from-[#F5A623]/10 via-[#111] to-[#111] border border-[#F5A623]/20 rounded-lg" data-testid="potm-leader">
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-[#1a1a1a] overflow-hidden border-2 border-[#F5A623]">
-                    {potmResults.results[0].image_url ? (
-                      <img src={resolveImg(potmResults.results[0].image_url)} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center font-['Bebas_Neue'] text-2xl text-[#F5A623]/40">#{potmResults.results[0].number}</div>
-                    )}
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-7 h-7 bg-[#F5A623] rounded-full flex items-center justify-center shadow-lg">
-                    <Trophy size={14} className="text-black" />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-[#F5A623] tracking-widest uppercase mb-1">Πρώτος</div>
-                  <div className="font-['Bebas_Neue'] text-2xl text-white">{potmResults.results[0].player_name}</div>
-                  <div className="text-sm text-zinc-400">{potmResults.results[0].votes} ψήφοι</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Voting Grid / Results */}
-          {potmHasVoted ? (
-            <div className="space-y-3" data-testid="potm-results">
-              {potmResults.results.map((r, idx) => {
+          {potmResults.results.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-testid="potm-top3">
+              {potmResults.results.slice(0, 3).map((r, idx) => {
                 const pct = potmResults.total_votes > 0 ? Math.round((r.votes / potmResults.total_votes) * 100) : 0;
+                const medals = ["border-[#F5A623]", "border-zinc-400", "border-amber-700"];
                 return (
-                  <div key={r.player_id} className={`flex items-center gap-4 p-3 rounded-lg border ${r.player_id === potmVotedId ? 'bg-[#F5A623]/5 border-[#F5A623]/30' : 'bg-[#111] border-[#222]'}`} data-testid={`potm-result-${r.player_id}`}>
-                    <span className="font-['Bebas_Neue'] text-lg text-zinc-500 w-6 text-center">{idx + 1}</span>
-                    <div className="w-10 h-10 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
+                  <div key={r.player_id} className={`flex items-center gap-4 p-4 bg-[#111] rounded-lg border ${medals[idx] || 'border-[#222]'}`} data-testid={`potm-top-${idx + 1}`}>
+                    <span className="font-['Bebas_Neue'] text-2xl text-zinc-500 w-6 text-center">{idx + 1}</span>
+                    <div className="w-12 h-12 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 border border-[#333]">
                       {r.image_url ? (
                         <img src={resolveImg(r.image_url)} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -698,60 +645,39 @@ const HomePage = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-white text-sm truncate">{r.player_name}</span>
-                        {r.player_id === potmVotedId && <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full">Η ψήφος σας</span>}
-                      </div>
+                      <div className="font-medium text-white text-sm truncate">{r.player_name}</div>
                       <div className="mt-1 w-full bg-[#1a1a1a] rounded-full h-1.5 overflow-hidden">
                         <div className="h-full bg-[#F5A623] rounded-full transition-all duration-700" style={{ width: `${pct}%` }}></div>
                       </div>
                     </div>
-                    <span className="text-sm text-zinc-400 font-mono w-12 text-right">{pct}%</span>
+                    <span className="text-sm text-[#F5A623] font-mono">{pct}%</span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" data-testid="potm-voting-grid">
-              {potmPlayers.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handlePotmVote(p.id)}
-                  disabled={potmVoting}
-                  className="group text-left bg-[#111] border border-[#222] rounded-lg overflow-hidden hover:border-[#F5A623] transition-all focus:outline-none focus:ring-1 focus:ring-[#F5A623] disabled:opacity-50"
-                  data-testid={`potm-vote-${p.id}`}
-                >
-                  <div className="aspect-[3/4] bg-[#1a1a1a] overflow-hidden relative">
-                    {p.image_url ? (
-                      <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="font-['Bebas_Neue'] text-5xl text-[#F5A623]/20">{p.number}</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                      <span className="text-xs text-[#F5A623] font-semibold tracking-wider uppercase">Ψήφισε</span>
-                    </div>
-                  </div>
-                  <div className="p-2.5">
-                    <div className="font-['Bebas_Neue'] text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">#{p.number} {p.name}</div>
-                    <div className="text-[10px] text-zinc-500">{posLabels[p.position] || p.position}</div>
-                  </div>
-                </button>
-              ))}
+            <div className="text-center py-8">
+              <p className="text-zinc-400 text-sm mb-4">Δεν υπάρχουν ψήφοι ακόμα. Γίνε ο πρώτος!</p>
+              <Link to="/vote" className="btn-primary inline-flex" data-testid="potm-vote-cta">
+                Ψήφισε Τώρα <ArrowRight size={16} />
+              </Link>
             </div>
           )}
+
+          <Link to="/vote" className="flex md:hidden items-center justify-center gap-2 text-[#F5A623] hover:underline text-sm mt-6" data-testid="potm-vote-link-mobile">
+            {potmHasVoted ? "Δες Αποτελέσματα" : "Ψήφισε Τώρα"} <ArrowRight size={14} />
+          </Link>
         </div>
       </section>
 
       {/* League Table */}
-      <section className="py-20 px-6 bg-[#0a0a0a]" data-testid="standings-section">
+      <section className="py-16 px-6 bg-[#0a0a0a]" data-testid="standings-section">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Standings Table */}
             <div>
-              <span className="badge badge-secondary mb-4">ΠΑΑΟΚ Α' Όμιλος</span>
-              <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading mb-8">
+              <span className="badge badge-secondary mb-3">ΠΑΑΟΚ Α' Όμιλος</span>
+              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
                 Βαθμολογία
               </h2>
               
@@ -805,8 +731,8 @@ const HomePage = () => {
 
             {/* Latest News */}
             <div>
-              <span className="badge badge-secondary mb-4">Ενημέρωση</span>
-              <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading mb-8">
+              <span className="badge badge-secondary mb-3">Ενημέρωση</span>
+              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
                 Τελευταία Νέα
               </h2>
               
@@ -860,10 +786,10 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-black/80"></div>
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <span className="badge badge-primary mb-6">Ανάπτυξη Νέων</span>
-          <h2 className="font-['Bebas_Neue'] text-5xl md:text-6xl text-white mb-6">
+          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
             Έλα στην <span className="text-[#F5A623]">Ακαδημία</span>
           </h2>
-          <p className="text-xl text-zinc-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-zinc-300 mb-8 max-w-2xl mx-auto">
             Από U8 έως U18, η ακαδημία μας αναπτύσσει νέα ταλέντα με προπονητές και εγκαταστάσεις υψηλού επιπέδου. 
             Ξεκίνα το ταξίδι σου για να γίνεις επαγγελματίας ποδοσφαιριστής.
           </p>
@@ -888,7 +814,7 @@ const AboutPage = () => (
     <section className="py-20 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
         <span className="badge badge-secondary mb-4">Η Ιστορία μας</span>
-        <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
+        <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
           Σχετικά με την <span className="text-[#F5A623]">LEFTERIA FC</span>
         </h1>
         <p className="text-xl text-zinc-300 max-w-3xl">
@@ -1039,10 +965,10 @@ const AcademyPage = () => {
         <div className="absolute inset-0 bg-black/70"></div>
         <div className="relative z-10 max-w-7xl mx-auto">
           <span className="badge badge-primary mb-4">Ανάπτυξη Νέων</span>
-          <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
+          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             LEFTERIA FC <span className="text-[#F5A623]">Ακαδημία</span>
           </h1>
-          <p className="text-xl text-zinc-300 max-w-3xl">
+          <p className="text-lg text-zinc-300 max-w-3xl">
             Αναπτύσσουμε την επόμενη γενιά ταλέντων του κυπριακού ποδοσφαίρου μέσω 
             κορυφαίας προπόνησης, εγκαταστάσεων και πορείας προς τον επαγγελματισμό.
           </p>
@@ -1183,7 +1109,7 @@ const FixturesPage = () => {
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
-          <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
+          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             Αγώνες & <span className="text-[#F5A623]">Αποτελέσματα</span>
           </h1>
         </div>
@@ -1323,7 +1249,7 @@ const NewsPage = () => {
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Τελευταία Ενημέρωση</span>
-          <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
+          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             Τα <span className="text-[#F5A623]">Νέα</span> μας
           </h1>
         </div>
@@ -1433,7 +1359,7 @@ const ContactPage = () => {
       <section className="py-20 px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Επικοινωνήστε Μαζί Μας</span>
-          <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white mb-6">
+          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             <span className="text-[#F5A623]">Επικοινωνία</span>
           </h1>
         </div>
@@ -1713,6 +1639,7 @@ function App() {
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/shop" element={<PublicLayout><ShopPage /></PublicLayout>} />
+            <Route path="/vote" element={<PublicLayout><VotePage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
             <Route path="/match/:fixtureId" element={<PublicLayout><MatchReportPage /></PublicLayout>} />
             {/* Legacy redirects */}

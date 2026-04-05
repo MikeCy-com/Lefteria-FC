@@ -4,6 +4,20 @@
   min-height: 100vh;
 }
 
+/* Birthday ticker animation */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.birthday-ticker {
+  animation: ticker-scroll 20s linear infinite;
+}
+
+.birthday-ticker:hover {
+  animation-play-state: paused;
+}
+
 /* Line clamp utility */
 .line-clamp-2 {
   display: -webkit-box;

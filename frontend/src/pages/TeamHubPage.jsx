@@ -776,7 +776,7 @@ const TeamHubPage = () => {
         <section className="py-16 px-6 bg-[#0a0a0a]">
           <div className="max-w-6xl mx-auto">
             <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζόν 2025/26</span>
-            <h1 className="font-['Bebas_Neue'] text-5xl md:text-6xl text-white mt-2">Πρώτη <span className="text-[#F5A623]">Ομάδα</span></h1>
+            <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2">Πρώτη <span className="text-[#F5A623]">Ομάδα</span></h1>
           </div>
         </section>
         <div className="flex items-center justify-center min-h-[300px]"><div className="spinner" /></div>
@@ -790,7 +790,7 @@ const TeamHubPage = () => {
       <section className="py-16 px-6 bg-[#0a0a0a]">
         <div className="max-w-6xl mx-auto">
           <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζόν 2025/26</span>
-          <h1 className="font-['Bebas_Neue'] text-5xl md:text-6xl text-white mt-2">
+          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2">
             Πρώτη <span className="text-[#F5A623]">Ομάδα</span>
           </h1>
           <p className="text-zinc-400 text-sm mt-3 max-w-2xl">
