@@ -707,6 +707,42 @@ async def get_players(
     players = await db.players.find(query, {"_id": 0}).sort("number", 1).to_list(1000)
     return [Player(**p) for p in players]
 
+# Birthday players - MUST be before {player_id} route
+@api_router.get("/players/birthdays")
+async def get_birthday_players():
+    now = datetime.now(timezone.utc)
+    current_month = now.month
+    
+    all_players = await db.players.find(
+        {"is_active": True, "date_of_birth": {"$ne": None}},
+        {"_id": 0}
+    ).to_list(500)
+    
+    birthday_players = []
+    for p in all_players:
+        dob = p.get("date_of_birth", "")
+        if dob:
+            try:
+                dob_date = datetime.strptime(dob, "%Y-%m-%d")
+                if dob_date.month == current_month:
+                    age = now.year - dob_date.year
+                    birthday_players.append({
+                        "id": p["id"],
+                        "name": p["name"],
+                        "number": p.get("number"),
+                        "position": p.get("position"),
+                        "team_type": p.get("team_type"),
+                        "image_url": p.get("image_url"),
+                        "date_of_birth": dob,
+                        "age": age,
+                        "birthday_day": dob_date.day,
+                    })
+            except ValueError:
+                pass
+    
+    birthday_players.sort(key=lambda x: x["birthday_day"])
+    return birthday_players
+
 @api_router.get("/players/{player_id}", response_model=Player)
 async def get_player(player_id: str):
     player = await db.players.find_one({"id": player_id}, {"_id": 0})
@@ -1852,6 +1888,123 @@ async def seed_data():
     await db.club_profile.insert_one(club.model_dump())
     
     return {"message": "Τα δεδομένα φορτώθηκαν επιτυχώς"}
+
+# ==================== PLAYER OF THE MONTH VOTING ====================
+class PotmVote(BaseModel):
+    player_id: str
+
+@api_router.post("/votes/potm")
+async def cast_potm_vote(vote: PotmVote, request: Request):
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+    
+    # Get voter fingerprint from IP + User-Agent
+    voter_ip = request.client.host if request.client else "unknown"
+    voter_ua = request.headers.get("user-agent", "")
+    import hashlib
+    voter_fingerprint = hashlib.sha256(f"{voter_ip}:{voter_ua}".encode()).hexdigest()
+    
+    # Check if already voted this month
+    existing = await db.potm_votes.find_one({
+        "voter_fingerprint": voter_fingerprint,
+        "month_key": month_key
+    })
+    if existing:
+        raise HTTPException(status_code=429, detail="Έχετε ήδη ψηφίσει αυτόν τον μήνα")
+    
+    # Verify player exists
+    player = await db.players.find_one({"id": vote.player_id, "is_active": True}, {"_id": 0, "name": 1})
+    if not player:
+        raise HTTPException(status_code=404, detail="Ο παίκτης δεν βρέθηκε")
+    
+    await db.potm_votes.insert_one({
+        "id": str(uuid.uuid4()),
+        "player_id": vote.player_id,
+        "player_name": player["name"],
+        "voter_fingerprint": voter_fingerprint,
+        "month_key": month_key,
+        "created_at": now.isoformat()
+    })
+    
+    return {"message": "Η ψήφος σας καταγράφηκε!"}
+
+@api_router.get("/votes/potm/results")
+async def get_potm_results():
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+    
+    pipeline = [
+        {"$match": {"month_key": month_key}},
+        {"$group": {"_id": "$player_id", "player_name": {"$first": "$player_name"}, "votes": {"$sum": 1}}},
+        {"$sort": {"votes": -1}},
+        {"$limit": 10}
+    ]
+    results = await db.potm_votes.aggregate(pipeline).to_list(10)
+    
+    # Enrich with player data
+    enriched = []
+    for r in results:
+        player = await db.players.find_one({"id": r["_id"]}, {"_id": 0, "image_url": 1, "number": 1, "position": 1})
+        enriched.append({
+            "player_id": r["_id"],
+            "player_name": r["player_name"],
+            "votes": r["votes"],
+            "image_url": player.get("image_url") if player else None,
+            "number": player.get("number") if player else None,
+            "position": player.get("position") if player else None,
+        })
+    
+    total_votes = await db.potm_votes.count_documents({"month_key": month_key})
+    
+    return {
+        "month_key": month_key,
+        "total_votes": total_votes,
+        "results": enriched
+    }
+
+@api_router.get("/votes/potm/check")
+async def check_potm_vote(request: Request):
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+    voter_ip = request.client.host if request.client else "unknown"
+    voter_ua = request.headers.get("user-agent", "")
+    import hashlib
+    voter_fingerprint = hashlib.sha256(f"{voter_ip}:{voter_ua}".encode()).hexdigest()
+    
+    existing = await db.potm_votes.find_one({
+        "voter_fingerprint": voter_fingerprint,
+        "month_key": month_key
+    })
+    return {"has_voted": existing is not None, "voted_player_id": existing["player_id"] if existing else None}
+
+# Admin: Get voting stats
+@api_router.get("/admin/votes/potm")
+async def admin_get_potm_results(current_user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+    
+    pipeline = [
+        {"$match": {"month_key": month_key}},
+        {"$group": {"_id": "$player_id", "player_name": {"$first": "$player_name"}, "votes": {"$sum": 1}}},
+        {"$sort": {"votes": -1}}
+    ]
+    results = await db.potm_votes.aggregate(pipeline).to_list(100)
+    total = await db.potm_votes.count_documents({"month_key": month_key})
+    
+    return {
+        "month_key": month_key,
+        "total_votes": total,
+        "results": [{"player_id": r["_id"], "player_name": r["player_name"], "votes": r["votes"]} for r in results]
+    }
+
+# Admin: Reset votes for current month
+@api_router.delete("/admin/votes/potm/reset")
+async def admin_reset_potm_votes(current_user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc)
+    month_key = now.strftime("%Y-%m")
+    result = await db.potm_votes.delete_many({"month_key": month_key})
+    return {"message": f"Διαγράφηκαν {result.deleted_count} ψήφοι"}
+
 
 # Include router
 app.include_router(api_router)

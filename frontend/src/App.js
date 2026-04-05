@@ -326,6 +326,14 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [prevScore, setPrevScore] = useState(null);
   const [cols, setCols] = useState({ played: true, won: true, drawn: true, lost: true, goals_for: false, goals_against: false, goal_difference: true, points: true, form: false });
+  // Player of the Month
+  const [potmPlayers, setPotmPlayers] = useState([]);
+  const [potmResults, setPotmResults] = useState({ results: [], total_votes: 0, month_key: "" });
+  const [potmHasVoted, setPotmHasVoted] = useState(false);
+  const [potmVotedId, setPotmVotedId] = useState(null);
+  const [potmVoting, setPotmVoting] = useState(false);
+  // Birthdays
+  const [birthdayPlayers, setBirthdayPlayers] = useState([]);
 
   const fetchLive = async () => {
     try {
@@ -355,18 +363,27 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes, potmCheckRes, potmPlayersRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
           axios.get(`${API}/live-match`),
           axios.get(`${API}/settings/standings-columns`),
+          axios.get(`${API}/players/birthdays`),
+          axios.get(`${API}/votes/potm/results`),
+          axios.get(`${API}/votes/potm/check`),
+          axios.get(`${API}/players?team_type=First%20Team`),
         ]);
         setFixtures(fixturesRes.data);
         setStandings(standingsRes.data);
         setNews(newsRes.data);
         if (liveRes.data.active) setLiveMatch(liveRes.data);
         setCols(colsRes.data);
+        setBirthdayPlayers(birthdayRes.data);
+        setPotmResults(potmResultsRes.data);
+        setPotmHasVoted(potmCheckRes.data.has_voted);
+        setPotmVotedId(potmCheckRes.data.voted_player_id);
+        setPotmPlayers(potmPlayersRes.data);
       } catch (e) {
         console.error("Error fetching data:", e);
       } finally {
@@ -381,6 +398,28 @@ const HomePage = () => {
   }, []);
 
   if (loading) return <Loading />;
+
+  const resolveImg = (url) => url && url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
+
+  const handlePotmVote = async (playerId) => {
+    if (potmHasVoted || potmVoting) return;
+    setPotmVoting(true);
+    try {
+      await axios.post(`${API}/votes/potm`, { player_id: playerId });
+      setPotmHasVoted(true);
+      setPotmVotedId(playerId);
+      const res = await axios.get(`${API}/votes/potm/results`);
+      setPotmResults(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPotmVoting(false);
+    }
+  };
+
+  const monthNames = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
+  const currentMonthName = monthNames[new Date().getMonth()];
+  const posLabels = { Goalkeeper: "Τερμ.", Defender: "Αμυν.", Midfielder: "Μέσος", Forward: "Επιθ." };
 
   return (
     <div data-testid="home-page">
@@ -543,6 +582,165 @@ const HomePage = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Birthday Celebrations */}
+      {birthdayPlayers.length > 0 && (
+        <section className="py-16 px-6 bg-[#0a0a0a] border-t border-[#1a1a1a]" data-testid="birthday-section">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-full bg-[#F5A623]/10 flex items-center justify-center">
+                <span className="text-lg" role="img" aria-label="cake">&#x1F382;</span>
+              </div>
+              <div>
+                <span className="badge badge-primary mb-1">Γενέθλια {currentMonthName}</span>
+                <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
+                  Χρόνια <span className="text-[#F5A623]">Πολλά!</span>
+                </h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {birthdayPlayers.map((p) => (
+                <Link 
+                  key={p.id} 
+                  to={`/player/${p.id}`} 
+                  className="group relative bg-[#111] border border-[#222] rounded-lg overflow-hidden hover:border-[#F5A623]/40 transition-all"
+                  data-testid={`birthday-player-${p.id}`}
+                >
+                  <div className="aspect-square bg-[#1a1a1a] overflow-hidden">
+                    {p.image_url ? (
+                      <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="font-['Bebas_Neue'] text-4xl text-[#F5A623]/30">#{p.number}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#F5A623] flex items-center justify-center shadow-lg">
+                    <span className="text-xs text-black font-bold">{p.birthday_day}</span>
+                  </div>
+                  <div className="p-3">
+                    <div className="font-['Bebas_Neue'] text-base text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-500">{posLabels[p.position] || p.position}</span>
+                      <span className="text-xs text-[#F5A623]">{p.age} ετών</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Player of the Month Voting */}
+      <section className="py-20 px-6 bg-[#050505]" data-testid="potm-section">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10">
+            <div>
+              <span className="badge badge-primary mb-4">Ψηφοφορία</span>
+              <h2 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white section-heading">
+                Παίκτης του <span className="text-[#F5A623]">Μήνα</span>
+              </h2>
+              <p className="text-zinc-400 text-sm mt-2">
+                {potmHasVoted 
+                  ? "Ευχαριστούμε για την ψήφο σας! Δείτε τα αποτελέσματα." 
+                  : "Ψηφίστε τον αγαπημένο σας παίκτη για τον μήνα " + currentMonthName + "."
+                }
+              </p>
+            </div>
+            {potmResults.total_votes > 0 && (
+              <div className="mt-4 md:mt-0 text-sm text-zinc-500">
+                Σύνολο ψήφων: <span className="text-[#F5A623] font-semibold">{potmResults.total_votes}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Leader Card */}
+          {potmResults.results.length > 0 && potmHasVoted && (
+            <div className="mb-10 p-6 bg-gradient-to-r from-[#F5A623]/10 via-[#111] to-[#111] border border-[#F5A623]/20 rounded-lg" data-testid="potm-leader">
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-[#1a1a1a] overflow-hidden border-2 border-[#F5A623]">
+                    {potmResults.results[0].image_url ? (
+                      <img src={resolveImg(potmResults.results[0].image_url)} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-['Bebas_Neue'] text-2xl text-[#F5A623]/40">#{potmResults.results[0].number}</div>
+                    )}
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-7 h-7 bg-[#F5A623] rounded-full flex items-center justify-center shadow-lg">
+                    <Trophy size={14} className="text-black" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-[#F5A623] tracking-widest uppercase mb-1">Πρώτος</div>
+                  <div className="font-['Bebas_Neue'] text-2xl text-white">{potmResults.results[0].player_name}</div>
+                  <div className="text-sm text-zinc-400">{potmResults.results[0].votes} ψήφοι</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Voting Grid / Results */}
+          {potmHasVoted ? (
+            <div className="space-y-3" data-testid="potm-results">
+              {potmResults.results.map((r, idx) => {
+                const pct = potmResults.total_votes > 0 ? Math.round((r.votes / potmResults.total_votes) * 100) : 0;
+                return (
+                  <div key={r.player_id} className={`flex items-center gap-4 p-3 rounded-lg border ${r.player_id === potmVotedId ? 'bg-[#F5A623]/5 border-[#F5A623]/30' : 'bg-[#111] border-[#222]'}`} data-testid={`potm-result-${r.player_id}`}>
+                    <span className="font-['Bebas_Neue'] text-lg text-zinc-500 w-6 text-center">{idx + 1}</span>
+                    <div className="w-10 h-10 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
+                      {r.image_url ? (
+                        <img src={resolveImg(r.image_url)} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-zinc-600">#{r.number}</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white text-sm truncate">{r.player_name}</span>
+                        {r.player_id === potmVotedId && <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full">Η ψήφος σας</span>}
+                      </div>
+                      <div className="mt-1 w-full bg-[#1a1a1a] rounded-full h-1.5 overflow-hidden">
+                        <div className="h-full bg-[#F5A623] rounded-full transition-all duration-700" style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </div>
+                    <span className="text-sm text-zinc-400 font-mono w-12 text-right">{pct}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" data-testid="potm-voting-grid">
+              {potmPlayers.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handlePotmVote(p.id)}
+                  disabled={potmVoting}
+                  className="group text-left bg-[#111] border border-[#222] rounded-lg overflow-hidden hover:border-[#F5A623] transition-all focus:outline-none focus:ring-1 focus:ring-[#F5A623] disabled:opacity-50"
+                  data-testid={`potm-vote-${p.id}`}
+                >
+                  <div className="aspect-[3/4] bg-[#1a1a1a] overflow-hidden relative">
+                    {p.image_url ? (
+                      <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="font-['Bebas_Neue'] text-5xl text-[#F5A623]/20">{p.number}</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
+                      <span className="text-xs text-[#F5A623] font-semibold tracking-wider uppercase">Ψήφισε</span>
+                    </div>
+                  </div>
+                  <div className="p-2.5">
+                    <div className="font-['Bebas_Neue'] text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">#{p.number} {p.name}</div>
+                    <div className="text-[10px] text-zinc-500">{posLabels[p.position] || p.position}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
