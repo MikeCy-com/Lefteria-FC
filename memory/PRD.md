@@ -13,80 +13,108 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 ```
 /app/
 ├── backend/
-│   ├── server.py              # FastAPI monolith (~2050 lines)
+│   ├── server.py              # FastAPI monolith (~2500 lines)
 │   ├── seed_official_data.py  # Official ΠΑΑΟΚ 2025-2026 data seeder
 │   ├── uploads/               # Player images, gallery photos
 │   └── .env                   # MONGO_URL, VAPID keys, JWT config
 ├── frontend/src/
-│   ├── App.js                 # Public pages, auth, routing, POTM top3, birthday ticker, ScrollToTop
+│   ├── App.js                 # Routes, Navigation (cart+profile icons), HomePage, layouts
+│   ├── context/CustomerAuth.jsx  # Customer auth context (login, register, cart)
 │   ├── pages/
 │   │   ├── AdminPanel.jsx     # Standalone CMS (13 tabs + Match Control Center)
 │   │   ├── TeamHubPage.jsx    # SportsPress-style tabbed Team page (6 tabs)
 │   │   ├── PlayerProfilePage.jsx  # Hero banner + stat bars + tabbed profile
 │   │   ├── MatchReportPage.jsx    # Full match detail with event timeline
-│   │   ├── ShopPage.jsx      # Tickets & Merchandise info page
-│   │   └── VotePage.jsx      # Trustworthy POTM voting: identity form, leaderboard, detail modal, withdraw
-│   ├── components/ImageUpload.jsx
-│   ├── utils/
-│   │   ├── sounds.js          # Web Audio API sound effects
-│   │   └── pushNotifications.js # Web Push subscription logic
-│   └── components/ui/         # Shadcn components
+│   │   ├── NewShopPage.jsx    # Real products from lefteriafc.cy with cart
+│   │   ├── VotePage.jsx       # Login-required POTM voting with leaderboard
+│   │   ├── LoginPage.jsx      # Customer login page
+│   │   ├── RegisterPage.jsx   # Customer registration page
+│   │   ├── ProfilePage.jsx    # Profile with tabs (info, orders, password)
+│   │   ├── CartPage.jsx       # Shopping cart with qty controls
+│   │   └── CheckoutPage.jsx   # Checkout with shipping form + order placement
 ```
 
 ## What's Been Implemented
 - Full Admin CMS with 13+ tabs
-- Centralized Team Hub page with 6 tabs (Overview, Roster, Results, Schedule, Gallery, Standings)
-- Player Profile page with hero banner and tabbed layout
-- Match Report page with event timeline
-- League Table with configurable column toggles
-- Gallery/Media uploads (Admin + public views)
-- Web Push Notifications (PyWebPush + Service Worker)
-- Player Transfer History tracking
-- Shop/Tickets showcase page
-- Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded (105 fixtures, 11 standings)
-- Live Match widget with real-time scoring
-- **Trustworthy POTM Voting System** — Name+Email identity, vote counts always visible, player detail modal with voter list, withdraw/revote, 1 vote per email per month
-- **Birthday celebrations** — Compact rotating ticker on homepage
-- **Greek font size optimization** — Reduced Bebas Neue titles globally
-- **Fixtures cleanup** — Removed competition badge, streamlined match rows
-- **Ανδρέας Πραστίτης profile image** — Fetched from lefteriafc.cy and stored locally
-- **Auto scroll-to-top on navigation** — ScrollToTop component in BrowserRouter
-
-## Bug Fixes
-- 2026-04: Fixed missing first-team players (10 of 20 marked is_active=False; reactivated)
-- 2026-04: Added ScrollToTop to fix SPA scroll persistence between route changes
+- Centralized Team Hub page with 6 tabs
+- Player Profile, Match Report, Gallery, Web Push Notifications
+- League Table, Player Transfers, Live Match widget
+- Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded
+- **Customer Auth System** — Registration, login, profile, change password, JWT tokens
+- **Real Product Shop** — 6 products from lefteriafc.cy, size selection, add to cart
+- **Shopping Cart** — Full cart with quantity controls, item removal, totals
+- **Order Placement** — Checkout with shipping form, order history in profile
+- **Login-Based Voting** — POTM voting requires login, withdraw/revote, public leaderboard
+- **Header Navigation** — Cart icon with badge + Profile/Login icon
+- Birthday ticker, ScrollToTop, Greek font optimization
 
 ## Key API Endpoints
-- `POST /api/votes/potm` — Cast vote (requires voter_name, voter_email, player_id)
-- `POST /api/votes/potm/withdraw` — Withdraw vote (requires voter_email)
-- `GET /api/votes/potm/results` — Public leaderboard with voter names per player
-- `GET /api/votes/potm/check?email=xxx` — Check if email has voted this month
-- `GET /api/votes/potm/player/{player_id}` — Player detail with voter list
-- `GET /api/admin/votes/potm` — Admin: view voting stats with emails
-- `DELETE /api/admin/votes/potm/reset` — Admin: reset current month votes
-- `GET /api/players/birthdays` — Players with birthdays in current month
+### Customer Auth
+- `POST /api/customer/register` — Register (name, email, password, phone)
+- `POST /api/customer/login` — Login (returns JWT)
+- `POST /api/customer/logout` — Logout (clears cookie)
+- `GET /api/customer/me` — Get profile (requires auth)
+- `PUT /api/customer/profile` — Update profile
+- `POST /api/customer/change-password` — Change password
+
+### Products & Shop
+- `GET /api/products` — List all products
+- `GET /api/products/{id}` — Product detail
+
+### Cart
+- `GET /api/cart` — Get cart (auth required)
+- `POST /api/cart/add` — Add item (product_id, quantity, size)
+- `PUT /api/cart/item/{id}` — Update quantity
+- `DELETE /api/cart/item/{id}` — Remove item
+- `GET /api/cart/count` — Cart item count
+
+### Orders
+- `POST /api/orders` — Place order (shipping details)
+- `GET /api/orders` — User's order history
+- `GET /api/orders/{id}` — Order detail
+
+### Voting
+- `POST /api/votes/potm` — Cast vote (auth required)
+- `POST /api/votes/potm/withdraw` — Withdraw vote (auth required)
+- `GET /api/votes/potm/results` — Public leaderboard
+- `GET /api/votes/potm/check` — Check user's vote status
+- `GET /api/votes/potm/player/{id}` — Player voting detail
 
 ## Routes
-- `/` — Homepage (hero, fixtures, birthdays, POTM top 3, standings, news, academy CTA)
-- `/vote` — Trustworthy POTM voting page (identity, leaderboard, player detail modal, withdraw)
+- `/` — Homepage
+- `/login` — Customer login
+- `/register` — Customer registration
+- `/profile` — Customer profile (tabs: info, orders, password)
+- `/shop` — Product shop (6 real items)
+- `/cart` — Shopping cart
+- `/checkout` — Order placement
+- `/vote` — Player of the Month voting
 - `/team` — Team Hub (6 tabs)
 - `/player/:id` — Player profile
 - `/match/:id` — Match report
-- `/about`, `/academy`, `/news`, `/contact`, `/shop`
+- `/about`, `/academy`, `/news`, `/contact`
 - `/admin/login` — Admin CMS
+
+## DB Collections
+- `admin_users` — Admin accounts (JWT role="admin")
+- `users` — Customer accounts (JWT role="customer")
+- `products` — Shop products (seeded from lefteriafc.cy)
+- `carts` — Shopping carts (per user)
+- `orders` — Placed orders with shipping details
+- `potm_votes` — POTM votes (linked to user_id)
+- `players`, `fixtures`, `standings`, `news`, `gallery`, etc.
 
 ## Backlog (P3)
 - Video uploads in gallery
 - AI-generated match report narratives
-- Multi-language support (English toggle for the UI)
-- Refactor server.py into FastAPI routers
+- Multi-language support (English toggle)
+- Refactor server.py into FastAPI routers (~2500 lines)
+- Admin orders management tab
 
 ## Key Technical Notes
-- Frontend team name constant: `OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024"`
-- Backend serves uploaded files via `/api/uploads/{path}`
-- Push notifications use VAPID keys in .env
-- server.py is ~2050 lines — consider splitting into FastAPI routers
-- Birthday endpoint registered before `/players/{player_id}` to avoid route conflict
-- POTM voting uses email-based uniqueness (unique index on voter_email + month_key)
-- Voter identity stored in localStorage (potm_voter_name, potm_voter_email)
-- Birthday ticker uses CSS @keyframes ticker-scroll animation
+- Customer auth uses JWT with role="customer", admin uses role="admin"
+- Token stored in localStorage (customer_token) + httpOnly cookie
+- Products seeded on startup if collection empty (6 items from lefteriafc.cy)
+- Orders use "pay on delivery" model (no online payment)
+- Voting uses voter_id (user.id) + month_key unique index
+- Admin and customer auth systems are completely separate
