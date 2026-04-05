@@ -28,56 +28,33 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 │   ├── components/ImageUpload.jsx
 │   ├── utils/
 │   │   ├── sounds.js          # Web Audio API sound effects
-│   │   └── pushNotifications.js # Service worker + push subscription
-│   └── index.css
-└── memory/
+│   │   └── pushNotifications.js # Web Push subscription logic
+│   └── components/ui/         # Shadcn components
 ```
 
-## Implemented Features (All Complete)
+## What's Been Implemented
+- Full Admin CMS with 13+ tabs (Players, Fixtures, Standings, Gallery, Transfers, Staff, Academy, Settings, etc.)
+- Centralized Team Hub page with 6 tabs (Overview, Roster, Results, Schedule, Gallery, Standings)
+- Player Profile page with hero banner and tabbed layout
+- Match Report page with event timeline
+- League Table with configurable column toggles
+- Gallery/Media uploads (Admin + public views)
+- Web Push Notifications (PyWebPush + Service Worker)
+- Player Transfer History tracking
+- Shop/Tickets showcase page
+- Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded (105 fixtures, 11 standings)
+- Live Match widget with real-time scoring
 
-### Public Website (7 nav items)
-- Home (hero, live widget, dynamic stats bar, fixtures, standings with GF/GA/GD, news)
-- About, Academy (grouped by age), News, Contact form
-- **Team Hub** (/team) — 6 tabs:
-  - Overview: Game Scoreboard, Games History (W/D/L chart), Roster preview, Latest Results, Team Stats, Staff
-  - Roster: Full player table with position filter, Goals/Assists/Minutes columns
-  - Results: All 105 league fixtures with status filter, clickable → Match Report
-  - Schedule: Calendar grid with month navigation (Sep 2025 - Mar 2026)
-  - Gallery: Photo grid with 6 category filters, fullscreen lightbox with navigation
-  - Venues: Venue cards with Google Maps iframes
-- **Player Profile** (/player/:id) — Hero banner, stat bars, 3 tabs (Overview, Statistics, Biography), transfer history, linked gallery
-- **Match Report** (/match/:id) — Score header, event timeline, match statistics bars, summary
-- **Tickets & Merchandise** (/shop) — Ticket prices (€5/€3/Free), merchandise grid, Season Pass (€40), contact info
+## Bug Fixes
+- 2026-02: Fixed missing first-team players (10 of 20 were accidentally marked is_active=False; reactivated via DB update)
 
-### Admin CMS (13 tabs)
-- Dashboard, Club Profile, Players (with file upload + transfer), Academy Groups
-- Staff, Fixtures, Standings (with Recalculate All + Column Config), News, Venues, Seasons, Gallery, Messages
-- Live Score tab → Match Control Center
-- Standings Column Config: Toggle GF/GA/GD/Form columns
-- Gallery Management: Upload photos with category, player/match linking
-
-### Live Match System
-- 9 event types, match stats, auto-score, auto-standings
-- Sound effects (Web Audio API)
-- Homepage widget with auto-refresh, LIVE indicator
-
-### Web Push Notifications
-- VAPID-based infrastructure with Service Worker
-- Bell icon in navigation (subscribe/unsubscribe)
-- Auto-push: match goes Live, goal scored, match completed
-
-### Player Transfer History
-- Transfer records with type (In/Out/Loan), from/to team, date, fee
-- Admin modal per player, public display on Biography tab
-
-### Official Data
-- 105 fixtures from ΠΑΑΟΚ Α' Όμιλος 2025-2026 (all Completed)
-- 11 teams in standings with real points, GF, GA
-- ΛΕΥΤΕΡΙΑ 2024: 3rd place, 42 points, 61 GF, 24 GA
-
-## Testing: 100% across 12 iterations
-
-## Backlog
+## Backlog (P3)
 - Video uploads in gallery
 - AI-generated match report narratives
-- Multi-language support (English)
+- Multi-language support (English toggle for the UI)
+
+## Key Technical Notes
+- Frontend team name constant: `OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024"` (used in TeamHubPage.jsx and App.js for highlighting)
+- Backend serves uploaded files via `/api/uploads/{path}` endpoint
+- Push notifications use VAPID keys stored in backend/.env and frontend/.env
+- server.py is ~1900 lines — consider splitting into FastAPI routers if more backend work is needed
