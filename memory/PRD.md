@@ -13,12 +13,12 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 ```
 /app/
 ├── backend/
-│   ├── server.py              # FastAPI monolith (~1900 lines)
+│   ├── server.py              # FastAPI monolith (~2050 lines)
 │   ├── seed_official_data.py  # Official ΠΑΑΟΚ 2025-2026 data seeder
 │   ├── uploads/               # Player images, gallery photos
 │   └── .env                   # MONGO_URL, VAPID keys, JWT config
 ├── frontend/src/
-│   ├── App.js                 # Public pages, auth, routing, live widget
+│   ├── App.js                 # Public pages, auth, routing, live widget, POTM, birthdays
 │   ├── pages/
 │   │   ├── AdminPanel.jsx     # Standalone CMS (13 tabs + Match Control Center)
 │   │   ├── TeamHubPage.jsx    # SportsPress-style tabbed Team page (6 tabs)
@@ -44,9 +44,22 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - Shop/Tickets showcase page
 - Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded (105 fixtures, 11 standings)
 - Live Match widget with real-time scoring
+- **Player of the Month voting** — fans vote for favourite player, one vote/month per visitor, results leaderboard
+- **Birthday celebrations** — homepage section showing players with birthdays this month (first team + academy)
 
 ## Bug Fixes
-- 2026-02: Fixed missing first-team players (10 of 20 were accidentally marked is_active=False; reactivated via DB update)
+- 2026-04: Fixed missing first-team players (10 of 20 were accidentally marked is_active=False; reactivated via DB update)
+
+## Key API Endpoints (new)
+- `GET /api/players/birthdays` — Returns players with birthdays in the current month
+- `POST /api/votes/potm` — Cast a Player of the Month vote
+- `GET /api/votes/potm/results` — Current month voting leaderboard
+- `GET /api/votes/potm/check` — Check if current visitor already voted
+- `GET /api/admin/votes/potm` — Admin: view voting stats
+- `DELETE /api/admin/votes/potm/reset` — Admin: reset current month votes
+
+## DB Collections (new)
+- `potm_votes`: {id, player_id, player_name, voter_fingerprint, month_key, created_at}
 
 ## Backlog (P3)
 - Video uploads in gallery
@@ -57,4 +70,6 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - Frontend team name constant: `OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024"` (used in TeamHubPage.jsx and App.js for highlighting)
 - Backend serves uploaded files via `/api/uploads/{path}` endpoint
 - Push notifications use VAPID keys stored in backend/.env and frontend/.env
-- server.py is ~1900 lines — consider splitting into FastAPI routers if more backend work is needed
+- server.py is ~2050 lines — consider splitting into FastAPI routers if more backend work is needed
+- Birthday endpoint MUST be registered before `/players/{player_id}` route to avoid conflicts
+- POTM voting uses SHA-256 hash of IP + User-Agent as voter fingerprint
