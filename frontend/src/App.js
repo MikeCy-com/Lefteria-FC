@@ -2,13 +2,19 @@ import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
-import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket } from "lucide-react";
+import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket, ShoppingCart, User } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
 import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import MatchReportPage from "./pages/MatchReportPage";
-import ShopPage from "./pages/ShopPage";
+import NewShopPage from "./pages/NewShopPage";
 import VotePage from "./pages/VotePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
 
@@ -72,11 +78,11 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-const useAuth = () => useContext(AuthContext);
+const useAdminAuth = () => useContext(AuthContext);
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAdminAuth();
   const location = useLocation();
 
   if (loading) {
@@ -98,6 +104,7 @@ const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
   const [pushState, setPushState] = useState('loading');
   const location = useLocation();
+  const { user, cartCount } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -132,7 +139,7 @@ const Navigation = () => {
   ];
 
   return (
-    <header 
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled ? "backdrop-blur-xl bg-black/90 border-b border-white/10" : "bg-transparent"
       }`}
@@ -165,7 +172,7 @@ const Navigation = () => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Push Notification Bell */}
             {pushState !== 'unsupported' && pushState !== 'loading' && (
               <button
@@ -185,14 +192,33 @@ const Navigation = () => {
               </button>
             )}
 
+            {/* Shopping Cart */}
+            <Link to="/cart" className="relative p-2 rounded-full text-zinc-400 hover:text-[#F5A623] hover:bg-white/5 transition-colors" data-testid="nav-cart">
+              <ShoppingCart size={20} />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F5A623] text-black text-[9px] font-bold rounded-full flex items-center justify-center" data-testid="cart-badge">{cartCount}</span>
+              )}
+            </Link>
+
+            {/* Profile / Login */}
+            {user ? (
+              <Link to="/profile" className="p-2 rounded-full bg-[#F5A623]/10 text-[#F5A623] hover:bg-[#F5A623]/20 transition-colors" data-testid="nav-profile">
+                <User size={20} />
+              </Link>
+            ) : (
+              <Link to="/login" className="p-2 rounded-full text-zinc-400 hover:text-[#F5A623] hover:bg-white/5 transition-colors" data-testid="nav-login">
+                <User size={20} />
+              </Link>
+            )}
+
             {/* Mobile Menu Button */}
             <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden text-white p-2"
-            data-testid="mobile-menu-toggle"
-          >
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+              onClick={() => setIsOpen(!isOpen)}
+              className="lg:hidden text-white p-2"
+              data-testid="mobile-menu-toggle"
+            >
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
           </div>
         </div>
       </div>
@@ -218,6 +244,12 @@ const Navigation = () => {
               {link.label}
             </Link>
           ))}
+          {/* Mobile: Profile link */}
+          <Link to={user ? "/profile" : "/login"} onClick={() => setIsOpen(false)}
+            className="flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider text-white">
+            <User size={24} />
+            {user ? "Προφίλ" : "Σύνδεση"}
+          </Link>
         </nav>
       </div>
     </header>
@@ -1475,7 +1507,7 @@ const AdminLoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -1583,7 +1615,7 @@ const AdminLoginPage = () => {
 
 // Admin Page (Protected) - Uses AdminPanel component
 const AdminPage = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -1618,6 +1650,7 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <ScrollToTop />
+        <CustomerAuthProvider>
         <AuthProvider>
           <Routes>
             {/* Public routes with nav + footer */}
@@ -1628,10 +1661,16 @@ function App() {
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
-            <Route path="/shop" element={<PublicLayout><ShopPage /></PublicLayout>} />
+            <Route path="/shop" element={<PublicLayout><NewShopPage /></PublicLayout>} />
             <Route path="/vote" element={<PublicLayout><VotePage /></PublicLayout>} />
             <Route path="/player/:playerId" element={<PublicLayout><PlayerProfilePage /></PublicLayout>} />
             <Route path="/match/:fixtureId" element={<PublicLayout><MatchReportPage /></PublicLayout>} />
+            {/* Auth routes */}
+            <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
+            <Route path="/register" element={<PublicLayout><RegisterPage /></PublicLayout>} />
+            <Route path="/profile" element={<PublicLayout><ProfilePage /></PublicLayout>} />
+            <Route path="/cart" element={<PublicLayout><CartPage /></PublicLayout>} />
+            <Route path="/checkout" element={<PublicLayout><CheckoutPage /></PublicLayout>} />
             {/* Legacy redirects */}
             <Route path="/calendar" element={<Navigate to="/team?tab=schedule" replace />} />
             <Route path="/venues" element={<Navigate to="/team?tab=venues" replace />} />
@@ -1646,6 +1685,7 @@ function App() {
             } />
           </Routes>
         </AuthProvider>
+        </CustomerAuthProvider>
       </BrowserRouter>
     </div>
   );

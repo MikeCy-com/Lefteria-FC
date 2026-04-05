@@ -83,6 +83,7 @@ class StaffRole(str, Enum):
     SCOUT = "Scout"
 
 # ==================== AUTH HELPERS ====================
+
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
@@ -91,40 +92,84 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
-def create_access_token(user_id: str, username: str) -> str:
+def create_access_token(user_id: str, username: str, role: str = "admin") -> str:
     payload = {
         "sub": user_id,
         "username": username,
+        "role": role,
         "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         "type": "access"
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-async def get_current_user(request: Request) -> dict:
+def _extract_token(request: Request) -> str:
     token = request.cookies.get("access_token")
+    if not token:
+        token = request.cookies.get("user_access_token")
     if not token:
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
-    
+    return token
+
+async def get_current_user(request: Request) -> dict:
+    token = _extract_token(request)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
-        
         user = await db.admin_users.find_one({"id": payload["sub"]}, {"_id": 0})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
-        
         user.pop("password_hash", None)
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_current_customer(request: Request) -> dict:
+    token = request.cookies.get("user_access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    if not token:
+        raise HTTPException(status_code=401, detail="Πρέπει να συνδεθείτε")
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access" or payload.get("role") != "customer":
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        user.pop("password_hash", None)
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_optional_customer(request: Request):
+    token = request.cookies.get("user_access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("role") != "customer":
+            return None
+        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+        if user:
+            user.pop("password_hash", None)
+        return user
+    except Exception:
+        return None
 
 # ==================== MODELS ====================
 
@@ -1889,25 +1934,316 @@ async def seed_data():
     
     return {"message": "Τα δεδομένα φορτώθηκαν επιτυχώς"}
 
+# ==================== CUSTOMER AUTH MODELS ====================
+class CustomerRegister(BaseModel):
+    name: str
+    email: str
+    password: str
+    phone: Optional[str] = None
+
+class CustomerLogin(BaseModel):
+    email: str
+    password: str
+
+class CustomerChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+class CustomerUpdateProfile(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
+
+# ==================== CUSTOMER AUTH ROUTES ====================
+@api_router.post("/customer/register")
+async def customer_register(body: CustomerRegister, response: Response):
+    email_lower = body.email.strip().lower()
+    if not body.name.strip() or not email_lower or not body.password:
+        raise HTTPException(status_code=400, detail="Συμπληρώστε όλα τα πεδία")
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες")
+
+    existing = await db.users.find_one({"email": email_lower})
+    if existing:
+        raise HTTPException(status_code=409, detail="Αυτό το email χρησιμοποιείται ήδη")
+
+    user_id = str(uuid.uuid4())
+    user_doc = {
+        "id": user_id,
+        "name": body.name.strip(),
+        "email": email_lower,
+        "password_hash": hash_password(body.password),
+        "phone": body.phone or "",
+        "address": "",
+        "city": "",
+        "postal_code": "",
+        "role": "customer",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.users.insert_one(user_doc)
+
+    token = create_access_token(user_id, body.name.strip(), role="customer")
+    response.set_cookie(key="user_access_token", value=token, httponly=True, secure=False, samesite="lax", max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60, path="/")
+
+    return {"id": user_id, "name": body.name.strip(), "email": email_lower, "token": token}
+
+@api_router.post("/customer/login")
+async def customer_login(body: CustomerLogin, response: Response):
+    email_lower = body.email.strip().lower()
+    user = await db.users.find_one({"email": email_lower}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="Λάθος email ή κωδικός")
+    if not verify_password(body.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Λάθος email ή κωδικός")
+
+    token = create_access_token(user["id"], user["name"], role="customer")
+    response.set_cookie(key="user_access_token", value=token, httponly=True, secure=False, samesite="lax", max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60, path="/")
+
+    return {"id": user["id"], "name": user["name"], "email": user["email"], "token": token}
+
+@api_router.post("/customer/logout")
+async def customer_logout(response: Response):
+    response.delete_cookie(key="user_access_token", path="/")
+    return {"message": "Αποσυνδέθηκε επιτυχώς"}
+
+@api_router.get("/customer/me")
+async def customer_me(user: dict = Depends(get_current_customer)):
+    return {"id": user["id"], "name": user["name"], "email": user["email"], "phone": user.get("phone", ""), "address": user.get("address", ""), "city": user.get("city", ""), "postal_code": user.get("postal_code", ""), "created_at": user.get("created_at", "")}
+
+@api_router.put("/customer/profile")
+async def customer_update_profile(body: CustomerUpdateProfile, user: dict = Depends(get_current_customer)):
+    updates = {}
+    if body.name is not None:
+        updates["name"] = body.name.strip()
+    if body.phone is not None:
+        updates["phone"] = body.phone.strip()
+    if body.address is not None:
+        updates["address"] = body.address.strip()
+    if body.city is not None:
+        updates["city"] = body.city.strip()
+    if body.postal_code is not None:
+        updates["postal_code"] = body.postal_code.strip()
+
+    if updates:
+        await db.users.update_one({"id": user["id"]}, {"$set": updates})
+
+    updated = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password_hash": 0})
+    return updated
+
+@api_router.post("/customer/change-password")
+async def customer_change_password(body: CustomerChangePassword, user: dict = Depends(get_current_customer)):
+    full_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if not verify_password(body.current_password, full_user["password_hash"]):
+        raise HTTPException(status_code=400, detail="Ο τρέχων κωδικός είναι λάθος")
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Ο νέος κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες")
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    return {"message": "Ο κωδικός άλλαξε επιτυχώς"}
+
+# ==================== PRODUCTS ====================
+@api_router.get("/products")
+async def get_products():
+    products = await db.products.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return products
+
+@api_router.get("/products/{product_id}")
+async def get_product(product_id: str):
+    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Το προϊόν δεν βρέθηκε")
+    return product
+
+# ==================== CART ====================
+class CartItemAdd(BaseModel):
+    product_id: str
+    quantity: int = 1
+    size: Optional[str] = None
+
+class CartItemUpdate(BaseModel):
+    quantity: int
+
+@api_router.get("/cart")
+async def get_cart(user: dict = Depends(get_current_customer)):
+    cart = await db.carts.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not cart:
+        return {"user_id": user["id"], "items": [], "total": 0}
+
+    enriched_items = []
+    total = 0
+    for item in cart.get("items", []):
+        product = await db.products.find_one({"id": item["product_id"]}, {"_id": 0})
+        if product:
+            subtotal = product["price"] * item["quantity"]
+            total += subtotal
+            enriched_items.append({
+                "product_id": item["product_id"],
+                "name": product["name"],
+                "price": product["price"],
+                "image_url": product.get("image_url", ""),
+                "quantity": item["quantity"],
+                "size": item.get("size", ""),
+                "subtotal": subtotal
+            })
+
+    return {"user_id": user["id"], "items": enriched_items, "total": round(total, 2)}
+
+@api_router.post("/cart/add")
+async def add_to_cart(body: CartItemAdd, user: dict = Depends(get_current_customer)):
+    product = await db.products.find_one({"id": body.product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Το προϊόν δεν βρέθηκε")
+
+    cart = await db.carts.find_one({"user_id": user["id"]})
+    if not cart:
+        await db.carts.insert_one({
+            "user_id": user["id"],
+            "items": [{"product_id": body.product_id, "quantity": body.quantity, "size": body.size or ""}],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        })
+    else:
+        existing_item = None
+        for item in cart.get("items", []):
+            if item["product_id"] == body.product_id and item.get("size", "") == (body.size or ""):
+                existing_item = item
+                break
+
+        if existing_item:
+            await db.carts.update_one(
+                {"user_id": user["id"], "items.product_id": body.product_id, "items.size": body.size or ""},
+                {"$inc": {"items.$.quantity": body.quantity}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+        else:
+            await db.carts.update_one(
+                {"user_id": user["id"]},
+                {"$push": {"items": {"product_id": body.product_id, "quantity": body.quantity, "size": body.size or ""}},
+                 "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+
+    return {"message": "Προστέθηκε στο καλάθι"}
+
+@api_router.put("/cart/item/{product_id}")
+async def update_cart_item(product_id: str, body: CartItemUpdate, size: str = "", user: dict = Depends(get_current_customer)):
+    if body.quantity <= 0:
+        await db.carts.update_one(
+            {"user_id": user["id"]},
+            {"$pull": {"items": {"product_id": product_id, "size": size}}}
+        )
+    else:
+        await db.carts.update_one(
+            {"user_id": user["id"], "items.product_id": product_id, "items.size": size},
+            {"$set": {"items.$.quantity": body.quantity, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    return {"message": "Ενημερώθηκε"}
+
+@api_router.delete("/cart/item/{product_id}")
+async def remove_cart_item(product_id: str, size: str = "", user: dict = Depends(get_current_customer)):
+    await db.carts.update_one(
+        {"user_id": user["id"]},
+        {"$pull": {"items": {"product_id": product_id, "size": size}}}
+    )
+    return {"message": "Αφαιρέθηκε από το καλάθι"}
+
+@api_router.get("/cart/count")
+async def get_cart_count(user: dict = Depends(get_current_customer)):
+    cart = await db.carts.find_one({"user_id": user["id"]}, {"_id": 0, "items": 1})
+    if not cart:
+        return {"count": 0}
+    return {"count": sum(item.get("quantity", 0) for item in cart.get("items", []))}
+
+# ==================== ORDERS ====================
+class OrderCreate(BaseModel):
+    shipping_name: str
+    shipping_address: str
+    shipping_city: str
+    shipping_postal_code: str
+    shipping_phone: str
+    notes: Optional[str] = ""
+
+@api_router.post("/orders")
+async def create_order(body: OrderCreate, user: dict = Depends(get_current_customer)):
+    cart = await db.carts.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not cart or not cart.get("items"):
+        raise HTTPException(status_code=400, detail="Το καλάθι είναι άδειο")
+
+    items = []
+    total = 0
+    for ci in cart["items"]:
+        product = await db.products.find_one({"id": ci["product_id"]}, {"_id": 0})
+        if product:
+            subtotal = product["price"] * ci["quantity"]
+            total += subtotal
+            items.append({
+                "product_id": ci["product_id"],
+                "name": product["name"],
+                "price": product["price"],
+                "quantity": ci["quantity"],
+                "size": ci.get("size", ""),
+                "subtotal": subtotal
+            })
+
+    order_id = str(uuid.uuid4())
+    order = {
+        "id": order_id,
+        "user_id": user["id"],
+        "user_email": user["email"],
+        "user_name": user["name"],
+        "items": items,
+        "total": round(total, 2),
+        "shipping": {
+            "name": body.shipping_name,
+            "address": body.shipping_address,
+            "city": body.shipping_city,
+            "postal_code": body.shipping_postal_code,
+            "phone": body.shipping_phone,
+        },
+        "notes": body.notes or "",
+        "status": "pending",
+        "payment_method": "Πληρωμή κατά την παραλαβή",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.orders.insert_one(order)
+
+    await db.carts.delete_one({"user_id": user["id"]})
+
+    return {"message": "Η παραγγελία σας καταχωρήθηκε!", "order_id": order_id}
+
+@api_router.get("/orders")
+async def get_orders(user: dict = Depends(get_current_customer)):
+    orders = await db.orders.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return orders
+
+@api_router.get("/orders/{order_id}")
+async def get_order(order_id: str, user: dict = Depends(get_current_customer)):
+    order = await db.orders.find_one({"id": order_id, "user_id": user["id"]}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Η παραγγελία δεν βρέθηκε")
+    return order
+
+# Admin: view all orders
+@api_router.get("/admin/orders")
+async def admin_get_orders(current_user: dict = Depends(get_current_user)):
+    orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return orders
+
+@api_router.put("/admin/orders/{order_id}/status")
+async def admin_update_order_status(order_id: str, status: str = Query(...), current_user: dict = Depends(get_current_user)):
+    result = await db.orders.update_one({"id": order_id}, {"$set": {"status": status}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": "Status updated"}
+
 # ==================== PLAYER OF THE MONTH VOTING ====================
 class PotmVote(BaseModel):
     player_id: str
-    voter_name: str
-    voter_email: str
-
-class PotmWithdraw(BaseModel):
-    voter_email: str
 
 @api_router.post("/votes/potm")
-async def cast_potm_vote(vote: PotmVote):
+async def cast_potm_vote(vote: PotmVote, user: dict = Depends(get_current_customer)):
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-    email_lower = vote.voter_email.strip().lower()
 
-    if not vote.voter_name.strip() or not email_lower:
-        raise HTTPException(status_code=400, detail="Το όνομα και το email είναι υποχρεωτικά")
-
-    existing = await db.potm_votes.find_one({"voter_email": email_lower, "month_key": month_key})
+    existing = await db.potm_votes.find_one({"voter_id": user["id"], "month_key": month_key})
     if existing:
         raise HTTPException(status_code=429, detail="Έχετε ήδη ψηφίσει αυτόν τον μήνα. Αποσύρετε πρώτα την ψήφο σας.")
 
@@ -1919,8 +2255,9 @@ async def cast_potm_vote(vote: PotmVote):
         "id": str(uuid.uuid4()),
         "player_id": vote.player_id,
         "player_name": player["name"],
-        "voter_name": vote.voter_name.strip(),
-        "voter_email": email_lower,
+        "voter_id": user["id"],
+        "voter_name": user["name"],
+        "voter_email": user["email"],
         "month_key": month_key,
         "created_at": now.isoformat()
     })
@@ -1928,14 +2265,13 @@ async def cast_potm_vote(vote: PotmVote):
     return {"message": "Η ψήφος σας καταγράφηκε!"}
 
 @api_router.post("/votes/potm/withdraw")
-async def withdraw_potm_vote(body: PotmWithdraw):
+async def withdraw_potm_vote(user: dict = Depends(get_current_customer)):
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-    email_lower = body.voter_email.strip().lower()
 
-    result = await db.potm_votes.delete_one({"voter_email": email_lower, "month_key": month_key})
+    result = await db.potm_votes.delete_one({"voter_id": user["id"], "month_key": month_key})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Δεν βρέθηκε ψήφος για αυτό το email")
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε ψήφος")
 
     return {"message": "Η ψήφος σας αποσύρθηκε επιτυχώς"}
 
@@ -1978,20 +2314,20 @@ async def get_potm_results():
     }
 
 @api_router.get("/votes/potm/check")
-async def check_potm_vote(email: str = ""):
+async def check_potm_vote(request: Request):
+    user = await get_optional_customer(request)
+    if not user:
+        return {"has_voted": False, "voted_player_id": None, "voter_name": None, "logged_in": False}
+
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
-
-    if not email:
-        return {"has_voted": False, "voted_player_id": None, "voter_name": None}
-
     existing = await db.potm_votes.find_one(
-        {"voter_email": email.strip().lower(), "month_key": month_key},
+        {"voter_id": user["id"], "month_key": month_key},
         {"_id": 0}
     )
     if existing:
-        return {"has_voted": True, "voted_player_id": existing["player_id"], "voter_name": existing.get("voter_name", "")}
-    return {"has_voted": False, "voted_player_id": None, "voter_name": None}
+        return {"has_voted": True, "voted_player_id": existing["player_id"], "voter_name": user["name"], "logged_in": True}
+    return {"has_voted": False, "voted_player_id": None, "voter_name": user["name"], "logged_in": True}
 
 @api_router.get("/votes/potm/player/{player_id}")
 async def get_potm_player_detail(player_id: str):
@@ -2064,12 +2400,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
-async def seed_admin():
+async def startup_tasks():
+    # Seed admin
     admin_username = os.environ.get("ADMIN_USERNAME", "admin")
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
-    
     existing = await db.admin_users.find_one({"username": admin_username}, {"_id": 0})
-    
     if existing is None:
         admin_user = {
             "id": str(uuid.uuid4()),
@@ -2078,13 +2413,85 @@ async def seed_admin():
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.admin_users.insert_one(admin_user)
-        logger.info(f"Admin user '{admin_username}' created")
+        logger.info(f"Admin user \'{admin_username}\' created")
     elif not verify_password(admin_password, existing["password_hash"]):
         await db.admin_users.update_one(
             {"username": admin_username},
             {"$set": {"password_hash": hash_password(admin_password)}}
         )
-        logger.info(f"Admin user '{admin_username}' password updated")
+        logger.info(f"Admin user \'{admin_username}\' password updated")
+
+    # Create indexes
+    await db.users.create_index("email", unique=True)
+    await db.potm_votes.create_index([("voter_id", 1), ("month_key", 1)], unique=True)
+
+    # Seed products
+    product_count = await db.products.count_documents({})
+    if product_count == 0:
+        products = [
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Γιλέκο",
+                "description": "Επίσημο γιλέκο ΛΕΥΤΕΡΙΑ FC",
+                "price": 50.00,
+                "image_url": "https://lefteriafc.cy/images/virtuemart/product/resized/eikona_viber_2026-02-09_21-32-54-956_512x512.jpg",
+                "category": "clothing",
+                "sizes": ["S", "M", "L", "XL", "XXL"],
+                "in_stock": True
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Γιλέκο Premium",
+                "description": "Premium γιλέκο ΛΕΥΤΕΡΙΑ FC",
+                "price": 55.00,
+                "image_url": "https://lefteriafc.cy/images/virtuemart/product/resized/eikona_viber_2026-02-09_21-32-54-983_512x512.jpg",
+                "category": "clothing",
+                "sizes": ["S", "M", "L", "XL", "XXL"],
+                "in_stock": True
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Μπουφάν",
+                "description": "Επίσημο μπουφάν ΛΕΥΤΕΡΙΑ FC",
+                "price": 55.00,
+                "image_url": "https://lefteriafc.cy/images/virtuemart/product/resized/eikona_viber_2026-02-09_21-32-55-021_512x512.jpg",
+                "category": "clothing",
+                "sizes": ["S", "M", "L", "XL", "XXL"],
+                "in_stock": True
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Σακίδιο",
+                "description": "Επίσημο σακίδιο ΛΕΥΤΕΡΙΑ FC",
+                "price": 50.00,
+                "image_url": "https://lefteriafc.cy/images/virtuemart/product/resized/eikona_viber_2026-02-09_21-32-54-942_512x512.jpg",
+                "category": "accessories",
+                "sizes": [],
+                "in_stock": True
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Φόρμα",
+                "description": "Αθλητική φόρμα ΛΕΥΤΕΡΙΑ FC",
+                "price": 20.00,
+                "image_url": "https://lefteriafc.cy/images/virtuemart/product/resized/eikona_viber_2026-02-09_21-32-55-079_512x512.jpg",
+                "category": "clothing",
+                "sizes": ["S", "M", "L", "XL", "XXL"],
+                "in_stock": True
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Φούτερ",
+                "description": "Επίσημο φούτερ ΛΕΥΤΕΡΙΑ FC",
+                "price": 40.00,
+                "image_url": "https://lefteriafc.cy/images/virtuemart/product/resized/eikona_viber_2026-02-09_21-32-54-997_512x512.jpg",
+                "category": "clothing",
+                "sizes": ["S", "M", "L", "XL", "XXL"],
+                "in_stock": True
+            },
+        ]
+        await db.products.insert_many(products)
+        logger.info(f"Seeded {len(products)} products")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
