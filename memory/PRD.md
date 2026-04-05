@@ -18,7 +18,7 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 │   ├── uploads/               # Player images, gallery photos
 │   └── .env                   # MONGO_URL, VAPID keys, JWT config
 ├── frontend/src/
-│   ├── App.js                 # Public pages, auth, routing, POTM top3, birthday ticker
+│   ├── App.js                 # Public pages, auth, routing, POTM top3, birthday ticker, ScrollToTop
 │   ├── pages/
 │   │   ├── AdminPanel.jsx     # Standalone CMS (13 tabs + Match Control Center)
 │   │   ├── TeamHubPage.jsx    # SportsPress-style tabbed Team page (6 tabs)
@@ -49,9 +49,12 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - **Birthday celebrations** — Compact rotating ticker on homepage
 - **Greek font size optimization** — Reduced Bebas Neue titles globally
 - **Fixtures cleanup** — Removed competition badge, streamlined match rows
+- **Ανδρέας Πραστίτης profile image** — Fetched from lefteriafc.cy and stored locally
+- **Auto scroll-to-top on navigation** — ScrollToTop component in BrowserRouter
 
 ## Bug Fixes
 - 2026-04: Fixed missing first-team players (10 of 20 marked is_active=False; reactivated)
+- 2026-04: Added ScrollToTop to fix SPA scroll persistence between route changes
 
 ## Key API Endpoints
 - `GET /api/players/birthdays` — Players with birthdays in current month
@@ -74,6 +77,7 @@ Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑ
 - Video uploads in gallery
 - AI-generated match report narratives
 - Multi-language support (English toggle for the UI)
+- Refactor server.py into FastAPI routers
 
 ## Key Technical Notes
 - Frontend team name constant: `OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024"`

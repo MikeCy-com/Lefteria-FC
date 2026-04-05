@@ -1623,11 +1623,21 @@ const PublicLayout = ({ children }) => (
   </>
 );
 
+// ==================== SCROLL TO TOP ====================
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 // ==================== APP ====================
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           <Routes>
             {/* Public routes with nav + footer */}
