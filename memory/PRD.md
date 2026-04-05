@@ -14,9 +14,9 @@ Build a complete football club CMS and public-facing website for "Lefteria FC" (
 Πίνακας (Dashboard)
 Live Score
 ─── ΣΥΛΛΟΓΟΣ ───
-    Ομάδες → drill-down: Ρόστερ, Πρόγραμμα, Staff, Βαθμολογία, Γκαλερί
+    Ομάδες → drill-down: Ρόστερ (clickable player profiles), Πρόγραμμα, Staff, Βαθμολογία, Γκαλερί
 ─── ΑΚΑΔΗΜΙΑ ───
-    Ομάδες → drill-down: Ρόστερ (full CRUD + transfer), Αγώνες (CRUD), Γκαλερί
+    Ομάδες → drill-down: Ρόστερ (clickable player profiles + transfer), Αγώνες (CRUD), Γκαλερί
     Εγγραφές → list with filter, detail, approve/reject
 ─── Standalone ───
     Νέα, Μηνύματα
@@ -41,21 +41,19 @@ Live Score
 - [x] Admin Panel Restructuring: grouped sidebar, Teams CRUD with drill-down
 - [x] Per-team/academy Gallery
 - [x] Academy Registration (5-step wizard with digital signature)
-- [x] **Full Academy Player Management** (Feb 2026):
-  - Full CRUD: Add, edit, delete academy players within groups
-  - Rich player profiles: DOB (auto-age), parent contact (name/phone/email), all profile fields
-  - Multi-group support: Transfer/assign players to multiple academy groups
-  - Academy fixtures per group: Create, complete (score entry), delete
-  - Academy group drill-down: Ρόστερ, Αγώνες, Γκαλερί (no standings for grassroots)
-  - Public academy player profiles with academy breadcrumb
-  - Transfer modal with multi-group checkbox selection
+- [x] Full Academy Player Management (Feb 2026): CRUD, DOB, parent info, multi-group, transfers
+- [x] **Full-Width Admin UI** (Feb 2026): Main content area uses full width next to fixed sidebar
+- [x] **Admin Player Profile View** (Feb 2026): Clicking player name in any roster opens full profile with view/edit modes, personal info, team info, parent info cards
+- [x] **Public Academy Group Pages** (Feb 2026): /academy/:groupId route with hero, breadcrumb, Ρόστερ/Πρόγραμμα/Γκαλερί tabs, clickable player cards
 
 ## Key API Endpoints
 - POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
 - POST `/api/admin/players/{id}/transfer` (Multi-group assignment)
+- GET `/api/academy-groups/{id}` (Single group)
 - GET `/api/academy-groups/{id}/players` (Multi-group aware)
 - POST/GET `/api/admin/academy-groups/{id}/fixtures` (Academy fixtures)
 - GET `/api/gallery?academy_group_id={id}` (Per-group gallery)
+- GET `/api/academy-groups/{id}/fixtures` (Public fixtures)
 
 ## Key DB Collections
 admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, registrations
@@ -63,10 +61,18 @@ admins, users, players, teams, fixtures, standings, academy_groups, staff, news,
 ## Player Model Fields
 name, number, position, nationality, age, date_of_birth, team_type, team_id, academy_group_id, academy_group_ids (multi-group), academy_group_name, image_url, bio, height, weight, preferred_foot, statistics, previous_clubs, parent_name, parent_phone, parent_email, is_active
 
+## Key Frontend Files
+- `/app/frontend/src/pages/AdminPanel.jsx` - Admin CMS with AdminPlayerProfile component
+- `/app/frontend/src/pages/AcademyGroupPage.jsx` - Public academy group detail page
+- `/app/frontend/src/App.js` - Routing, homepage, AcademyPage with clickable group cards
+- `/app/frontend/src/pages/PlayerProfilePage.jsx` - Public player profile
+- `/app/frontend/src/pages/RegistrationPage.jsx` - 5-step academy registration wizard
+
 ## Backlog
+- P2: Verify Match-day Push Notifications & POTM Social Share (testing pending from previous fork)
 - P3: Video uploads in gallery
 - P3: AI-generated match report narratives
 - P3: Multi-language support (English toggle)
 - Refactor: server.py (3100+ lines) into FastAPI routers
 - Refactor: App.js (1700+ lines) - extract Homepage components
-- Refactor: AdminPanel.jsx (2700+ lines) - extract tab components
+- Refactor: AdminPanel.jsx (3100+ lines) - extract tab components
