@@ -1,86 +1,83 @@
-# Lefteria FC Website - PRD
+# Lefteria FC / ΛΕΥΤΕΡΙΑ 2024 — PRD
 
 ## Original Problem Statement
-Create a website for Lefteria FC football club with an academy section, styled like a WordPress SportsPress theme. Full CMS admin panel with live match management.
+Create a website for ΛΕΥΤΕΡΙΑ 2024 football club (Limassol, Cyprus, ΠΑΑΟΚ league) with academy section, SportsPress-style design, full CMS admin panel with live match management. Official ΠΑΑΟΚ Α' Όμιλος 2025-2026 data seeded.
 
 ## Core Requirements
 - Club branding: Orange/gold (#F5A623), Black, White
 - WordPress/SportsPress-style design, entire website in Greek
 - Hidden admin panel at /admin/login (JWT protected)
-- MongoDB database, real data from Lefteria FC (Cyprus, PAAOK league)
+- MongoDB database, real official ΠΑΑΟΚ data (105 fixtures, 11 teams)
 
 ## Architecture
 ```
 /app/
 ├── backend/
-│   ├── server.py              # FastAPI - Full CMS + match events + live stats + file uploads
-│   ├── uploads/players/       # Player image files
-│   └── .env
+│   ├── server.py              # FastAPI monolith (~1900 lines)
+│   ├── seed_official_data.py  # Official ΠΑΑΟΚ 2025-2026 data seeder
+│   ├── uploads/               # Player images, gallery photos
+│   └── .env                   # MONGO_URL, VAPID keys, JWT config
 ├── frontend/src/
-│   ├── App.js                 # Public pages + auth + routing + live widget
+│   ├── App.js                 # Public pages, auth, routing, live widget
 │   ├── pages/
-│   │   ├── AdminPanel.jsx     # Standalone CMS (12 tabs + Match Control Center)
-│   │   ├── TeamHubPage.jsx    # SportsPress-style tabbed Team page (5 tabs)
-│   │   ├── PlayerProfilePage.jsx  # Hero banner + stat bars + tabbed player profile
-│   │   └── PublicPages.jsx    # Legacy (not used in routing anymore)
-│   ├── components/ImageUpload.jsx  # Drag-drop + URL image upload component
-│   ├── utils/sounds.js        # Web Audio API sound effects
-│   └── index.css              # SportsPress + admin CMS styles
+│   │   ├── AdminPanel.jsx     # Standalone CMS (13 tabs + Match Control Center)
+│   │   ├── TeamHubPage.jsx    # SportsPress-style tabbed Team page (6 tabs)
+│   │   ├── PlayerProfilePage.jsx  # Hero banner + stat bars + tabbed profile
+│   │   ├── MatchReportPage.jsx    # Full match detail with event timeline
+│   │   └── ShopPage.jsx      # Tickets & Merchandise info page
+│   ├── components/ImageUpload.jsx
+│   ├── utils/
+│   │   ├── sounds.js          # Web Audio API sound effects
+│   │   └── pushNotifications.js # Service worker + push subscription
+│   └── index.css
 └── memory/
 ```
 
-## Implemented Features
+## Implemented Features (All Complete)
 
-### Public Website
-- Home (hero, live match widget, fixtures, standings with logos, news)
-- About, Academy (grouped by age group), Fixtures, News, Contact form
-- **Team Hub** (/team) — SportsPress-style tabbed page with:
-  - Overview: Game Scoreboard, Games History (W/D/L chart), Roster preview, Latest Results, Team Statistics, Staff
+### Public Website (7 nav items)
+- Home (hero, live widget, dynamic stats bar, fixtures, standings with GF/GA/GD, news)
+- About, Academy (grouped by age), News, Contact form
+- **Team Hub** (/team) — 6 tabs:
+  - Overview: Game Scoreboard, Games History (W/D/L chart), Roster preview, Latest Results, Team Stats, Staff
   - Roster: Full player table with position filter, Goals/Assists/Minutes columns
-  - Latest Results: Fixture results with status filter
-  - Schedule: Calendar grid with month navigation
-  - **Gallery**: Photo grid with 6 category filters (Αγώνας, Προπόνηση, Εκδηλώσεις, Ακαδημία, Φίλαθλοι, Άλλο), lightbox with navigation
+  - Results: All 105 league fixtures with status filter, clickable → Match Report
+  - Schedule: Calendar grid with month navigation (Sep 2025 - Mar 2026)
+  - Gallery: Photo grid with 6 category filters, fullscreen lightbox with navigation
   - Venues: Venue cards with Google Maps iframes
-- **Player Profile** (/player/:id) — Hero banner with stadium background, player photo, number/name split, info grid, Goals/Assists circular indicators, stat progress bars, tabbed content (Overview, Statistics, Biography). Shows linked gallery photos.
-- **Match Report** (/match/:fixtureId) — Dedicated match page with header (teams, score, date, venue, competition), event timeline (goals, cards, subs, VAR with minute markers, positioned home/away), match statistics bars (possession, shots, corners, etc.), and summary card. Accessible by clicking any fixture from Results tab or Overview.
-- Simplified navigation (6 items): Αρχική, Σχετικά, Ομάδα, Ακαδημία, Νέα, Επικοινωνία
-- Legacy redirects: /fixtures → /team?tab=results, /calendar → /team?tab=schedule, /venues → /team?tab=venues, /seasons → /team?tab=overview, /staff → /team?tab=overview
+- **Player Profile** (/player/:id) — Hero banner, stat bars, 3 tabs (Overview, Statistics, Biography), transfer history, linked gallery
+- **Match Report** (/match/:id) — Score header, event timeline, match statistics bars, summary
+- **Tickets & Merchandise** (/shop) — Ticket prices (€5/€3/Free), merchandise grid, Season Pass (€40), contact info
 
-### Admin CMS (13 tabs, standalone layout — no public nav/footer)
-- Dashboard, Club Profile, Players (with file upload), Academy Groups
-- Staff, Fixtures, Standings (with Recalculate All + **Column Config**), News, Venues, Seasons, **Gallery**, Messages
-- **Live Score** tab → Match Control Center
-- **Standings Column Config**: Admin can toggle which columns (Played, Won, Drawn, Lost, GF, GA, GD, Points, Form) appear on the public standings table via a modal in the Standings tab. Settings stored in MongoDB and fetched by public pages.
-- **Gallery Management**: Upload match day photos with title, category (Match Day, Training, Team Events, Academy, Fans, Other), optional player/match linking, featured flag. File upload or URL input. Grid view with hover edit/delete overlay.
+### Admin CMS (13 tabs)
+- Dashboard, Club Profile, Players (with file upload + transfer), Academy Groups
+- Staff, Fixtures, Standings (with Recalculate All + Column Config), News, Venues, Seasons, Gallery, Messages
+- Live Score tab → Match Control Center
+- Standings Column Config: Toggle GF/GA/GD/Form columns
+- Gallery Management: Upload photos with category, player/match linking
 
-### Professional Live Match System
-- **Match Events**: 9 types (goal, penalty, own_goal, yellow/red/2nd yellow, sub, VAR)
-- **Match Stats**: possession%, shots, on-target, corners, fouls, offsides, saves
-- **Auto Score**: Adding goal events auto-increments scores; deleting reverses
-- **Auto Standings**: Completing match auto-recalculates both teams' standings
-- **Sound Effects**: Web Audio API sounds (goal horn, whistle, card beep, sub chime)
-- **Homepage Widget**: Auto-refresh 30s, LIVE indicator, goal scorers, browser notifications
+### Live Match System
+- 9 event types, match stats, auto-score, auto-standings
+- Sound effects (Web Audio API)
+- Homepage widget with auto-refresh, LIVE indicator
 
 ### Web Push Notifications
-- VAPID key-based push notification infrastructure
-- Service Worker (sw-push.js) for offline notification delivery
-- Subscribe/unsubscribe via bell icon in navigation bar
-- Subscription storage in MongoDB (push_subscriptions collection)
-- **Auto-push triggers**: Match goes Live, goal scored, match completed
-- Admin: Test push button and subscriber stats
+- VAPID-based infrastructure with Service Worker
+- Bell icon in navigation (subscribe/unsubscribe)
+- Auto-push: match goes Live, goal scored, match completed
 
 ### Player Transfer History
-- Transfer records: player, from/to team, date, type (In/Out/Loan In/Loan Out), fee, notes
-- Admin: Transfer button on each player with dedicated modal
-- Player Profile: Transfer history section in Biography tab with Greek labels
+- Transfer records with type (In/Out/Loan), from/to team, date, fee
+- Admin modal per player, public display on Biography tab
 
-### Player Image Upload
-- Drag & drop or click-to-browse file upload (JPEG/PNG/WebP, max 5MB)
-- URL input alternative, stored at /api/uploads/players/
+### Official Data
+- 105 fixtures from ΠΑΑΟΚ Α' Όμιλος 2025-2026 (all Completed)
+- 11 teams in standings with real points, GF, GA
+- ΛΕΥΤΕΡΙΑ 2024: 3rd place, 42 points, 61 GF, 24 GA
 
-## Testing: 100% across 10 iterations
+## Testing: 100% across 12 iterations
 
-## Prioritized Backlog
-
-### P3 (Future)
-- Ticket sales / Merchandise shop (simple info page or Stripe integration)
+## Backlog
+- Video uploads in gallery
+- AI-generated match report narratives
+- Multi-language support (English)
