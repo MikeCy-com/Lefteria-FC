@@ -2853,6 +2853,116 @@ async def admin_update_order_status(order_id: str, status: str = Query(...), cur
         raise HTTPException(status_code=404, detail="Order not found")
     return {"message": "Status updated"}
 
+# ==================== TRAINING SESSIONS ====================
+@api_router.post("/admin/training-sessions")
+async def create_training_session(body: dict, current_user: dict = Depends(get_current_user)):
+    session = {
+        "id": str(uuid.uuid4()),
+        "title": body.get("title", ""),
+        "team_id": body.get("team_id"),
+        "academy_group_id": body.get("academy_group_id"),
+        "date": body.get("date"),
+        "duration_minutes": body.get("duration_minutes", 90),
+        "intensity": body.get("intensity", "medium"),  # low, medium, high
+        "tags": body.get("tags", []),  # possession, attacking, defending, 1v1, set_pieces, fitness, shooting, passing
+        "exercises": body.get("exercises", []),  # [{name, description, duration_minutes, equipment}]
+        "notes": body.get("notes", ""),
+        "player_count": body.get("player_count", 0),
+        "created_by": current_user.get("username", "Admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.training_sessions.insert_one(session)
+    session.pop("_id", None)
+    return session
+
+@api_router.get("/admin/training-sessions")
+async def get_training_sessions(team_id: str = None, academy_group_id: str = None, current_user: dict = Depends(get_current_user)):
+    query = {}
+    if team_id:
+        query["team_id"] = team_id
+    if academy_group_id:
+        query["academy_group_id"] = academy_group_id
+    sessions = await db.training_sessions.find(query, {"_id": 0}).sort("date", -1).to_list(200)
+    return sessions
+
+@api_router.put("/admin/training-sessions/{session_id}")
+async def update_training_session(session_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    body.pop("_id", None)
+    body.pop("id", None)
+    await db.training_sessions.update_one({"id": session_id}, {"$set": body})
+    return {"message": "Ενημερώθηκε"}
+
+@api_router.delete("/admin/training-sessions/{session_id}")
+async def delete_training_session(session_id: str, current_user: dict = Depends(get_current_user)):
+    await db.training_sessions.delete_one({"id": session_id})
+    return {"message": "Διαγράφηκε"}
+
+# ==================== PLAYER DEVELOPMENT PLANS ====================
+@api_router.post("/admin/players/{player_id}/development")
+async def create_development_goal(player_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    goal = {
+        "id": str(uuid.uuid4()),
+        "player_id": player_id,
+        "title": body.get("title", ""),
+        "category": body.get("category", "technical"),  # technical, tactical, physical, mental
+        "description": body.get("description", ""),
+        "target_date": body.get("target_date"),
+        "progress": body.get("progress", 0),  # 0-100
+        "status": "active",  # active, completed, paused
+        "milestones": body.get("milestones", []),  # [{text, completed}]
+        "created_by": current_user.get("username", "Admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.player_development.insert_one(goal)
+    goal.pop("_id", None)
+    return goal
+
+@api_router.get("/admin/players/{player_id}/development")
+async def get_development_goals(player_id: str, current_user: dict = Depends(get_current_user)):
+    goals = await db.player_development.find({"player_id": player_id}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return goals
+
+@api_router.put("/admin/development/{goal_id}")
+async def update_development_goal(goal_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    body.pop("_id", None)
+    body.pop("id", None)
+    await db.player_development.update_one({"id": goal_id}, {"$set": body})
+    return {"message": "Ενημερώθηκε"}
+
+@api_router.delete("/admin/development/{goal_id}")
+async def delete_development_goal(goal_id: str, current_user: dict = Depends(get_current_user)):
+    await db.player_development.delete_one({"id": goal_id})
+    return {"message": "Διαγράφηκε"}
+
+# ==================== PLAYER EVALUATIONS ====================
+@api_router.post("/admin/players/{player_id}/evaluations")
+async def create_evaluation(player_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    evaluation = {
+        "id": str(uuid.uuid4()),
+        "player_id": player_id,
+        "period": body.get("period", ""),  # e.g. "Ιαν 2026", "Φεβ 2026"
+        "ratings": body.get("ratings", {}),  # {technical: 1-10, tactical: 1-10, physical: 1-10, mental: 1-10, teamwork: 1-10}
+        "overall": body.get("overall", 0),
+        "strengths": body.get("strengths", ""),
+        "areas_to_improve": body.get("areas_to_improve", ""),
+        "coach_notes": body.get("coach_notes", ""),
+        "evaluated_by": current_user.get("username", "Admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.player_evaluations.insert_one(evaluation)
+    evaluation.pop("_id", None)
+    return evaluation
+
+@api_router.get("/admin/players/{player_id}/evaluations")
+async def get_evaluations(player_id: str, current_user: dict = Depends(get_current_user)):
+    evals = await db.player_evaluations.find({"player_id": player_id}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return evals
+
+@api_router.delete("/admin/evaluations/{eval_id}")
+async def delete_evaluation(eval_id: str, current_user: dict = Depends(get_current_user)):
+    await db.player_evaluations.delete_one({"id": eval_id})
+    return {"message": "Διαγράφηκε"}
+
 # ==================== EVENTS / CALENDAR ====================
 @api_router.post("/admin/events")
 async def create_event(body: dict, current_user: dict = Depends(get_current_user)):

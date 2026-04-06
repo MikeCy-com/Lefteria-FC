@@ -5,13 +5,16 @@ import {
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
-  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare
+  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
 import AdminCalendarTab from "./admin/CalendarTab";
 import AdminAttendanceTab from "./admin/AttendanceTab";
 import AdminWallTab from "./admin/WallTab";
+import TrainingSessionsPanel from "./admin/TrainingSessionsPanel";
+import PlayerDevelopmentPanel from "./admin/PlayerDevelopmentPanel";
+import PlayerEvaluationPanel from "./admin/PlayerEvaluationPanel";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
@@ -178,6 +181,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
       </div>
 
       {!editing ? (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-personal-info">
             <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Προσωπικά Στοιχεία</h3>
@@ -227,6 +231,17 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
             </div>
           )}
         </div>
+
+        {/* Development & Evaluation - below info cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="bg-[#121212] border border-[#262626] rounded-xl p-6">
+            <PlayerDevelopmentPanel playerId={player.id} />
+          </div>
+          <div className="bg-[#121212] border border-[#262626] rounded-xl p-6">
+            <PlayerEvaluationPanel playerId={player.id} />
+          </div>
+        </div>
+        </>
       ) : (
         <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:p-8" data-testid="player-edit-form">
           <h3 className="font-['Bebas_Neue'] text-xl text-white mb-6">Επεξεργασία Στοιχείων</h3>
@@ -1920,6 +1935,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
           {[
             { id: "roster", label: "Ρόστερ", icon: Users, count: teamPlayers.length },
             { id: "schedule", label: "Πρόγραμμα", icon: Calendar, count: teamFixtures.length },
+            { id: "training", label: "Προπονήσεις", icon: Dumbbell, count: null },
             { id: "team_staff", label: "Staff", icon: UserCog, count: teamStaff.length },
             { id: "standings_tab", label: "Βαθμολογία", icon: Trophy, count: standings?.length || 0 },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
@@ -2011,6 +2027,10 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
               </table>
             </div>
           </div>
+        )}
+
+        {detailTab === "training" && (
+          <TrainingSessionsPanel teamId={selectedTeam.id} />
         )}
 
         {detailTab === "team_staff" && (
@@ -2317,6 +2337,7 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
           {[
             { id: "roster", label: "Ρόστερ", icon: Users, count: groupPlayers.length },
             { id: "schedule", label: "Αγώνες", icon: Calendar, count: groupFixtures.length },
+            { id: "training", label: "Προπονήσεις", icon: Dumbbell, count: null },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDetailTab(tab.id)}
@@ -2497,6 +2518,11 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
               />
             )}
           </div>
+        )}
+
+        {/* ── Training Sessions ── */}
+        {detailTab === "training" && (
+          <TrainingSessionsPanel academyGroupId={selectedGroup.id} />
         )}
 
         {/* ── Gallery ── */}
