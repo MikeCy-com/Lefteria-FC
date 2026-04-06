@@ -48,6 +48,9 @@ Live Score
 - [x] **Academy Season Statistics** (Feb 2026): New Στατιστικά tab on academy group pages with W/D/L record, goals summary (for/against/diff), win rate bar chart, top scorers/assisters/appearances leaderboards
 - [x] **Footer Greek Text** (Feb 2026): Replaced English footer text with Greek equivalent
 - [x] **Match Player Stats Input** (Feb 2026): MatchStatsModal in admin academy schedule - replaces prompt() with proper modal for score + per-player stats (goals, assists, cards, minutes). Idempotent save/re-edit via POST /api/admin/fixtures/{id}/player-stats. Auto-populates public Στατιστικά tab.
+- [x] **Grassroots Academy** (Feb 2026): Removed Βαθμοί (Points) from academy Στατιστικά tab since they play grassroots
+- [x] **DOB for all players** (Feb 2026): All player forms (First Team, Academy, PlayersTab, AdminPlayerProfile) now use date-of-birth input with auto-calculated age
+- [x] **Stadium image** (Feb 2026): Replaced Γήπεδο Αετού image with user-uploaded photo
 
 ## Key API Endpoints
 - POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
