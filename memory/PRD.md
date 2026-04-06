@@ -51,6 +51,18 @@ Live Score
 - [x] **Grassroots Academy** (Feb 2026): Removed Βαθμοί (Points) from academy Στατιστικά tab since they play grassroots
 - [x] **DOB for all players** (Feb 2026): All player forms (First Team, Academy, PlayersTab, AdminPlayerProfile) now use date-of-birth input with auto-calculated age
 - [x] **Stadium image** (Feb 2026): Replaced Γήπεδο Αετού image with user-uploaded photo
+- [x] **Club Calendar** (Feb 2026): Admin Ημερολόγιο tab with monthly grid, event CRUD (training/meeting/other), unified calendar merging events+fixtures, day detail sidebar, color-coded event types
+- [x] **Attendance Tracking** (Feb 2026): Admin Παρουσίες tab with team/group selector, attendance rate cards, per-player attendance bars, mark attendance modal (going/not going), attendance stats API
+- [x] **Wall Posts / Announcements** (Feb 2026): Admin Ανακοινώσεις tab with social feed posts, team targeting, pinning, likes, comments, create/delete, public API for posts feed
+
+## Key API Endpoints (New)
+- CRUD `/api/admin/events` (Calendar events)
+- GET `/api/calendar` (Unified: events + fixtures merged)
+- POST/GET `/api/admin/events/{id}/attendance` (Mark/get attendance)
+- GET `/api/admin/attendance/stats` (Per-player attendance rates)
+- CRUD `/api/admin/posts` (Wall posts)
+- PUT `/api/admin/posts/{id}/pin` (Toggle pin)
+- POST `/api/posts/{id}/like` & `/api/posts/{id}/comments` (Public interactions)
 
 ## Key API Endpoints
 - POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
@@ -74,11 +86,17 @@ name, number, position, nationality, age, date_of_birth, team_type, team_id, aca
 - `/app/frontend/src/pages/PlayerProfilePage.jsx` - Public player profile
 - `/app/frontend/src/pages/RegistrationPage.jsx` - 5-step academy registration wizard
 
-## Backlog
-- P2: Verify Match-day Push Notifications & POTM Social Share (testing pending from previous fork)
+## Backlog (360Player Feature Parity)
+- P1: Training Session Planning - session plans with exercises, tags (possession, attacking, defending), duration, physical strain
+- P1: Player Development Plans - individual goals, progress tracking per player
+- P1: Player Evaluation System - coach ratings/evaluations per player per period
+- P2: Financial Dashboard - payment tracking, past due, revenue charts
+- P2: Video Analytics - video upload with timestamps and match analysis
+- P2: Resource/Field Management - venue/field booking system
+- P2: Verify Match-day Push Notifications & POTM Social Share (testing pending)
 - P3: Video uploads in gallery
 - P3: AI-generated match report narratives
 - P3: Multi-language support (English toggle)
-- Refactor: server.py (3100+ lines) into FastAPI routers
+- Refactor: server.py (3400+ lines) into FastAPI routers
 - Refactor: App.js (1700+ lines) - extract Homepage components
-- Refactor: AdminPanel.jsx (3100+ lines) - extract tab components
+- Refactor: AdminPanel.jsx (3300+ lines) - extract remaining tab components
