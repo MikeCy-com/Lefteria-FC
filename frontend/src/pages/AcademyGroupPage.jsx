@@ -327,7 +327,7 @@ const AcademyGroupPage = () => {
                 { label: "Ισοπαλίες", value: seasonStats.draws, color: "#6B7280" },
                 { label: "Ήττες", value: seasonStats.losses, color: "#EF4444" },
                 { label: "Βαθμοί", value: seasonStats.points, color: "#F5A623" },
-              ].map((s, i) => (
+              ].filter(s => s.label !== "Βαθμοί").map((s, i) => (
                 <div key={i} className="card p-5 text-center" data-testid={`stat-${s.label}`}>
                   <div className="font-['Bebas_Neue'] text-4xl" style={{ color: s.color }}>{s.value}</div>
                   <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{s.label}</div>

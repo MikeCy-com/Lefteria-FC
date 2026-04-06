@@ -98,7 +98,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
   const handleSave = async () => {
     setSaving(true);
     try {
-      const age = isAcademy ? calcAge(form.date_of_birth) : form.age;
+      const age = calcAge(form.date_of_birth);
       const payload = { ...form, number: parseInt(form.number) || 0, age: parseInt(age) || 0 };
       if (isAcademy) {
         payload.academy_group_ids = player.academy_group_ids?.length ? player.academy_group_ids : (player.academy_group_id ? [player.academy_group_id] : []);
@@ -239,14 +239,10 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <Field label="Εθνικότητα"><AdminInput value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
-              {isAcademy ? (
-                <Field label="Ημ. Γέννησης">
-                  <AdminInput type="date" value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} />
-                  {form.date_of_birth && <span className="text-xs text-[#10B981] mt-1 block">Ηλικία: {calcAge(form.date_of_birth)} ετών</span>}
-                </Field>
-              ) : (
-                <Field label="Ηλικία"><AdminInput type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} /></Field>
-              )}
+              <Field label="Ημ. Γέννησης">
+                <AdminInput type="date" value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} />
+                {form.date_of_birth && <span className="text-xs text-[#10B981] mt-1 block">Ηλικία: {calcAge(form.date_of_birth)} ετών</span>}
+              </Field>
               <Field label="Πόδι">
                 <AdminSelect value={form.preferred_foot} onChange={e => setForm({...form, preferred_foot: e.target.value})}>
                   <option value="Right">Δεξί</option><option value="Left">Αριστερό</option><option value="Both">Αμφίπλευρο</option>
@@ -885,6 +881,7 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
   const [showTransfer, setShowTransfer] = useState(null);
   const [transferForm, setTransferForm] = useState({ from_team: 'LEFTERIA FC', to_team: '', transfer_date: '', transfer_type: 'Out', fee: '', notes: '' });
   const [savingTransfer, setSavingTransfer] = useState(false);
+  const calcAge = (dob) => { if (!dob) return ""; try { return Math.floor((new Date() - new Date(dob)) / 31557600000); } catch { return ""; } };
   const emptyPlayer = {
     name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "",
     team_type: "First Team", academy_group_id: "", image_url: "", bio: "",
@@ -911,7 +908,7 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
-      const payload = { ...form, number: parseInt(form.number) || 0, age: parseInt(form.age) || 0 };
+      const payload = { ...form, number: parseInt(form.number) || 0, age: parseInt(calcAge(form.date_of_birth)) || parseInt(form.age) || 0 };
       if (editPlayer) await axios.put(`${API}/admin/players/${editPlayer.id}`, payload, { headers });
       else await axios.post(`${API}/admin/players`, payload, { headers });
       setShowForm(false); onRefresh();
@@ -1001,7 +998,10 @@ const PlayersTab = ({ players, academyGroups, onRefresh }) => {
             <Field label="Εθνικότητα"><AdminInput value={form.nationality} onChange={e => setForm({...form, nationality: e.target.value})} /></Field>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Ηλικία *"><AdminInput type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} data-testid="player-age-input" /></Field>
+            <Field label="Ημ. Γέννησης *">
+              <AdminInput type="date" value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} data-testid="player-dob-input" />
+              {form.date_of_birth && <span className="text-xs text-[#10B981] mt-1 block">Ηλικία: {calcAge(form.date_of_birth)} ετών</span>}
+            </Field>
             <Field label="Ύψος"><AdminInput placeholder="1.85m" value={form.height} onChange={e => setForm({...form, height: e.target.value})} /></Field>
             <Field label="Βάρος"><AdminInput placeholder="78kg" value={form.weight} onChange={e => setForm({...form, weight: e.target.value})} /></Field>
           </div>
@@ -1790,8 +1790,9 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
   const [showPlayerForm, setShowPlayerForm] = useState(false);
   const [editPlayer, setEditPlayer] = useState(null);
   const [savingPlayer, setSavingPlayer] = useState(false);
-  const emptyPlayer = { name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "", image_url: "", bio: "", height: "", weight: "", preferred_foot: "Right" };
+  const emptyPlayer = { name: "", number: "", position: "Midfielder", nationality: "Cyprus", age: "", image_url: "", bio: "", height: "", weight: "", preferred_foot: "Right", date_of_birth: "" };
   const [playerForm, setPlayerForm] = useState(emptyPlayer);
+  const calcAge = (dob) => { if (!dob) return ""; try { return Math.floor((new Date() - new Date(dob)) / 31557600000); } catch { return ""; } };
   // Gallery state
   const [galleryItems, setGalleryItems] = useState([]);
   const [showGalleryForm, setShowGalleryForm] = useState(false);
@@ -1819,7 +1820,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
 
   const openCreatePlayer = () => { setPlayerForm({...emptyPlayer}); setEditPlayer(null); setShowPlayerForm(true); };
   const openEditPlayer = (p) => {
-    setPlayerForm({ name: p.name || "", number: p.number || "", position: p.position || "Midfielder", nationality: p.nationality || "Cyprus", age: p.age || "", image_url: p.image_url || "", bio: p.bio || "", height: p.height || "", weight: p.weight || "", preferred_foot: p.preferred_foot || "Right" });
+    setPlayerForm({ name: p.name || "", number: p.number || "", position: p.position || "Midfielder", nationality: p.nationality || "Cyprus", age: p.age || "", image_url: p.image_url || "", bio: p.bio || "", height: p.height || "", weight: p.weight || "", preferred_foot: p.preferred_foot || "Right", date_of_birth: p.date_of_birth || "" });
     setEditPlayer(p); setShowPlayerForm(true);
   };
 
@@ -1827,7 +1828,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
     setSavingPlayer(true);
     try {
       const headers = getAuthHeaders();
-      const payload = { ...playerForm, number: parseInt(playerForm.number) || 0, age: parseInt(playerForm.age) || 0, team_type: "First Team", team_id: selectedTeam.id };
+      const payload = { ...playerForm, number: parseInt(playerForm.number) || 0, age: parseInt(calcAge(playerForm.date_of_birth)) || parseInt(playerForm.age) || 0, team_type: "First Team", team_id: selectedTeam.id };
       if (editPlayer) await axios.put(`${API}/admin/players/${editPlayer.id}`, payload, { headers });
       else await axios.post(`${API}/admin/players`, payload, { headers });
       setShowPlayerForm(false); onRefresh();
@@ -1973,7 +1974,10 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
                   <Field label="Εθνικότητα"><AdminInput value={playerForm.nationality} onChange={e => setPlayerForm({...playerForm, nationality: e.target.value})} /></Field>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <Field label="Ηλικία *"><AdminInput type="number" value={playerForm.age} onChange={e => setPlayerForm({...playerForm, age: e.target.value})} /></Field>
+                  <Field label="Ημ. Γέννησης *">
+                    <AdminInput type="date" value={playerForm.date_of_birth} onChange={e => setPlayerForm({...playerForm, date_of_birth: e.target.value})} />
+                    {playerForm.date_of_birth && <span className="text-xs text-[#10B981] mt-1 block">Ηλικία: {calcAge(playerForm.date_of_birth)} ετών</span>}
+                  </Field>
                   <Field label="Ύψος"><AdminInput placeholder="1.85m" value={playerForm.height} onChange={e => setPlayerForm({...playerForm, height: e.target.value})} /></Field>
                   <Field label="Βάρος"><AdminInput placeholder="78kg" value={playerForm.weight} onChange={e => setPlayerForm({...playerForm, weight: e.target.value})} /></Field>
                 </div>

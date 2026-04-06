@@ -927,8 +927,8 @@ const AboutPage = () => (
           </div>
           <div className="aspect-video bg-[#1F1F1F] rounded-none overflow-hidden">
             <img 
-              src="https://lefteriafc.cy/images/2026/02/22/639112112_122172212540791287_1953686296477132728_n.jpg"
-              alt="Stadium"
+              src="https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/vq6hm4ij_unnamed%20%282%29.webp"
+              alt="Γήπεδο Αετού"
               className="w-full h-full object-cover"
             />
           </div>
