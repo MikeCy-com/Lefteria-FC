@@ -47,6 +47,7 @@ Live Score
 - [x] **Public Academy Group Pages** (Feb 2026): /academy/:groupId route with hero, breadcrumb, Ρόστερ/Πρόγραμμα/Γκαλερί tabs, clickable player cards
 - [x] **Academy Season Statistics** (Feb 2026): New Στατιστικά tab on academy group pages with W/D/L record, goals summary (for/against/diff), win rate bar chart, top scorers/assisters/appearances leaderboards
 - [x] **Footer Greek Text** (Feb 2026): Replaced English footer text with Greek equivalent
+- [x] **Match Player Stats Input** (Feb 2026): MatchStatsModal in admin academy schedule - replaces prompt() with proper modal for score + per-player stats (goals, assists, cards, minutes). Idempotent save/re-edit via POST /api/admin/fixtures/{id}/player-stats. Auto-populates public Στατιστικά tab.
 
 ## Key API Endpoints
 - POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
