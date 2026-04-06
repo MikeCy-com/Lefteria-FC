@@ -3360,8 +3360,21 @@ async def admin_reset_potm_votes(current_user: dict = Depends(get_current_user))
     result = await db.potm_votes.delete_many({"month_key": month_key})
     return {"message": f"Διαγράφηκαν {result.deleted_count} ψήφοι"}
 
-# Include router
+# Include main router
 app.include_router(api_router)
+
+# Include modular routers
+from routes.financial import router as financial_router, setup_financial_routes
+from routes.videos import router as video_router, setup_video_routes
+from routes.resources import router as resource_router, setup_resource_routes
+
+setup_financial_routes(db, get_current_user)
+setup_video_routes(db, get_current_user)
+setup_resource_routes(db, get_current_user)
+
+app.include_router(financial_router)
+app.include_router(video_router)
+app.include_router(resource_router)
 
 app.add_middleware(
     CORSMiddleware,

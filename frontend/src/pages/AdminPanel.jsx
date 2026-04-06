@@ -5,7 +5,8 @@ import {
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
-  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star
+  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
+  DollarSign, Video, Landmark
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -15,6 +16,9 @@ import AdminWallTab from "./admin/WallTab";
 import TrainingSessionsPanel from "./admin/TrainingSessionsPanel";
 import PlayerDevelopmentPanel from "./admin/PlayerDevelopmentPanel";
 import PlayerEvaluationPanel from "./admin/PlayerEvaluationPanel";
+import FinancialDashboard from "./admin/FinancialDashboard";
+import VideoAnalyticsPanel from "./admin/VideoAnalyticsPanel";
+import ResourceManagement from "./admin/ResourceManagement";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
@@ -1936,6 +1940,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
             { id: "roster", label: "Ρόστερ", icon: Users, count: teamPlayers.length },
             { id: "schedule", label: "Πρόγραμμα", icon: Calendar, count: teamFixtures.length },
             { id: "training", label: "Προπονήσεις", icon: Dumbbell, count: null },
+            { id: "videos", label: "Βίντεο", icon: Video, count: null },
             { id: "team_staff", label: "Staff", icon: UserCog, count: teamStaff.length },
             { id: "standings_tab", label: "Βαθμολογία", icon: Trophy, count: standings?.length || 0 },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
@@ -2031,6 +2036,10 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
 
         {detailTab === "training" && (
           <TrainingSessionsPanel teamId={selectedTeam.id} />
+        )}
+
+        {detailTab === "videos" && (
+          <VideoAnalyticsPanel teamId={selectedTeam.id} players={teamPlayers} />
         )}
 
         {detailTab === "team_staff" && (
@@ -2338,6 +2347,7 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
             { id: "roster", label: "Ρόστερ", icon: Users, count: groupPlayers.length },
             { id: "schedule", label: "Αγώνες", icon: Calendar, count: groupFixtures.length },
             { id: "training", label: "Προπονήσεις", icon: Dumbbell, count: null },
+            { id: "videos", label: "Βίντεο", icon: Video, count: null },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDetailTab(tab.id)}
@@ -2523,6 +2533,11 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
         {/* ── Training Sessions ── */}
         {detailTab === "training" && (
           <TrainingSessionsPanel academyGroupId={selectedGroup.id} />
+        )}
+
+        {/* ── Video Analytics ── */}
+        {detailTab === "videos" && (
+          <VideoAnalyticsPanel academyGroupId={selectedGroup.id} players={groupPlayers} />
         )}
 
         {/* ── Gallery ── */}
@@ -3165,6 +3180,11 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "item", id: "calendar", label: "Ημερολόγιο", icon: Calendar },
     { type: "item", id: "attendance", label: "Παρουσίες", icon: Check },
     { type: "divider" },
+    { type: "group", id: "management_section", label: "Διαχείριση", icon: Landmark, items: [
+      { id: "financial", label: "Οικονομικά", icon: DollarSign },
+      { id: "resources", label: "Εγκαταστάσεις", icon: MapPin },
+    ]},
+    { type: "divider" },
     { type: "group", id: "shop_section", label: "Κατάστημα", icon: ShoppingCart, items: [
       { id: "shop_products", label: "Προϊόντα", icon: Package },
       { id: "shop_tickets", label: "Εισιτήρια", icon: Ticket },
@@ -3207,6 +3227,8 @@ const AdminPanel = ({ user, onLogout }) => {
       case "calendar": return <AdminCalendarTab teams={data.teams} academyGroups={data.academyGroups} />;
       case "attendance": return <AdminAttendanceTab teams={data.teams} academyGroups={data.academyGroups} players={data.players} />;
       case "wall": return <AdminWallTab teams={data.teams} academyGroups={data.academyGroups} />;
+      case "financial": return <FinancialDashboard teams={data.teams} academyGroups={data.academyGroups} players={data.players} />;
+      case "resources": return <ResourceManagement teams={data.teams} academyGroups={data.academyGroups} />;
       case "shop_products": return <AdminProductsTab />;
       case "shop_tickets": return <AdminTicketsTab />;
       case "shop_orders": return <AdminOrdersTab />;
