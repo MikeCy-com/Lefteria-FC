@@ -6,6 +6,7 @@ Build a complete football club CMS and public-facing website for "Lefteria FC" (
 ## Architecture
 - **Frontend**: React + Tailwind CSS + lucide-react, Shadcn/UI components
 - **Backend**: FastAPI + MongoDB (Motor) + PyJWT
+- **Backend Routes**: Modular routers in `/app/backend/routes/` (financial.py, videos.py, resources.py) + monolith `server.py`
 - **Auth**: Dual auth - Admin CMS (`useAdminAuth`) and Customer (`CustomerAuth.jsx`)
 - **Push**: Native VAPID Web Push Notifications
 
@@ -14,12 +15,16 @@ Build a complete football club CMS and public-facing website for "Lefteria FC" (
 Πίνακας (Dashboard)
 Live Score
 ─── ΣΥΛΛΟΓΟΣ ───
-    Ομάδες → drill-down: Ρόστερ (clickable player profiles), Πρόγραμμα, Staff, Βαθμολογία, Γκαλερί
+    Ομάδες → drill-down: Ρόστερ, Πρόγραμμα, Προπονήσεις, Βίντεο, Staff, Βαθμολογία, Γκαλερί
 ─── ΑΚΑΔΗΜΙΑ ───
-    Ομάδες → drill-down: Ρόστερ (clickable player profiles + transfer), Αγώνες (CRUD), Γκαλερί
+    Ομάδες → drill-down: Ρόστερ, Αγώνες, Προπονήσεις, Βίντεο, Γκαλερί
     Εγγραφές → list with filter, detail, approve/reject
 ─── Standalone ───
-    Νέα, Μηνύματα
+    Νέα, Ανακοινώσεις, Μηνύματα
+─── Calendar/Attendance ───
+    Ημερολόγιο, Παρουσίες
+─── ΔΙΑΧΕΙΡΙΣΗ ───
+    Οικονομικά, Εγκαταστάσεις
 ─── ΚΑΤΑΣΤΗΜΑ ───
     Προϊόντα, Εισιτήρια, Παραγγελίες
 ─── ΡΥΘΜΙΣΕΙΣ ───
@@ -41,62 +46,55 @@ Live Score
 - [x] Admin Panel Restructuring: grouped sidebar, Teams CRUD with drill-down
 - [x] Per-team/academy Gallery
 - [x] Academy Registration (5-step wizard with digital signature)
-- [x] Full Academy Player Management (Feb 2026): CRUD, DOB, parent info, multi-group, transfers
-- [x] **Full-Width Admin UI** (Feb 2026): Main content area uses full width next to fixed sidebar
-- [x] **Admin Player Profile View** (Feb 2026): Clicking player name in any roster opens full profile with view/edit modes, personal info, team info, parent info cards
-- [x] **Public Academy Group Pages** (Feb 2026): /academy/:groupId route with hero, breadcrumb, Ρόστερ/Πρόγραμμα/Γκαλερί tabs, clickable player cards
-- [x] **Academy Season Statistics** (Feb 2026): New Στατιστικά tab on academy group pages with W/D/L record, goals summary (for/against/diff), win rate bar chart, top scorers/assisters/appearances leaderboards
-- [x] **Footer Greek Text** (Feb 2026): Replaced English footer text with Greek equivalent
-- [x] **Match Player Stats Input** (Feb 2026): MatchStatsModal in admin academy schedule - replaces prompt() with proper modal for score + per-player stats (goals, assists, cards, minutes). Idempotent save/re-edit via POST /api/admin/fixtures/{id}/player-stats. Auto-populates public Στατιστικά tab.
-- [x] **Grassroots Academy** (Feb 2026): Removed Βαθμοί (Points) from academy Στατιστικά tab since they play grassroots
-- [x] **DOB for all players** (Feb 2026): All player forms (First Team, Academy, PlayersTab, AdminPlayerProfile) now use date-of-birth input with auto-calculated age
-- [x] **Stadium image** (Feb 2026): Replaced Γήπεδο Αετού image with user-uploaded photo
-- [x] **Club Calendar** (Feb 2026): Admin Ημερολόγιο tab with monthly grid, event CRUD (training/meeting/other), unified calendar merging events+fixtures, day detail sidebar, color-coded event types
-- [x] **Attendance Tracking** (Feb 2026): Admin Παρουσίες tab with team/group selector, attendance rate cards, per-player attendance bars, mark attendance modal (going/not going), attendance stats API
-- [x] **Wall Posts / Announcements** (Feb 2026): Admin Ανακοινώσεις tab with social feed posts, team targeting, pinning, likes, comments, create/delete, public API for posts feed
+- [x] Full Academy Player Management: CRUD, DOB, parent info, multi-group, transfers
+- [x] Full-Width Admin UI
+- [x] Admin Player Profile View with Development & Evaluation panels
+- [x] Public Academy Group Pages with Season Statistics
+- [x] Match Player Stats Input (MatchStatsModal)
+- [x] Grassroots Academy (no points), DOB-based age, Stadium image
+- [x] Club Calendar (events + fixtures merged)
+- [x] Attendance Tracking (per-player rates)
+- [x] Wall Posts / Announcements (social feed)
+- [x] Training Session Planning (in team & academy drill-downs)
+- [x] Player Development Plans (in player profile)
+- [x] Player Evaluation System (in player profile)
+- [x] **Financial Dashboard** (Feb 2026): Payment tracking, KPI cards (revenue/pending/overdue/expected), monthly revenue chart, records table with filters, mark-as-paid, bulk dues generation for teams/academy groups
+- [x] **Video Analytics** (Feb 2026): Video management inside team & academy drill-downs, YouTube embed support, timestamped markers/annotations, player tagging, video upload support
+- [x] **Resource/Field Management** (Feb 2026): Facility CRUD (type, surface, capacity, lighting, changing rooms), calendar-based booking system, availability time slot viewer (07:00-22:00), conflict detection preventing double-booking, recurring weekly bookings
 
-## Key API Endpoints (New)
-- CRUD `/api/admin/events` (Calendar events)
-- GET `/api/calendar` (Unified: events + fixtures merged)
-- POST/GET `/api/admin/events/{id}/attendance` (Mark/get attendance)
-- GET `/api/admin/attendance/stats` (Per-player attendance rates)
-- CRUD `/api/admin/posts` (Wall posts)
-- PUT `/api/admin/posts/{id}/pin` (Toggle pin)
-- POST `/api/posts/{id}/like` & `/api/posts/{id}/comments` (Public interactions)
-
-## Key API Endpoints
-- POST/GET/PUT/DELETE `/api/admin/players` (Player CRUD with auto-age from DOB)
-- POST `/api/admin/players/{id}/transfer` (Multi-group assignment)
-- GET `/api/academy-groups/{id}` (Single group)
-- GET `/api/academy-groups/{id}/players` (Multi-group aware)
-- POST/GET `/api/admin/academy-groups/{id}/fixtures` (Academy fixtures)
-- GET `/api/gallery?academy_group_id={id}` (Per-group gallery)
-- GET `/api/academy-groups/{id}/fixtures` (Public fixtures)
+## Key API Endpoints (P2 New - Feb 2026)
+- CRUD `/api/admin/financial/records` (Financial records)
+- PUT `/api/admin/financial/records/{id}/pay` (Mark as paid)
+- GET `/api/admin/financial/stats` (Dashboard KPIs + monthly revenue)
+- POST `/api/admin/financial/generate-dues` (Bulk dues for team/group)
+- CRUD `/api/admin/videos` (Video management)
+- POST `/api/admin/videos/upload` (File upload)
+- POST/DELETE `/api/admin/videos/{id}/markers` (Timeline markers)
+- GET `/api/videos` (Public video list)
+- CRUD `/api/admin/facilities` (Facility management)
+- CRUD `/api/admin/bookings` (Booking management with conflict detection)
+- GET `/api/admin/facilities/{id}/availability` (Time slot availability)
 
 ## Key DB Collections
-admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, registrations
-
-## Player Model Fields
-name, number, position, nationality, age, date_of_birth, team_type, team_id, academy_group_id, academy_group_ids (multi-group), academy_group_name, image_url, bio, height, weight, preferred_foot, statistics, previous_clubs, parent_name, parent_phone, parent_email, is_active
+admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, registrations, events, attendances, wall_posts, training_sessions, player_development, player_evaluations, financial_records, videos, facilities, bookings
 
 ## Key Frontend Files
-- `/app/frontend/src/pages/AdminPanel.jsx` - Admin CMS with AdminPlayerProfile component
-- `/app/frontend/src/pages/AcademyGroupPage.jsx` - Public academy group detail page
-- `/app/frontend/src/App.js` - Routing, homepage, AcademyPage with clickable group cards
-- `/app/frontend/src/pages/PlayerProfilePage.jsx` - Public player profile
-- `/app/frontend/src/pages/RegistrationPage.jsx` - 5-step academy registration wizard
+- `/app/frontend/src/pages/AdminPanel.jsx` - Admin CMS (~3370 lines)
+- `/app/frontend/src/pages/admin/FinancialDashboard.jsx` - Financial Dashboard
+- `/app/frontend/src/pages/admin/VideoAnalyticsPanel.jsx` - Video Analytics
+- `/app/frontend/src/pages/admin/ResourceManagement.jsx` - Resource/Field Management
+- `/app/frontend/src/pages/admin/CalendarTab.jsx` - Calendar
+- `/app/frontend/src/pages/admin/AttendanceTab.jsx` - Attendance
+- `/app/frontend/src/pages/admin/WallTab.jsx` - Wall Posts
+- `/app/frontend/src/pages/admin/TrainingSessionsPanel.jsx` - Training Sessions
+- `/app/frontend/src/pages/admin/PlayerDevelopmentPanel.jsx` - Player Development
+- `/app/frontend/src/pages/admin/PlayerEvaluationPanel.jsx` - Player Evaluations
 
-## Backlog (360Player Feature Parity)
-- P1: Training Session Planning - session plans with exercises, tags (possession, attacking, defending), duration, physical strain
-- P1: Player Development Plans - individual goals, progress tracking per player
-- P1: Player Evaluation System - coach ratings/evaluations per player per period
-- P2: Financial Dashboard - payment tracking, past due, revenue charts
-- P2: Video Analytics - video upload with timestamps and match analysis
-- P2: Resource/Field Management - venue/field booking system
+## Backlog
 - P2: Verify Match-day Push Notifications & POTM Social Share (testing pending)
 - P3: Video uploads in gallery
 - P3: AI-generated match report narratives
 - P3: Multi-language support (English toggle)
-- Refactor: server.py (3400+ lines) into FastAPI routers
+- Refactor: server.py (3500+ lines) into FastAPI routers (partially started with /routes/)
 - Refactor: App.js (1700+ lines) - extract Homepage components
-- Refactor: AdminPanel.jsx (3300+ lines) - extract remaining tab components
+- Refactor: AdminPanel.jsx (3370+ lines) - extract remaining tab components
