@@ -1076,20 +1076,20 @@ async def get_fixture(fixture_id: str):
         raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
     return Fixture(**fixture)
 
-# Calendar Events
-@api_router.get("/calendar")
-async def get_calendar_events(month: Optional[int] = None, year: Optional[int] = None):
-    query = {}
-    if month and year:
-        start_date = f"{year}-{month:02d}-01"
-        if month == 12:
-            end_date = f"{year + 1}-01-01"
-        else:
-            end_date = f"{year}-{month + 1:02d}-01"
-        query["match_date"] = {"$gte": start_date, "$lt": end_date}
-    
-    fixtures = await db.fixtures.find(query, {"_id": 0}).sort("match_date", 1).to_list(100)
-    return fixtures
+# Calendar Events (Legacy - now using unified /calendar endpoint at line ~2905)
+# @api_router.get("/calendar")
+# async def get_calendar_events(month: Optional[int] = None, year: Optional[int] = None):
+#     query = {}
+#     if month and year:
+#         start_date = f"{year}-{month:02d}-01"
+#         if month == 12:
+#             end_date = f"{year + 1}-01-01"
+#         else:
+#             end_date = f"{year}-{month + 1:02d}-01"
+#         query["match_date"] = {"$gte": start_date, "$lt": end_date}
+#     
+#     fixtures = await db.fixtures.find(query, {"_id": 0}).sort("match_date", 1).to_list(100)
+#     return fixtures
 
 # Standings (Public Read)
 @api_router.get("/standings", response_model=List[Standing])
@@ -2852,6 +2852,252 @@ async def admin_update_order_status(order_id: str, status: str = Query(...), cur
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Order not found")
     return {"message": "Status updated"}
+
+# ==================== EVENTS / CALENDAR ====================
+@api_router.post("/admin/events")
+async def create_event(body: dict, current_user: dict = Depends(get_current_user)):
+    event = {
+        "id": str(uuid.uuid4()),
+        "title": body.get("title", ""),
+        "type": body.get("type", "training"),  # training, meeting, other
+        "team_id": body.get("team_id"),
+        "academy_group_id": body.get("academy_group_id"),
+        "date": body.get("date"),
+        "end_date": body.get("end_date"),
+        "location": body.get("location", ""),
+        "description": body.get("description", ""),
+        "recurring": body.get("recurring", False),
+        "created_by": current_user.get("username", "Admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.events.insert_one(event)
+    event.pop("_id", None)
+    return event
+
+@api_router.get("/admin/events")
+async def admin_get_events(current_user: dict = Depends(get_current_user)):
+    events = await db.events.find({}, {"_id": 0}).sort("date", 1).to_list(500)
+    return events
+
+@api_router.put("/admin/events/{event_id}")
+async def admin_update_event(event_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    body.pop("_id", None)
+    body.pop("id", None)
+    await db.events.update_one({"id": event_id}, {"$set": body})
+    return {"message": "Ενημερώθηκε"}
+
+@api_router.delete("/admin/events/{event_id}")
+async def admin_delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    await db.events.delete_one({"id": event_id})
+    await db.event_attendance.delete_many({"event_id": event_id})
+    return {"message": "Διαγράφηκε"}
+
+@api_router.get("/events")
+async def get_events(team_id: str = None, academy_group_id: str = None, month: str = None):
+    query = {}
+    if team_id:
+        query["team_id"] = team_id
+    if academy_group_id:
+        query["academy_group_id"] = academy_group_id
+    events = await db.events.find(query, {"_id": 0}).sort("date", 1).to_list(500)
+    return events
+
+@api_router.get("/calendar")
+async def get_calendar(team_id: str = None, academy_group_id: str = None, month: str = None):
+    """Unified calendar: merges events + fixtures into one list"""
+    event_query = {}
+    fixture_query = {}
+    if team_id:
+        event_query["team_id"] = team_id
+        fixture_query["team_id"] = team_id
+    if academy_group_id:
+        event_query["academy_group_id"] = academy_group_id
+        fixture_query["academy_group_id"] = academy_group_id
+
+    events = await db.events.find(event_query, {"_id": 0}).sort("date", 1).to_list(500)
+    fixtures = await db.fixtures.find(fixture_query, {"_id": 0}).sort("match_date", 1).to_list(500)
+
+    calendar = []
+    for e in events:
+        calendar.append({
+            "id": e["id"], "title": e.get("title", ""), "type": e.get("type", "training"),
+            "date": e.get("date"), "end_date": e.get("end_date"),
+            "location": e.get("location", ""), "description": e.get("description", ""),
+            "source": "event",
+        })
+    for f in fixtures:
+        calendar.append({
+            "id": f["id"], "title": f"{f.get('home_team', '')} vs {f.get('away_team', '')}",
+            "type": "match", "date": f.get("match_date"), "location": f.get("venue", ""),
+            "description": f.get("competition", ""), "source": "fixture",
+            "home_team": f.get("home_team"), "away_team": f.get("away_team"),
+            "home_score": f.get("home_score"), "away_score": f.get("away_score"),
+            "status": f.get("status", "Scheduled"),
+        })
+    calendar.sort(key=lambda x: x.get("date") or "")
+    return calendar
+
+# ==================== ATTENDANCE ====================
+@api_router.post("/admin/events/{event_id}/attendance")
+async def save_attendance(event_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    """Admin marks attendance for an event. Body: { responses: [{ player_id, status }] }"""
+    responses = body.get("responses", [])
+    for r in responses:
+        await db.event_attendance.update_one(
+            {"event_id": event_id, "player_id": r["player_id"]},
+            {"$set": {
+                "event_id": event_id,
+                "player_id": r["player_id"],
+                "player_name": r.get("player_name", ""),
+                "status": r.get("status", "no_response"),  # going, not_going, no_response
+                "marked_at": datetime.now(timezone.utc).isoformat(),
+                "marked_by": current_user.get("username", "Admin"),
+            }},
+            upsert=True
+        )
+    return {"message": "Παρουσίες αποθηκεύτηκαν", "count": len(responses)}
+
+@api_router.get("/admin/events/{event_id}/attendance")
+async def get_event_attendance(event_id: str, current_user: dict = Depends(get_current_user)):
+    records = await db.event_attendance.find({"event_id": event_id}, {"_id": 0}).to_list(200)
+    return records
+
+@api_router.get("/admin/attendance/stats")
+async def get_attendance_stats(team_id: str = None, academy_group_id: str = None, current_user: dict = Depends(get_current_user)):
+    """Get attendance statistics: per-player attendance rates"""
+    # Get all events for this team/group
+    event_query = {}
+    if team_id:
+        event_query["team_id"] = team_id
+    if academy_group_id:
+        event_query["academy_group_id"] = academy_group_id
+
+    events = await db.events.find(event_query, {"_id": 0, "id": 1}).to_list(500)
+    event_ids = [e["id"] for e in events]
+
+    # Also include fixtures
+    fixture_query = {}
+    if team_id:
+        fixture_query["team_id"] = team_id
+    if academy_group_id:
+        fixture_query["academy_group_id"] = academy_group_id
+    fixtures = await db.fixtures.find(fixture_query, {"_id": 0, "id": 1}).to_list(500)
+    event_ids.extend([f["id"] for f in fixtures])
+
+    if not event_ids:
+        return {"total_events": 0, "player_stats": [], "overall": {"going": 0, "not_going": 0, "no_response": 0}}
+
+    # Get all attendance records for these events
+    all_records = await db.event_attendance.find({"event_id": {"$in": event_ids}}, {"_id": 0}).to_list(5000)
+
+    # Aggregate per player
+    player_map = {}
+    for r in all_records:
+        pid = r["player_id"]
+        if pid not in player_map:
+            player_map[pid] = {"player_id": pid, "player_name": r.get("player_name", ""), "going": 0, "not_going": 0, "no_response": 0}
+        status = r.get("status", "no_response")
+        if status in player_map[pid]:
+            player_map[pid][status] += 1
+
+    player_stats = list(player_map.values())
+    for ps in player_stats:
+        total = ps["going"] + ps["not_going"] + ps["no_response"]
+        ps["total"] = total
+        ps["attendance_rate"] = round((ps["going"] / total * 100) if total > 0 else 0)
+
+    overall_going = sum(r.get("status") == "going" for r in all_records)
+    overall_not = sum(r.get("status") == "not_going" for r in all_records)
+    overall_nr = sum(r.get("status") == "no_response" for r in all_records)
+
+    return {
+        "total_events": len(event_ids),
+        "player_stats": sorted(player_stats, key=lambda x: x["attendance_rate"], reverse=True),
+        "overall": {"going": overall_going, "not_going": overall_not, "no_response": overall_nr},
+    }
+
+# ==================== WALL POSTS ====================
+@api_router.post("/admin/posts")
+async def create_post(body: dict, current_user: dict = Depends(get_current_user)):
+    post = {
+        "id": str(uuid.uuid4()),
+        "author_name": current_user.get("username", "Admin"),
+        "author_role": "coach",
+        "team_id": body.get("team_id"),
+        "academy_group_id": body.get("academy_group_id"),
+        "content": body.get("content", ""),
+        "image_url": body.get("image_url"),
+        "pinned": body.get("pinned", False),
+        "likes": [],
+        "comment_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.wall_posts.insert_one(post)
+    post.pop("_id", None)
+    return post
+
+@api_router.get("/admin/posts")
+async def admin_get_posts(current_user: dict = Depends(get_current_user)):
+    posts = await db.wall_posts.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return posts
+
+@api_router.delete("/admin/posts/{post_id}")
+async def admin_delete_post(post_id: str, current_user: dict = Depends(get_current_user)):
+    await db.wall_posts.delete_one({"id": post_id})
+    await db.post_comments.delete_many({"post_id": post_id})
+    return {"message": "Διαγράφηκε"}
+
+@api_router.put("/admin/posts/{post_id}/pin")
+async def toggle_pin_post(post_id: str, current_user: dict = Depends(get_current_user)):
+    post = await db.wall_posts.find_one({"id": post_id}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404)
+    new_pin = not post.get("pinned", False)
+    await db.wall_posts.update_one({"id": post_id}, {"$set": {"pinned": new_pin}})
+    return {"pinned": new_pin}
+
+@api_router.get("/posts")
+async def get_posts(team_id: str = None, academy_group_id: str = None):
+    query = {}
+    if team_id:
+        query["$or"] = [{"team_id": team_id}, {"team_id": None, "academy_group_id": None}]
+    elif academy_group_id:
+        query["$or"] = [{"academy_group_id": academy_group_id}, {"team_id": None, "academy_group_id": None}]
+    posts = await db.wall_posts.find(query, {"_id": 0}).sort([("pinned", -1), ("created_at", -1)]).to_list(100)
+    return posts
+
+@api_router.post("/posts/{post_id}/like")
+async def like_post(post_id: str, body: dict):
+    user_id = body.get("user_id", "anonymous")
+    post = await db.wall_posts.find_one({"id": post_id}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404)
+    likes = post.get("likes", [])
+    if user_id in likes:
+        likes.remove(user_id)
+    else:
+        likes.append(user_id)
+    await db.wall_posts.update_one({"id": post_id}, {"$set": {"likes": likes}})
+    return {"likes": len(likes), "liked": user_id in likes}
+
+@api_router.post("/posts/{post_id}/comments")
+async def add_comment(post_id: str, body: dict):
+    comment = {
+        "id": str(uuid.uuid4()),
+        "post_id": post_id,
+        "author_name": body.get("author_name", "Ανώνυμος"),
+        "content": body.get("content", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.post_comments.insert_one(comment)
+    await db.wall_posts.update_one({"id": post_id}, {"$inc": {"comment_count": 1}})
+    comment.pop("_id", None)
+    return comment
+
+@api_router.get("/posts/{post_id}/comments")
+async def get_comments(post_id: str):
+    comments = await db.post_comments.find({"post_id": post_id}, {"_id": 0}).sort("created_at", 1).to_list(200)
+    return comments
 
 # ==================== PLAYER OF THE MONTH VOTING ====================
 class PotmVote(BaseModel):

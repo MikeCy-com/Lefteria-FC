@@ -5,10 +5,13 @@ import {
   LogOut, Plus, Edit2, Trash2, X, Save, BarChart3, Building2,
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
-  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye
+  Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
+import AdminCalendarTab from "./admin/CalendarTab";
+import AdminAttendanceTab from "./admin/AttendanceTab";
+import AdminWallTab from "./admin/WallTab";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
@@ -3130,7 +3133,11 @@ const AdminPanel = ({ user, onLogout }) => {
     ]},
     { type: "divider" },
     { type: "item", id: "news", label: "Νέα", icon: Newspaper },
+    { type: "item", id: "wall", label: "Ανακοινώσεις", icon: MessageSquare },
     { type: "item", id: "messages", label: "Μηνύματα", icon: Mail },
+    { type: "divider" },
+    { type: "item", id: "calendar", label: "Ημερολόγιο", icon: Calendar },
+    { type: "item", id: "attendance", label: "Παρουσίες", icon: Check },
     { type: "divider" },
     { type: "group", id: "shop_section", label: "Κατάστημα", icon: ShoppingCart, items: [
       { id: "shop_products", label: "Προϊόντα", icon: Package },
@@ -3171,6 +3178,9 @@ const AdminPanel = ({ user, onLogout }) => {
       case "news": return <NewsTab news={data.news} onRefresh={fetchAll} />;
       case "gallery": return <GalleryTab onRefresh={fetchAll} />;
       case "messages": return <MessagesTab messages={data.messages} onRefresh={fetchAll} />;
+      case "calendar": return <AdminCalendarTab teams={data.teams} academyGroups={data.academyGroups} />;
+      case "attendance": return <AdminAttendanceTab teams={data.teams} academyGroups={data.academyGroups} players={data.players} />;
+      case "wall": return <AdminWallTab teams={data.teams} academyGroups={data.academyGroups} />;
       case "shop_products": return <AdminProductsTab />;
       case "shop_tickets": return <AdminTicketsTab />;
       case "shop_orders": return <AdminOrdersTab />;

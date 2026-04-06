@@ -1,0 +1,88 @@
+{
+  "summary": "Iteration 26 testing complete. All 3 new 360Player-style features (Calendar, Attendance, Wall Posts) are working correctly. Backend APIs all pass (22/22 tests). Frontend UI verified with all new tabs accessible and functional. Fixed duplicate /calendar endpoint issue that was returning raw fixtures instead of merged events+fixtures.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "CalendarTab event form modal",
+        "issues": ["Minor React hydration warning: <span> inside <option> in team selector dropdown - doesn't affect functionality"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration26_calendar_attendance_wall.py",
+    "/app/test_reports/pytest/pytest_results_iter26.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed: Duplicate /calendar endpoint at line 1080 was shadowing the new unified calendar endpoint at line 2905. Commented out the old endpoint."
+  ],
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/backend/tests/test_iteration26_calendar_attendance_wall.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "100% (all new tabs verified)"
+  },
+  "test_credentials": {
+    "admin": {
+      "username": "Lefteria FC",
+      "password": "L3ft3r1@FC#2024$Secure!",
+      "login_url": "/admin/login"
+    }
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 26 added 3 major new admin features: 1) Calendar Tab - monthly grid view with events+fixtures merged, event CRUD with type/team targeting. 2) Attendance Tab - team/group selector, stats cards (attendance rate, present, absent, events), per-player attendance rates, attendance marking modal. 3) Wall Posts Tab - announcements with team targeting, pinning, likes, comments. All backend APIs tested: POST/GET/PUT/DELETE /api/admin/events, GET /api/calendar (unified), POST/GET /api/admin/events/{id}/attendance, GET /api/admin/attendance/stats, POST/GET/DELETE /api/admin/posts, PUT /api/admin/posts/{id}/pin, POST/GET /api/posts/{id}/like, POST/GET /api/posts/{id}/comments. Sidebar shows new tabs: Ανακοινώσεις, Ημερολόγιο, Παρουσίες.",
+  "features_tested": {
+    "calendar_tab": {
+      "status": "PASS",
+      "details": "Monthly grid view, day navigation, event creation modal with type/team selection, event type legend (Προπόνηση, Αγώνας, Συνάντηση, Άλλο), upcoming events sidebar"
+    },
+    "attendance_tab": {
+      "status": "PASS",
+      "details": "Team/group selector (LEFTERIA FC - Α' Ομάδα, U12, U7, U9), stats cards (ΠΑΡΟΥΣΙΑ %, ΠΑΡΟΝΤΕΣ, ΑΠΟΝΤΕΣ, ΕΚΔΗΛΩΣΕΙΣ), per-player attendance list, events list with fixtures from database"
+    },
+    "wall_posts_tab": {
+      "status": "PASS",
+      "details": "Post creation modal with content, team targeting, image URL, pinning checkbox. Empty state shows 'Δεν υπάρχουν ανακοινώσεις'"
+    },
+    "sidebar_new_tabs": {
+      "status": "PASS",
+      "details": "Ανακοινώσεις, Ημερολόγιο, Παρουσίες tabs visible and clickable in admin sidebar"
+    },
+    "existing_features": {
+      "status": "PASS",
+      "details": "Dashboard, Teams (ΟΜΑΔΕΣ with LEFTERIA FC - Α' ΟΜΑΔΑ showing 20 players), Academy, News, Shop tabs still working"
+    },
+    "backend_events_api": {
+      "status": "PASS",
+      "details": "POST /api/admin/events creates event, GET /api/admin/events returns list, PUT/DELETE work correctly"
+    },
+    "backend_calendar_api": {
+      "status": "PASS",
+      "details": "GET /api/calendar returns merged events+fixtures with source field (event/fixture), type field, title, date, location"
+    },
+    "backend_attendance_api": {
+      "status": "PASS",
+      "details": "POST /api/admin/events/{id}/attendance saves records, GET returns attendance, GET /api/admin/attendance/stats returns per-player rates"
+    },
+    "backend_wall_posts_api": {
+      "status": "PASS",
+      "details": "POST /api/admin/posts creates post, GET returns list, DELETE removes post, PUT /api/admin/posts/{id}/pin toggles pin, POST /api/posts/{id}/like toggles like, POST/GET /api/posts/{id}/comments work"
+    }
+  },
+  "bug_fixed": {
+    "issue": "Duplicate /calendar endpoint",
+    "root_cause": "Old /calendar endpoint at line 1080 was registered before new unified endpoint at line 2905, causing FastAPI to use the old one",
+    "fix": "Commented out old endpoint at line 1080",
+    "file": "/app/backend/server.py"
+  }
+}
