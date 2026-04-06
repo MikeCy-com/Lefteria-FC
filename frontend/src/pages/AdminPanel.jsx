@@ -283,6 +283,185 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
   );
 };
 
+// ==================== MATCH STATS MODAL ====================
+const MatchStatsModal = ({ fixture, players = [], onClose, onSaved }) => {
+  const [homeScore, setHomeScore] = useState(fixture.home_score ?? 0);
+  const [awayScore, setAwayScore] = useState(fixture.away_score ?? 0);
+  const [performances, setPerformances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      try {
+        // Load existing stats if any
+        const res = await axios.get(`${API}/admin/fixtures/${fixture.id}/player-stats`, { headers: getAuthHeaders() });
+        const saved = res.data?.performances || [];
+        // Build performances list from players, merging any saved data
+        const perfs = players.map(p => {
+          const existing = saved.find(s => s.player_id === p.id);
+          return existing ? { ...existing, player_name: p.name } : {
+            player_id: p.id, player_name: p.name,
+            minutes_played: 0, goals: 0, assists: 0,
+            yellow_card: false, red_card: false, appeared: false,
+          };
+        });
+        // Mark appeared for existing entries
+        perfs.forEach(p => { if (saved.find(s => s.player_id === p.player_id)) p.appeared = true; });
+        setPerformances(perfs);
+      } catch (e) {
+        // No saved stats - init empty
+        setPerformances(players.map(p => ({
+          player_id: p.id, player_name: p.name,
+          minutes_played: 0, goals: 0, assists: 0,
+          yellow_card: false, red_card: false, appeared: false,
+        })));
+      }
+      setLoading(false);
+    };
+    init();
+  }, [fixture.id, players]);
+
+  const updatePerf = (idx, field, value) => {
+    setPerformances(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // 1) Update fixture score/status
+      await axios.put(`${API}/admin/fixtures/${fixture.id}`, {
+        ...fixture, home_score: homeScore, away_score: awayScore, status: "Completed",
+      }, { headers: getAuthHeaders() });
+
+      // 2) Save player stats (only appeared players)
+      const appeared = performances.filter(p => p.appeared);
+      if (appeared.length > 0) {
+        await axios.post(`${API}/admin/fixtures/${fixture.id}/player-stats`, {
+          performances: appeared.map(p => ({
+            player_id: p.player_id, player_name: p.player_name,
+            minutes_played: parseInt(p.minutes_played) || 0,
+            goals: parseInt(p.goals) || 0, assists: parseInt(p.assists) || 0,
+            yellow_card: !!p.yellow_card, red_card: !!p.red_card,
+          })),
+        }, { headers: getAuthHeaders() });
+      }
+
+      onSaved();
+      onClose();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα αποθήκευσης"); }
+    finally { setSaving(false); }
+  };
+
+  const appearedCount = performances.filter(p => p.appeared).length;
+  const totalGoals = performances.reduce((s, p) => s + (p.appeared ? (parseInt(p.goals) || 0) : 0), 0);
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center pt-10 overflow-y-auto" data-testid="match-stats-modal">
+      <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-4xl mx-4 mb-10">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-[#262626]">
+          <div>
+            <h2 className="font-['Bebas_Neue'] text-2xl text-white">Στατιστικά Αγώνα</h2>
+            <span className="text-xs text-zinc-500">{new Date(fixture.match_date).toLocaleDateString('el-GR')} - {fixture.venue}</span>
+          </div>
+          <button onClick={onClose} className="admin-icon-btn" data-testid="close-match-stats"><X size={18} /></button>
+        </div>
+
+        {/* Score Input */}
+        <div className="p-5 border-b border-[#262626]">
+          <div className="flex items-center justify-center gap-4">
+            <div className="text-center">
+              <span className="text-sm text-zinc-400 block mb-1">{fixture.home_team}</span>
+              <input
+                type="number" min="0" value={homeScore}
+                onChange={e => setHomeScore(parseInt(e.target.value) || 0)}
+                className="w-20 h-14 text-center font-['Bebas_Neue'] text-3xl bg-[#0a0a0a] border border-[#333] rounded-lg text-white focus:border-[#F5A623] outline-none"
+                data-testid="home-score-input"
+              />
+            </div>
+            <span className="font-['Bebas_Neue'] text-3xl text-zinc-600 mt-5">-</span>
+            <div className="text-center">
+              <span className="text-sm text-zinc-400 block mb-1">{fixture.away_team}</span>
+              <input
+                type="number" min="0" value={awayScore}
+                onChange={e => setAwayScore(parseInt(e.target.value) || 0)}
+                className="w-20 h-14 text-center font-['Bebas_Neue'] text-3xl bg-[#0a0a0a] border border-[#333] rounded-lg text-white focus:border-[#F5A623] outline-none"
+                data-testid="away-score-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Player Stats */}
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-medium text-sm">Παίκτες ({appearedCount} συμμετοχές, {totalGoals} γκολ)</h3>
+            <button onClick={() => setPerformances(prev => prev.map(p => ({...p, appeared: true, minutes_played: p.appeared ? p.minutes_played : 90})))}
+              className="text-xs text-[#F5A623] hover:underline" data-testid="select-all-players">Όλοι συμμετείχαν</button>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8 text-zinc-500"><RefreshCw size={20} className="animate-spin mx-auto" /></div>
+          ) : (
+            <div className="max-h-[45vh] overflow-y-auto space-y-1">
+              {/* Header row */}
+              <div className="grid grid-cols-[32px_1fr_60px_60px_60px_36px_36px] gap-2 px-3 py-2 text-[10px] text-zinc-600 uppercase tracking-wider sticky top-0 bg-[#121212]">
+                <span></span><span>Παίκτης</span><span className="text-center">Λεπτά</span>
+                <span className="text-center">Γκολ</span><span className="text-center">Ασίστ</span>
+                <span className="text-center">Κ</span><span className="text-center">Α</span>
+              </div>
+              {performances.map((p, i) => (
+                <div key={p.player_id}
+                  className={`grid grid-cols-[32px_1fr_60px_60px_60px_36px_36px] gap-2 px-3 py-2 rounded-lg items-center transition-colors ${p.appeared ? 'bg-white/[0.04]' : 'opacity-50'}`}
+                  data-testid={`player-stat-row-${p.player_id}`}
+                >
+                  <input type="checkbox" checked={p.appeared}
+                    onChange={e => updatePerf(i, 'appeared', e.target.checked)}
+                    className="w-4 h-4 accent-[#F5A623] cursor-pointer" data-testid={`player-appeared-${p.player_id}`} />
+                  <span className="text-sm text-white truncate">{p.player_name}</span>
+                  <input type="number" min="0" max="120" value={p.minutes_played} disabled={!p.appeared}
+                    onChange={e => updatePerf(i, 'minutes_played', e.target.value)}
+                    className="w-full h-8 text-center text-sm bg-[#0a0a0a] border border-[#333] rounded text-white disabled:opacity-30 focus:border-[#F5A623] outline-none"
+                    data-testid={`player-minutes-${p.player_id}`} />
+                  <input type="number" min="0" max="20" value={p.goals} disabled={!p.appeared}
+                    onChange={e => updatePerf(i, 'goals', e.target.value)}
+                    className="w-full h-8 text-center text-sm bg-[#0a0a0a] border border-[#333] rounded text-white disabled:opacity-30 focus:border-emerald-500 outline-none"
+                    data-testid={`player-goals-${p.player_id}`} />
+                  <input type="number" min="0" max="20" value={p.assists} disabled={!p.appeared}
+                    onChange={e => updatePerf(i, 'assists', e.target.value)}
+                    className="w-full h-8 text-center text-sm bg-[#0a0a0a] border border-[#333] rounded text-white disabled:opacity-30 focus:border-blue-500 outline-none"
+                    data-testid={`player-assists-${p.player_id}`} />
+                  <input type="checkbox" checked={p.yellow_card} disabled={!p.appeared}
+                    onChange={e => updatePerf(i, 'yellow_card', e.target.checked)}
+                    className="w-4 h-4 mx-auto accent-yellow-500 cursor-pointer disabled:opacity-30"
+                    data-testid={`player-yellow-${p.player_id}`} />
+                  <input type="checkbox" checked={p.red_card} disabled={!p.appeared}
+                    onChange={e => updatePerf(i, 'red_card', e.target.checked)}
+                    className="w-4 h-4 mx-auto accent-red-500 cursor-pointer disabled:opacity-30"
+                    data-testid={`player-red-${p.player_id}`} />
+                </div>
+              ))}
+              {performances.length === 0 && (
+                <p className="text-center text-zinc-500 py-6 text-sm">Δεν υπάρχουν παίκτες σε αυτή την ομάδα</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-3 p-5 border-t border-[#262626]">
+          <button onClick={onClose} className="admin-btn-ghost" data-testid="cancel-match-stats">Ακύρωση</button>
+          <button onClick={handleSave} disabled={saving} className="admin-btn-primary" data-testid="save-match-stats">
+            {saving ? <><RefreshCw size={14} className="animate-spin" /> Αποθήκευση...</> : <><Save size={14} /> Αποθήκευση</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ==================== DASHBOARD TAB ====================
 const DashboardTab = ({ stats, onTabChange }) => {
   const cards = [
@@ -1973,6 +2152,7 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   const [fixtureForm, setFixtureForm] = useState({ home_team: "LEFTERIA FC", away_team: "", match_date: "", venue: "", competition: "", season: "2025/26" });
   const [savingFixture, setSavingFixture] = useState(false);
   const [editFixture, setEditFixture] = useState(null);
+  const [matchStatsFixture, setMatchStatsFixture] = useState(null);
 
   // Gallery state
   const [galleryItems, setGalleryItems] = useState([]);
@@ -2272,10 +2452,14 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
                       <td>
                         <div className="flex gap-1">
                           {f.status === 'Scheduled' && (
-                            <button onClick={() => handleUpdateFixture(f.id, { status: "Completed", home_score: parseInt(prompt("Σκορ γηπεδούχου:") || "0"), away_score: parseInt(prompt("Σκορ φιλοξ.:") || "0") })}
-                              className="admin-icon-btn text-green-400/70 hover:text-green-300" title="Καταχώρηση Σκορ"><Check size={14} /></button>
+                            <button onClick={() => setMatchStatsFixture(f)}
+                              className="admin-icon-btn text-green-400/70 hover:text-green-300" title="Ολοκλήρωση & Στατιστικά" data-testid={`complete-fixture-${f.id}`}><Check size={14} /></button>
                           )}
-                          <button onClick={() => handleDeleteFixture(f.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400"><Trash2 size={14} /></button>
+                          {f.status === 'Completed' && (
+                            <button onClick={() => setMatchStatsFixture(f)}
+                              className="admin-icon-btn text-[#F5A623]/70 hover:text-[#F5A623]" title="Στατιστικά Αγώνα" data-testid={`edit-stats-${f.id}`}><BarChart3 size={14} /></button>
+                          )}
+                          <button onClick={() => handleDeleteFixture(f.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-fixture-${f.id}`}><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -2296,6 +2480,14 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
                 </div>
                 <Field label="Διοργάνωση"><AdminInput value={fixtureForm.competition} onChange={e => setFixtureForm({...fixtureForm, competition: e.target.value})} placeholder="Πρωτάθλημα U12" /></Field>
               </FormModal>
+            )}
+            {matchStatsFixture && (
+              <MatchStatsModal
+                fixture={matchStatsFixture}
+                players={players.filter(p => p.academy_group_id === selectedGroup.id || (p.academy_group_ids && p.academy_group_ids.includes(selectedGroup.id)))}
+                onClose={() => setMatchStatsFixture(null)}
+                onSaved={() => { fetchFixtures(); onRefresh(); }}
+              />
             )}
           </div>
         )}

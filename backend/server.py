@@ -972,6 +972,68 @@ async def transfer_player_group(player_id: str, body: dict, current_user: dict =
     await db.players.update_one({"id": player_id}, {"$set": update})
     return {"message": "Ο παίκτης μεταφέρθηκε επιτυχώς"}
 
+# ==================== MATCH PLAYER STATS ====================
+@api_router.get("/admin/fixtures/{fixture_id}/player-stats")
+async def get_fixture_player_stats(fixture_id: str, current_user: dict = Depends(get_current_user)):
+    """Get saved player stats for a fixture"""
+    doc = await db.match_player_stats.find_one({"fixture_id": fixture_id}, {"_id": 0})
+    if not doc:
+        return {"fixture_id": fixture_id, "performances": []}
+    return doc
+
+@api_router.post("/admin/fixtures/{fixture_id}/player-stats")
+async def save_fixture_player_stats(fixture_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    """Save/update player performances for a match. Idempotent: reverses old stats before applying new."""
+    fixture = await db.fixtures.find_one({"id": fixture_id}, {"_id": 0})
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Ο αγώνας δεν βρέθηκε")
+
+    performances = body.get("performances", [])
+
+    # 1) Reverse any previously saved stats for this fixture
+    existing = await db.match_player_stats.find_one({"fixture_id": fixture_id}, {"_id": 0})
+    if existing:
+        for old_perf in existing.get("performances", []):
+            pid = old_perf.get("player_id")
+            if not pid:
+                continue
+            await db.players.update_one({"id": pid}, {"$inc": {
+                "statistics.appearances": -1,
+                "statistics.goals": -(old_perf.get("goals", 0)),
+                "statistics.assists": -(old_perf.get("assists", 0)),
+                "statistics.yellow_cards": -1 if old_perf.get("yellow_card") else 0,
+                "statistics.red_cards": -1 if old_perf.get("red_card") else 0,
+                "statistics.minutes_played": -(old_perf.get("minutes_played", 0)),
+            }})
+
+    # 2) Save new performances
+    stats_doc = {
+        "fixture_id": fixture_id,
+        "performances": performances,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.match_player_stats.update_one(
+        {"fixture_id": fixture_id},
+        {"$set": stats_doc},
+        upsert=True
+    )
+
+    # 3) Apply new stats to player aggregates
+    for perf in performances:
+        pid = perf.get("player_id")
+        if not pid:
+            continue
+        await db.players.update_one({"id": pid}, {"$inc": {
+            "statistics.appearances": 1,
+            "statistics.goals": perf.get("goals", 0),
+            "statistics.assists": perf.get("assists", 0),
+            "statistics.yellow_cards": 1 if perf.get("yellow_card") else 0,
+            "statistics.red_cards": 1 if perf.get("red_card") else 0,
+            "statistics.minutes_played": perf.get("minutes_played", 0),
+        }})
+
+    return {"message": "Τα στατιστικά αποθηκεύτηκαν", "count": len(performances)}
+
 # Staff (Public Read)
 @api_router.get("/staff", response_model=List[Staff])
 async def get_staff(team_type: Optional[TeamType] = None):
