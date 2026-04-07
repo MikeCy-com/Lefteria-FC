@@ -363,6 +363,7 @@ class Player(BaseModel):
     parent_name: Optional[str] = None
     parent_phone: Optional[str] = None
     parent_email: Optional[str] = None
+    phone: Optional[str] = None
     # Multi-group support (academy)
     academy_group_ids: List[str] = Field(default_factory=list)
     # Meta
@@ -394,6 +395,7 @@ class PlayerCreate(BaseModel):
     parent_name: Optional[str] = None
     parent_phone: Optional[str] = None
     parent_email: Optional[str] = None
+    phone: Optional[str] = None
     academy_group_ids: List[str] = Field(default_factory=list)
 
 class PlayerUpdate(BaseModel):
@@ -422,6 +424,7 @@ class PlayerUpdate(BaseModel):
     parent_name: Optional[str] = None
     parent_phone: Optional[str] = None
     parent_email: Optional[str] = None
+    phone: Optional[str] = None
     academy_group_ids: Optional[List[str]] = None
 
 # Staff Model
@@ -434,6 +437,7 @@ class Staff(BaseModel):
     date_of_birth: Optional[str] = None
     image_url: Optional[str] = None
     bio: Optional[str] = None
+    phone: Optional[str] = None
     team_type: TeamType = TeamType.FIRST_TEAM
     academy_group_id: Optional[str] = None
     joined_date: Optional[str] = None
@@ -449,6 +453,7 @@ class StaffCreate(BaseModel):
     date_of_birth: Optional[str] = None
     image_url: Optional[str] = None
     bio: Optional[str] = None
+    phone: Optional[str] = None
     team_type: TeamType = TeamType.FIRST_TEAM
     academy_group_id: Optional[str] = None
     joined_date: Optional[str] = None
@@ -3367,14 +3372,17 @@ app.include_router(api_router)
 from routes.financial import router as financial_router, setup_financial_routes
 from routes.videos import router as video_router, setup_video_routes
 from routes.resources import router as resource_router, setup_resource_routes
+from routes.mobile_auth import router as mobile_router, setup_mobile_routes
 
 setup_financial_routes(db, get_current_user)
 setup_video_routes(db, get_current_user)
 setup_resource_routes(db, get_current_user)
+setup_mobile_routes(db)
 
 app.include_router(financial_router)
 app.include_router(video_router)
 app.include_router(resource_router)
+app.include_router(mobile_router)
 
 app.add_middleware(
     CORSMiddleware,

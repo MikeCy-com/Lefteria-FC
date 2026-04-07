@@ -102,7 +102,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
     date_of_birth: player.date_of_birth || "", joined_date: player.joined_date || "",
     contract_until: player.contract_until || "",
     parent_name: player.parent_name || "", parent_phone: player.parent_phone || "",
-    parent_email: player.parent_email || "",
+    parent_email: player.parent_email || "", phone: player.phone || "",
   });
 
   const handleSave = async () => {
@@ -176,7 +176,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
                   <button onClick={handleSave} disabled={saving} className="admin-btn-primary" data-testid="save-profile-btn">
                     {saving ? <><RefreshCw size={14} className="animate-spin" /> Αποθήκευση...</> : <><Save size={14} /> Αποθήκευση</>}
                   </button>
-                  <button onClick={() => { setForm({ name: player.name || "", number: player.number || "", position: player.position || "Midfielder", nationality: player.nationality || "Cyprus", age: player.age || "", team_type: player.team_type || "First Team", academy_group_id: player.academy_group_id || "", image_url: player.image_url || "", bio: player.bio || "", height: player.height || "", weight: player.weight || "", preferred_foot: player.preferred_foot || "Right", date_of_birth: player.date_of_birth || "", joined_date: player.joined_date || "", contract_until: player.contract_until || "", parent_name: player.parent_name || "", parent_phone: player.parent_phone || "", parent_email: player.parent_email || "" }); setEditing(false); }} className="admin-btn-ghost" data-testid="cancel-edit-btn">Ακύρωση</button>
+                  <button onClick={() => { setForm({ name: player.name || "", number: player.number || "", position: player.position || "Midfielder", nationality: player.nationality || "Cyprus", age: player.age || "", team_type: player.team_type || "First Team", academy_group_id: player.academy_group_id || "", image_url: player.image_url || "", bio: player.bio || "", height: player.height || "", weight: player.weight || "", preferred_foot: player.preferred_foot || "Right", date_of_birth: player.date_of_birth || "", joined_date: player.joined_date || "", contract_until: player.contract_until || "", parent_name: player.parent_name || "", parent_phone: player.parent_phone || "", parent_email: player.parent_email || "", phone: player.phone || "" }); setEditing(false); }} className="admin-btn-ghost" data-testid="cancel-edit-btn">Ακύρωση</button>
                 </>
               )}
             </div>
@@ -292,6 +292,12 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
                 </div>
               </div>
             )}
+            <div className="border-t border-[#262626] pt-5">
+              <h4 className="text-white text-sm font-semibold mb-4">Mobile App</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Κινητό Παίκτη (για Mobile App)"><AdminInput value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+357 99 xxxxxx" data-testid="player-phone-input" /></Field>
+              </div>
+            </div>
             <ImageUpload currentUrl={form.image_url} onImageChange={url => setForm({...form, image_url: url})} playerId={player.id} />
             <Field label="Βιογραφικό"><AdminTextarea rows={3} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
           </div>
@@ -1141,12 +1147,12 @@ const StaffTab = ({ staff, onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editStaff, setEditStaff] = useState(null);
   const [saving, setSaving] = useState(false);
-  const emptyStaff = { name: "", role: "Head Coach", nationality: "Cyprus", team_type: "First Team", image_url: "", bio: "" };
+  const emptyStaff = { name: "", role: "Head Coach", nationality: "Cyprus", team_type: "First Team", image_url: "", bio: "", phone: "" };
   const [form, setForm] = useState(emptyStaff);
   const roles = { "Head Coach": "Προπονητής", "Assistant Coach": "Βοηθός", "Goalkeeper Coach": "Προπ. Τερμ.", "Fitness Coach": "Γυμναστής", "Physiotherapist": "Φυσιοθ.", "Team Manager": "Διευθυντής", "Youth Coach": "Προπ. Νέων", "Scout": "Ανιχνευτής" };
 
   const openCreate = () => { setForm(emptyStaff); setEditStaff(null); setShowForm(true); };
-  const openEdit = (s) => { setForm({ name: s.name, role: s.role, nationality: s.nationality || "Cyprus", team_type: s.team_type || "First Team", image_url: s.image_url || "", bio: s.bio || "" }); setEditStaff(s); setShowForm(true); };
+  const openEdit = (s) => { setForm({ name: s.name, role: s.role, nationality: s.nationality || "Cyprus", team_type: s.team_type || "First Team", image_url: s.image_url || "", bio: s.bio || "", phone: s.phone || "" }); setEditStaff(s); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
@@ -1170,18 +1176,19 @@ const StaffTab = ({ staff, onRefresh }) => {
       </TabHeader>
       <div className="admin-table-wrap">
         <table className="admin-table">
-          <thead><tr><th></th><th>Όνομα</th><th>Ρόλος</th><th>Ομάδα</th><th></th></tr></thead>
+          <thead><tr><th></th><th>Όνομα</th><th>Ρόλος</th><th>Τηλέφωνο</th><th>Ομάδα</th><th></th></tr></thead>
           <tbody>
             {staff.map(s => (
               <tr key={s.id}>
                 <td>{s.image_url ? <img src={s.image_url} alt="" className="w-8 h-8 object-cover rounded-full" /> : <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center"><UserCog size={12} className="text-zinc-700" /></div>}</td>
                 <td className="font-medium text-white">{s.name}</td>
                 <td className="text-zinc-400">{roles[s.role] || s.role}</td>
+                <td className="text-zinc-500 text-xs">{s.phone || "—"}</td>
                 <td><span className="admin-badge admin-badge-default">{s.team_type === 'First Team' ? "Α'" : 'Ακαδ.'}</span></td>
                 <td><div className="flex gap-1"><button onClick={() => openEdit(s)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(s.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
               </tr>
             ))}
-            {staff.length === 0 && <tr><td colSpan={5}><EmptyState icon={UserCog} text="Δεν υπάρχουν μέλη" /></td></tr>}
+            {staff.length === 0 && <tr><td colSpan={6}><EmptyState icon={UserCog} text="Δεν υπάρχουν μέλη" /></td></tr>}
           </tbody>
         </table>
       </div>

@@ -17,6 +17,9 @@ import CheckoutPage from "./pages/CheckoutPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import AcademyGroupPage from "./pages/AcademyGroupPage";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
+import { MobileAuthProvider } from "./mobile/MobileAuthContext";
+import MobileApp from "./mobile/MobileApp";
+import MobileLoginPage from "./mobile/pages/MobileLoginPage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
 
@@ -1683,6 +1686,10 @@ function App() {
             <Route path="/venues" element={<Navigate to="/team?tab=venues" replace />} />
             <Route path="/seasons" element={<Navigate to="/team?tab=overview" replace />} />
             <Route path="/staff" element={<Navigate to="/team?tab=overview" replace />} />
+            {/* Mobile App routes - standalone, no website nav/footer */}
+            <Route path="/app/login" element={<MobileAuthProvider><MobileLoginPage /></MobileAuthProvider>} />
+            <Route path="/app" element={<MobileAuthProvider><MobileApp /></MobileAuthProvider>} />
+            <Route path="/app/*" element={<MobileAuthProvider><MobileApp /></MobileAuthProvider>} />
             {/* Admin routes - NO nav/footer */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={

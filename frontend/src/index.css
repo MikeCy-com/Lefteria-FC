@@ -727,3 +727,41 @@ body > div[style*="fixed"]:last-of-type {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+
+
+/* ==================== MOBILE PWA ==================== */
+/* Safe areas for notch devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .mobile-safe-top { padding-top: env(safe-area-inset-top); }
+  .mobile-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Prevent overscroll bounce on mobile */
+[data-testid="mobile-app"] {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection on mobile UI */
+[data-testid="bottom-nav"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth page transitions */
+[data-testid="mobile-app"] main {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile line clamping */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
