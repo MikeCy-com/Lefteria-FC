@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Save, RefreshCw, Trash2, Edit2, Clock, Dumbbell, Tag, Users, ChevronDown, ChevronRight, Calendar } from "lucide-react";
+import { Plus, X, Save, RefreshCw, Trash2, Edit2, Clock, Dumbbell, Tag, Users, ChevronDown, ChevronRight, Calendar, MapPin } from "lucide-react";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -23,7 +23,7 @@ const INTENSITY_MAP = {
   high: { label: "Υψηλή", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20" },
 };
 
-const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
+const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [] }) => {
   const [sessions, setSessions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
@@ -32,6 +32,7 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
   const [expandedId, setExpandedId] = useState(null);
   const [form, setForm] = useState({
     title: "", date: "", start_time: "16:00", duration_minutes: 90, intensity: "medium",
+    venue: "", venue_id: "", location: "", location_url: "", arrival_time: "",
     tags: [], notes: "", player_count: 0,
     exercises: [{ name: "", description: "", duration_minutes: 15, equipment: "" }],
   });
@@ -43,6 +44,7 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
     intensity: "medium",
     season_start: "",
     season_end: "",
+    venue: "", venue_id: "", location: "", location_url: "", arrival_time: "",
     tags: [],
     notes: "",
   });
@@ -60,7 +62,8 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
   const openCreate = () => {
     setEditSession(null);
     setForm({
-      title: "", date: "", duration_minutes: 90, intensity: "medium",
+      title: "", date: "", start_time: "16:00", duration_minutes: 90, intensity: "medium",
+      venue: "", venue_id: "", location: "", location_url: "", arrival_time: "",
       tags: [], notes: "", player_count: 0,
       exercises: [{ name: "", description: "", duration_minutes: 15, equipment: "" }],
     });
@@ -70,9 +73,11 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
   const openEdit = (s) => {
     setEditSession(s);
     setForm({
-      title: s.title, date: s.date || "", duration_minutes: s.duration_minutes || 90,
-      intensity: s.intensity || "medium", tags: s.tags || [], notes: s.notes || "",
-      player_count: s.player_count || 0,
+      title: s.title, date: s.date || "", start_time: s.start_time || "16:00",
+      duration_minutes: s.duration_minutes || 90, intensity: s.intensity || "medium",
+      venue: s.venue || "", venue_id: s.venue_id || "", location: s.location || "",
+      location_url: s.location_url || "", arrival_time: s.arrival_time || "",
+      tags: s.tags || [], notes: s.notes || "", player_count: s.player_count || 0,
       exercises: s.exercises?.length ? s.exercises : [{ name: "", description: "", duration_minutes: 15, equipment: "" }],
     });
     setShowForm(true);
@@ -147,11 +152,63 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
     }));
   };
 
+  const selectFacility = (facId, target) => {
+    const fac = facilities.find(f => f.id === facId);
+    if (!fac) return;
+    if (target === "form") {
+      setForm(prev => ({ ...prev, venue: fac.name, venue_id: fac.id, location: fac.address || prev.location }));
+    } else {
+      setBulkForm(prev => ({ ...prev, venue: fac.name, venue_id: fac.id, location: fac.address || prev.location }));
+    }
+  };
+
   const DAYS = [
     { value: 0, label: "Δευτέρα" }, { value: 1, label: "Τρίτη" }, { value: 2, label: "Τετάρτη" },
     { value: 3, label: "Πέμπτη" }, { value: 4, label: "Παρασκευή" }, { value: 5, label: "Σάββατο" },
     { value: 6, label: "Κυριακή" },
   ];
+
+  // Venue/Location fields shared between single and bulk forms
+  const VenueFields = ({ values, onChange }) => (
+    <div className="space-y-3 border-t border-[#262626] pt-4 mt-2">
+      <h4 className="text-white text-xs font-semibold flex items-center gap-1.5"><MapPin size={13} className="text-[#F5A623]" /> Τοποθεσία</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Γήπεδο</label>
+          <select value={values.venue_id || ""} onChange={e => {
+            if (e.target.value) {
+              const fac = facilities.find(f => f.id === e.target.value);
+              if (fac) onChange({ ...values, venue: fac.name, venue_id: fac.id, location: fac.address || values.location });
+            } else {
+              onChange({ ...values, venue_id: "" });
+            }
+          }} className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-venue-select">
+            <option value="">-- Επιλέξτε ή πληκτρολογήστε --</option>
+            {facilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+          <input value={values.venue || ""} onChange={e => onChange({ ...values, venue: e.target.value })}
+            placeholder="Ή πληκτρολογήστε γήπεδο" className="w-full mt-1 bg-[#0a0a0a] border border-[#222] rounded px-3 py-1.5 text-xs text-zinc-300 focus:border-[#F5A623] outline-none" data-testid="training-venue-input" />
+        </div>
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Ώρα Προσέλευσης</label>
+          <input type="time" value={values.arrival_time || ""} onChange={e => onChange({ ...values, arrival_time: e.target.value })}
+            className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-arrival-time" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Τοποθεσία</label>
+          <input value={values.location || ""} onChange={e => onChange({ ...values, location: e.target.value })}
+            placeholder="Διεύθυνση" className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-location-input" />
+        </div>
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Google Maps Link</label>
+          <input value={values.location_url || ""} onChange={e => onChange({ ...values, location_url: e.target.value })}
+            placeholder="https://maps.google.com/..." className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-location-url" />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div data-testid="training-sessions-panel">
@@ -214,6 +271,8 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
               <option value="low">Χαμηλή</option><option value="medium">Μέτρια</option><option value="high">Υψηλή</option>
             </select>
           </div>
+          {/* Venue/Location for bulk */}
+          <VenueFields values={bulkForm} onChange={vals => setBulkForm(prev => ({ ...prev, ...vals }))} />
           <div className="flex gap-2 pt-2">
             <button onClick={handleBulkCreate} disabled={saving} className="admin-btn-primary flex-1" data-testid="bulk-create-btn">
               {saving ? <><RefreshCw size={14} className="animate-spin" /> Δημιουργία...</> : <><Calendar size={14} /> Δημιουργία Προγράμματος</>}
@@ -240,7 +299,9 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
                     </div>
                     <div className="flex items-center gap-3 text-[10px] text-zinc-500">
                       {s.date && <span className="flex items-center gap-1"><Clock size={10} /> {new Date(s.date).toLocaleDateString('el-GR')}</span>}
+                      {s.start_time && <span>{s.start_time}</span>}
                       <span>{s.duration_minutes} λεπτά</span>
+                      {s.venue && <span className="flex items-center gap-1"><MapPin size={10} /> {s.venue}</span>}
                       {s.exercises?.length > 0 && <span>{s.exercises.length} ασκήσεις</span>}
                     </div>
                   </div>
@@ -264,6 +325,15 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
                 {/* Expanded Detail */}
                 {isExpanded && (
                   <div className="border-t border-[#1e1e1e] p-4 space-y-4">
+                    {/* Location info */}
+                    {(s.venue || s.location || s.arrival_time) && (
+                      <div className="flex flex-wrap gap-4 text-xs text-zinc-400">
+                        {s.venue && <span className="flex items-center gap-1"><MapPin size={12} className="text-[#F5A623]" /> {s.venue}</span>}
+                        {s.location && <span>{s.location}</span>}
+                        {s.location_url && <a href={s.location_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1"><MapPin size={10} /> Χάρτης</a>}
+                        {s.arrival_time && <span className="flex items-center gap-1"><Clock size={12} /> Προσέλευση: {s.arrival_time}</span>}
+                      </div>
+                    )}
                     {s.notes && (
                       <div>
                         <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Σημειώσεις</span>
@@ -345,6 +415,9 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Venue / Location */}
+              <VenueFields values={form} onChange={vals => setForm(prev => ({ ...prev, ...vals }))} />
 
               {/* Tags */}
               <div>

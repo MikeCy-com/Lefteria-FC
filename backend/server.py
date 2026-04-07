@@ -2879,10 +2879,16 @@ async def create_training_session(body: dict, current_user: dict = Depends(get_c
         "team_id": body.get("team_id"),
         "academy_group_id": body.get("academy_group_id"),
         "date": body.get("date"),
+        "start_time": body.get("start_time", ""),
         "duration_minutes": body.get("duration_minutes", 90),
-        "intensity": body.get("intensity", "medium"),  # low, medium, high
-        "tags": body.get("tags", []),  # possession, attacking, defending, 1v1, set_pieces, fitness, shooting, passing
-        "exercises": body.get("exercises", []),  # [{name, description, duration_minutes, equipment}]
+        "intensity": body.get("intensity", "medium"),
+        "venue": body.get("venue", ""),
+        "venue_id": body.get("venue_id", ""),
+        "location": body.get("location", ""),
+        "location_url": body.get("location_url", ""),
+        "arrival_time": body.get("arrival_time", ""),
+        "tags": body.get("tags", []),
+        "exercises": body.get("exercises", []),
         "notes": body.get("notes", ""),
         "player_count": body.get("player_count", 0),
         "created_by": current_user.get("username", "Admin"),

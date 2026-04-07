@@ -1,0 +1,97 @@
+{
+  "summary": "Iteration 31 - Testing new features: Training Sessions venue/location fields, Team/Academy Group banner_url, Image upload, Player profile 'Πληροφορίες Ομάδας' removal. All 14 backend tests passed (100%). Frontend UI verified - all new features working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter31_features.py",
+    "/app/test_reports/pytest/pytest_results_iter31.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iter31_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "admin_cms": {
+      "username": "Lefteria FC",
+      "password": "L3ft3r1@FC#2024$Secure!",
+      "url": "/admin/login"
+    }
+  },
+  "seed_data_creation": "Test data created and cleaned up during tests (TEST_ prefixed items)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All new features from this session verified: 1) Training Sessions have venue/location/arrival_time/Google Maps fields in both single and bulk forms (VenueFields component), 2) Teams and Academy Groups have banner_url field with upload functionality, 3) Image upload endpoint returns {image_url: ...}, 4) Player profile view does NOT show 'Πληροφορίες Ομάδας' section. Backend APIs at /api/admin/training-sessions (single) and /api/admin/training-sessions/bulk work correctly with venue fields.",
+  "features_tested": {
+    "training_session_single_create": {
+      "status": "PASS",
+      "details": "POST /api/admin/training-sessions with venue, location, location_url, arrival_time fields - all fields saved and returned correctly"
+    },
+    "training_session_bulk_create": {
+      "status": "PASS",
+      "details": "POST /api/admin/training-sessions/bulk with venue fields - creates multiple sessions with venue data"
+    },
+    "training_sessions_list": {
+      "status": "PASS",
+      "details": "GET /api/admin/training-sessions returns venue/location data in response"
+    },
+    "team_banner_url_create": {
+      "status": "PASS",
+      "details": "POST /api/admin/teams with banner_url field - saved and returned correctly"
+    },
+    "team_banner_url_update": {
+      "status": "PASS",
+      "details": "PUT /api/admin/teams/{id} with banner_url - updates correctly"
+    },
+    "team_banner_url_get": {
+      "status": "PASS",
+      "details": "GET /api/teams returns banner_url field in team objects"
+    },
+    "academy_group_banner_url_create": {
+      "status": "PASS",
+      "details": "POST /api/admin/academy-groups with banner_url field - saved and returned correctly"
+    },
+    "academy_group_banner_url_update": {
+      "status": "PASS",
+      "details": "PUT /api/admin/academy-groups/{id} with banner_url - updates correctly"
+    },
+    "academy_group_banner_url_get": {
+      "status": "PASS",
+      "details": "GET /api/academy-groups returns banner_url field in group objects"
+    },
+    "image_upload": {
+      "status": "PASS",
+      "details": "POST /api/admin/upload-image returns {image_url: '/api/uploads/...'} and image is accessible"
+    },
+    "frontend_team_banner_form": {
+      "status": "PASS",
+      "details": "Team create/edit form has 'BANNER ΟΜΑΔΑΣ' field with upload button (data-testid='team-banner-upload') and URL input (data-testid='team-banner-url')"
+    },
+    "frontend_academy_group_banner_form": {
+      "status": "PASS",
+      "details": "Academy Group create/edit form has 'BANNER ΟΜΑΔΑΣ' field with upload button (data-testid='group-banner-upload') and URL input (data-testid='group-banner-url')"
+    },
+    "frontend_training_venue_fields": {
+      "status": "PASS",
+      "details": "Training Sessions forms (single and bulk) have ΤΟΠΟΘΕΣΙΑ section with venue select, venue input, arrival time, location address, and Google Maps link fields"
+    },
+    "player_profile_no_team_info": {
+      "status": "PASS",
+      "details": "Player profile view does NOT show 'Πληροφορίες Ομάδας' section - correctly removed"
+    }
+  },
+  "mocked_apis": {
+    "twilio_sms": "OTP returned in API response debug field for testing"
+  }
+}

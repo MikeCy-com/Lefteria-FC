@@ -87,6 +87,11 @@ def setup_opponents_routes(db, get_current_user):
         tags = body.get("tags", [])
         notes = body.get("notes", "")
         exercises = body.get("exercises", [])
+        venue = body.get("venue", "")
+        venue_id = body.get("venue_id", "")
+        location = body.get("location", "")
+        location_url = body.get("location_url", "")
+        arrival_time = body.get("arrival_time", "")
 
         if not days_of_week or not season_start or not season_end:
             raise HTTPException(status_code=400, detail="days_of_week, season_start, season_end required")
@@ -115,6 +120,11 @@ def setup_opponents_routes(db, get_current_user):
                     "start_time": start_time,
                     "duration_minutes": duration_minutes,
                     "intensity": intensity,
+                    "venue": venue,
+                    "venue_id": venue_id,
+                    "location": location,
+                    "location_url": location_url,
+                    "arrival_time": arrival_time,
                     "tags": tags,
                     "notes": notes,
                     "exercises": exercises,

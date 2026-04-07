@@ -6,7 +6,7 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
-  DollarSign, Video, Landmark
+  DollarSign, Video, Landmark, Upload
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -198,25 +198,6 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
             <InfoRow label="Ύψος" value={player.height} />
             <InfoRow label="Βάρος" value={player.weight} />
             <InfoRow label="Πόδι" value={player.preferred_foot === 'Right' ? 'Δεξί' : player.preferred_foot === 'Left' ? 'Αριστερό' : player.preferred_foot} />
-          </div>
-
-          <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-team-info">
-            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Πληροφορίες Ομάδας</h3>
-            <InfoRow label="Τύπος" value={isAcademy ? "Ακαδημία" : "Α' Ομάδα"} />
-            {isAcademy && <InfoRow label="Ομάδα Ακαδημίας" value={groupName} />}
-            {player.academy_group_ids?.length > 1 && (
-              <div className="py-2.5 border-b border-[#1e1e1e]">
-                <span className="text-sm text-zinc-500 block mb-2">Εγγεγραμμένος σε:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {player.academy_group_ids.map(gid => {
-                    const g = academyGroups.find(ag => ag.id === gid);
-                    return g ? <span key={gid} className="admin-badge admin-badge-green text-xs">{g.name}</span> : null;
-                  })}
-                </div>
-              </div>
-            )}
-            {player.joined_date && <InfoRow label="Ημ. Ένταξης" value={player.joined_date} />}
-            {player.contract_until && <InfoRow label="Συμβόλαιο έως" value={player.contract_until} />}
           </div>
 
           {isAcademy && (player.parent_name || player.parent_phone || player.parent_email) && (
@@ -1894,7 +1875,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
   const [editTeam, setEditTeam] = useState(null);
   const [saving, setSaving] = useState(false);
   const [detailTab, setDetailTab] = useState("roster");
-  const emptyForm = { name: "", level: "Α' Ομάδα", description: "" };
+  const emptyForm = { name: "", level: "Α' Ομάδα", description: "", banner_url: "" };
   const [form, setForm] = useState(emptyForm);
   const [showPlayerForm, setShowPlayerForm] = useState(false);
   const [editPlayer, setEditPlayer] = useState(null);
@@ -1908,9 +1889,10 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
   const [galleryForm, setGalleryForm] = useState({ title: "", image_url: "", category: "Match Day", description: "" });
   const [savingGallery, setSavingGallery] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   const openCreateTeam = () => { setForm(emptyForm); setEditTeam(null); setShowForm(true); };
-  const openEditTeam = (t) => { setForm({ name: t.name, level: t.level, description: t.description || "" }); setEditTeam(t); setShowForm(true); };
+  const openEditTeam = (t) => { setForm({ name: t.name, level: t.level, description: t.description || "", banner_url: t.banner_url || "" }); setEditTeam(t); setShowForm(true); };
 
   const handleSaveTeam = async () => {
     setSaving(true);
@@ -1986,6 +1968,18 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
     try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); }
   };
 
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBanner(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await axios.post(`${API}/admin/upload-image`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      setForm(prev => ({ ...prev, banner_url: res.data.image_url || res.data.url }));
+    } catch (err) { alert("Σφάλμα ανεβάσματος"); } finally { setUploadingBanner(false); }
+  };
+
   useEffect(() => {
     if (selectedTeam) {
       const updated = teams.find(t => t.id === selectedTeam.id);
@@ -2013,6 +2007,11 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
         <button onClick={() => setSelectedTeam(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-teams">
           <ChevronRight size={14} className="rotate-180" /> Πίσω στις ομάδες
         </button>
+        {selectedTeam.banner_url && (
+          <div className="h-32 rounded-xl overflow-hidden mb-4 border border-[#262626]">
+            <img src={selectedTeam.banner_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${selectedTeam.banner_url}` : selectedTeam.banner_url} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="font-['Bebas_Neue'] text-4xl text-[#F5A623] tracking-wide">{selectedTeam.name}</h2>
@@ -2122,7 +2121,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
         )}
 
         {detailTab === "training" && (
-          <TrainingSessionsPanel teamId={selectedTeam.id} />
+          <TrainingSessionsPanel teamId={selectedTeam.id} facilities={facilities} />
         )}
 
         {detailTab === "videos" && (
@@ -2208,21 +2207,28 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
       </TabHeader>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.map(team => (
-          <div key={team.id} className="admin-card p-6 cursor-pointer hover:border-[#F5A623]/40 transition-colors group" onClick={() => { setSelectedTeam(team); setDetailTab("roster"); }} data-testid={`team-card-${team.id}`}>
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-['Bebas_Neue'] text-2xl text-white group-hover:text-[#F5A623] transition-colors">{team.name}</h3>
-                <span className="admin-badge admin-badge-gold mt-1">{team.level}</span>
+          <div key={team.id} className="admin-card overflow-hidden cursor-pointer hover:border-[#F5A623]/40 transition-colors group" onClick={() => { setSelectedTeam(team); setDetailTab("roster"); }} data-testid={`team-card-${team.id}`}>
+            {team.banner_url && (
+              <div className="h-24 overflow-hidden">
+                <img src={team.banner_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${team.banner_url}` : team.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
-              <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                <button onClick={() => openEditTeam(team)} className="admin-icon-btn" data-testid={`edit-team-${team.id}`}><Edit2 size={14} /></button>
-                <button onClick={() => handleDeleteTeam(team.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-${team.id}`}><Trash2 size={14} /></button>
+            )}
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-['Bebas_Neue'] text-2xl text-white group-hover:text-[#F5A623] transition-colors">{team.name}</h3>
+                  <span className="admin-badge admin-badge-gold mt-1">{team.level}</span>
+                </div>
+                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => openEditTeam(team)} className="admin-icon-btn" data-testid={`edit-team-${team.id}`}><Edit2 size={14} /></button>
+                  <button onClick={() => handleDeleteTeam(team.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-team-${team.id}`}><Trash2 size={14} /></button>
+                </div>
               </div>
-            </div>
-            {team.description && <p className="text-zinc-400 text-sm mb-3">{team.description}</p>}
-            <div className="flex gap-3 text-sm text-zinc-400">
-              <span className="flex items-center gap-1"><Users size={14} /> {team.player_count || 0} παίκτες</span>
-              <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#F5A623] ml-auto transition-colors" />
+              {team.description && <p className="text-zinc-400 text-sm mb-3">{team.description}</p>}
+              <div className="flex gap-3 text-sm text-zinc-400">
+                <span className="flex items-center gap-1"><Users size={14} /> {team.player_count || 0} παίκτες</span>
+                <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#F5A623] ml-auto transition-colors" />
+              </div>
             </div>
           </div>
         ))}
@@ -2239,6 +2245,21 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
             </AdminSelect>
           </Field>
           <Field label="Περιγραφή"><AdminTextarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} data-testid="team-desc-input" /></Field>
+          <Field label="Banner Ομάδας">
+            <div className="flex items-center gap-3">
+              {form.banner_url && (
+                <div className="relative h-16 w-32 rounded overflow-hidden border border-[#262626]">
+                  <img src={form.banner_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${form.banner_url}` : form.banner_url} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setForm({...form, banner_url: ""})} className="absolute top-0.5 right-0.5 bg-black/60 rounded p-0.5 text-red-400 hover:text-red-300"><X size={12} /></button>
+                </div>
+              )}
+              <label className="admin-btn-ghost cursor-pointer flex items-center gap-1.5" data-testid="team-banner-upload">
+                <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+                {uploadingBanner ? <RefreshCw size={14} className="animate-spin" /> : <><Upload size={14} /> {form.banner_url ? "Αλλαγή" : "Ανέβασμα"}</>}
+              </label>
+            </div>
+            <AdminInput value={form.banner_url} onChange={e => setForm({...form, banner_url: e.target.value})} placeholder="Ή επικολλήστε URL" className="mt-2" data-testid="team-banner-url" />
+          </Field>
         </FormModal>
       )}
     </div>
@@ -2253,7 +2274,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   const [editGroup, setEditGroup] = useState(null);
   const [saving, setSaving] = useState(false);
   const [detailTab, setDetailTab] = useState("roster");
-  const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26" };
+  const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26", banner_url: "" };
   const [form, setForm] = useState(emptyGroup);
 
   // Player CRUD state
@@ -2283,10 +2304,11 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   const [galleryForm, setGalleryForm] = useState({ title: "", image_url: "", category: "Training", description: "" });
   const [savingGallery, setSavingGallery] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   // Group CRUD
   const openCreate = () => { setForm(emptyGroup); setEditGroup(null); setShowForm(true); };
-  const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26" }); setEditGroup(g); setShowForm(true); };
+  const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26", banner_url: g.banner_url || "" }); setEditGroup(g); setShowForm(true); };
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -2300,6 +2322,18 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   const handleDeleteGroup = async (id) => {
     if (!window.confirm("Διαγραφή ομάδας;")) return;
     try { await axios.delete(`${API}/admin/academy-groups/${id}`, { headers: getAuthHeaders() }); if (selectedGroup?.id === id) setSelectedGroup(null); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
+  const handleGroupBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBanner(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await axios.post(`${API}/admin/upload-image`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      setForm(prev => ({ ...prev, banner_url: res.data.image_url || res.data.url }));
+    } catch (err) { alert("Σφάλμα ανεβάσματος"); } finally { setUploadingBanner(false); }
   };
 
   // Player CRUD
@@ -2419,6 +2453,11 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
         <button onClick={() => setSelectedGroup(null)} className="admin-btn-ghost text-sm mb-4" data-testid="back-to-academy">
           <ChevronRight size={14} className="rotate-180" /> Πίσω στις ομάδες
         </button>
+        {selectedGroup.banner_url && (
+          <div className="h-32 rounded-xl overflow-hidden mb-4 border border-[#262626]">
+            <img src={selectedGroup.banner_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${selectedGroup.banner_url}` : selectedGroup.banner_url} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
         <div className="mb-6">
           <h2 className="font-['Bebas_Neue'] text-4xl text-[#10B981] tracking-wide">{selectedGroup.name}</h2>
           <div className="flex items-center gap-3 mt-2 text-sm text-zinc-300 flex-wrap">
@@ -2635,7 +2674,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
 
         {/* ── Training Sessions ── */}
         {detailTab === "training" && (
-          <TrainingSessionsPanel academyGroupId={selectedGroup.id} />
+          <TrainingSessionsPanel academyGroupId={selectedGroup.id} facilities={facilities} />
         )}
 
         {/* ── Video Analytics ── */}
@@ -2692,20 +2731,27 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
         {groups.map(g => {
           const playerCount = players.filter(p => p.academy_group_id === g.id || (p.academy_group_ids && p.academy_group_ids.includes(g.id))).length;
           return (
-            <div key={g.id} className="admin-card p-6 cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => { setSelectedGroup(g); setDetailTab("roster"); }} data-testid={`academy-group-${g.id}`}>
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-['Bebas_Neue'] text-2xl text-[#10B981] group-hover:text-white transition-colors">{g.name}</span>
-                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDeleteGroup(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={14} /></button>
+            <div key={g.id} className="admin-card overflow-hidden cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => { setSelectedGroup(g); setDetailTab("roster"); }} data-testid={`academy-group-${g.id}`}>
+              {g.banner_url && (
+                <div className="h-20 overflow-hidden">
+                  <img src={g.banner_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${g.banner_url}` : g.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
-              </div>
-              <span className="admin-badge admin-badge-green mb-2">{g.age_range}</span>
-              <p className="text-zinc-200 text-sm mb-1">{g.coach_name}</p>
-              <p className="text-zinc-400 text-sm flex items-center gap-1"><Clock size={13} /> {g.training_schedule}</p>
-              <div className="flex items-center mt-3 text-sm text-zinc-400">
-                <Users size={13} className="mr-1" /> {playerCount} παίκτες
-                <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] ml-auto transition-colors" />
+              )}
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-['Bebas_Neue'] text-2xl text-[#10B981] group-hover:text-white transition-colors">{g.name}</span>
+                  <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={14} /></button>
+                    <button onClick={() => handleDeleteGroup(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+                <span className="admin-badge admin-badge-green mb-2">{g.age_range}</span>
+                <p className="text-zinc-200 text-sm mb-1">{g.coach_name}</p>
+                <p className="text-zinc-400 text-sm flex items-center gap-1"><Clock size={13} /> {g.training_schedule}</p>
+                <div className="flex items-center mt-3 text-sm text-zinc-400">
+                  <Users size={13} className="mr-1" /> {playerCount} παίκτες
+                  <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] ml-auto transition-colors" />
+                </div>
               </div>
             </div>
           );
@@ -2721,6 +2767,21 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
           <Field label="Προπονητής"><AdminInput value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
           <Field label="Πρόγραμμα"><AdminInput value={form.training_schedule} onChange={e => setForm({...form, training_schedule: e.target.value})} /></Field>
           <Field label="Περιγραφή"><AdminTextarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></Field>
+          <Field label="Banner Ομάδας">
+            <div className="flex items-center gap-3">
+              {form.banner_url && (
+                <div className="relative h-16 w-32 rounded overflow-hidden border border-[#262626]">
+                  <img src={form.banner_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${form.banner_url}` : form.banner_url} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setForm({...form, banner_url: ""})} className="absolute top-0.5 right-0.5 bg-black/60 rounded p-0.5 text-red-400 hover:text-red-300"><X size={12} /></button>
+                </div>
+              )}
+              <label className="admin-btn-ghost cursor-pointer flex items-center gap-1.5" data-testid="group-banner-upload">
+                <input type="file" accept="image/*" onChange={handleGroupBannerUpload} className="hidden" />
+                {uploadingBanner ? <RefreshCw size={14} className="animate-spin" /> : <><Upload size={14} /> {form.banner_url ? "Αλλαγή" : "Ανέβασμα"}</>}
+              </label>
+            </div>
+            <AdminInput value={form.banner_url} onChange={e => setForm({...form, banner_url: e.target.value})} placeholder="Ή επικολλήστε URL" className="mt-2" data-testid="group-banner-url" />
+          </Field>
         </FormModal>
       )}
     </div>
