@@ -6,7 +6,7 @@ Build a complete football club CMS and public-facing website for "Lefteria FC" (
 ## Architecture
 - **Frontend**: React + Tailwind CSS + lucide-react, Shadcn/UI components
 - **Backend**: FastAPI + MongoDB (Motor) + PyJWT
-- **Backend Routes**: Modular routers in `/app/backend/routes/` (financial.py, videos.py, resources.py, mobile_auth.py) + monolith `server.py`
+- **Backend Routes**: Modular routers in `/app/backend/routes/` (financial.py, videos.py, resources.py, mobile_auth.py, opponents.py) + monolith `server.py`
 - **Auth**: Triple auth — Admin CMS (`useAdminAuth`), Customer (`CustomerAuth.jsx`), Mobile OTP (`MobileAuthContext.jsx`)
 - **Push**: Native VAPID Web Push Notifications
 - **PWA**: manifest.json + service worker for mobile installability
@@ -44,6 +44,13 @@ Build a complete football club CMS and public-facing website for "Lefteria FC" (
 - [x] **Video Analytics** (Feb 2026): Video management, YouTube embed, markers, player tags
 - [x] **Resource/Field Management** (Feb 2026): Facility CRUD, booking calendar, availability checker
 - [x] **Mobile PWA App** (Feb 2026): Phone+OTP auth, 4 role-based dashboards, bottom navigation, PWA manifest, service worker
+- [x] **Opponents CRUD** (Feb 2026): Opponent management with logo upload, venue, location, Google Maps link
+- [x] **Advanced Fixture Forms** (Feb 2026): Location/Google Maps, arrival time, venue dropdown, opponent select
+- [x] **Bulk Training Sessions** (Feb 2026): Season-wide recurring training creation with day-of-week selection
+- [x] **Training Session Venue/Location** (Feb 2026): Venue dropdown, location, Google Maps, arrival time for single and bulk training
+- [x] **Team & Academy Group Banners** (Feb 2026): Banner upload/URL for teams and academy groups (shown on cards and detail views)
+- [x] **Player Profile Cleanup** (Feb 2026): Removed redundant "Πληροφορίες Ομάδας" from player profile detail view
+- [x] **Player Profile Pictures** (Feb 2026): Image upload with drag-and-drop and URL input for all players (ImageUpload component fixed for admin auth)
 
 ## Key Mobile API Endpoints
 - POST `/api/mobile/auth/request-otp` (send OTP, detect role)
@@ -56,7 +63,7 @@ Build a complete football club CMS and public-facing website for "Lefteria FC" (
 - POST `/api/mobile/availability` (submit event availability)
 
 ## Key DB Collections
-admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, registrations, events, attendances, wall_posts, training_sessions, player_development, player_evaluations, financial_records, videos, facilities, bookings, mobile_users, mobile_otps, availability
+admins, users, players, teams, fixtures, standings, academy_groups, staff, news, gallery, venues, seasons, products, tickets, orders, potm_votes, push_subscriptions, club, contact_messages, registrations, events, attendances, wall_posts, training_sessions, player_development, player_evaluations, financial_records, videos, facilities, bookings, mobile_users, mobile_otps, availability, opponents
 
 ## Key Frontend Files
 - `/app/frontend/src/mobile/MobileApp.jsx` - Mobile app shell
@@ -66,19 +73,17 @@ admins, users, players, teams, fixtures, standings, academy_groups, staff, news,
 - `/app/frontend/src/mobile/pages/CoachDashboard.jsx` - Coach view
 - `/app/frontend/src/mobile/pages/PlayerDashboard.jsx` - Player view
 - `/app/frontend/src/mobile/pages/ManagementDashboard.jsx` - Management view
-- `/app/frontend/src/mobile/pages/SchedulePage.jsx` - Calendar
-- `/app/frontend/src/mobile/pages/NewsPage.jsx` - Announcements
-- `/app/frontend/src/mobile/pages/ProfilePage.jsx` - Profile + Logout
-- `/app/frontend/src/mobile/components/BottomNav.jsx` - Bottom navigation
-- `/app/frontend/src/mobile/components/MobileHeader.jsx` - Header
+- `/app/frontend/src/pages/AdminPanel.jsx` - Main admin CMS
+- `/app/frontend/src/pages/admin/TrainingSessionsPanel.jsx` - Training with venue/location
+- `/app/frontend/src/components/ImageUpload.jsx` - Image upload (admin + customer auth)
 
 ## Backlog
 - P1: Add Twilio SMS keys for real OTP (currently simulated)
+- P1: Verify Match-day Push Notifications & POTM Social Share
+- P1: Refactor server.py (3600+ lines) → break into more routers
+- P1: Refactor AdminPanel.jsx (3500+ lines) → extract remaining inline tabs
 - P2: Team chat / messaging in mobile app
 - P2: Availability submission (going/not going) in mobile app
-- P2: Verify Match-day Push Notifications & POTM Social Share
 - P3: Video uploads in gallery
 - P3: AI-generated match report narratives
 - P3: Multi-language support (English toggle)
-- Refactor: server.py (3600+ lines) → break into more routers
-- Refactor: AdminPanel.jsx (3370+ lines) → extract remaining inline tabs
