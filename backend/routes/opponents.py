@@ -24,6 +24,7 @@ def setup_opponents_routes(db, get_current_user):
             "venue": body.get("venue", ""),
             "location": body.get("location", ""),
             "location_url": body.get("location_url", ""),
+            "team_type": body.get("team_type", ""),
             "notes": body.get("notes", ""),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -31,14 +32,17 @@ def setup_opponents_routes(db, get_current_user):
         return {"id": opponent["id"], "message": "Opponent created"}
 
     @router.get("/admin/opponents")
-    async def get_opponents(current_user: dict = Depends(get_current_user)):
-        opponents = await db.opponents.find({}, {"_id": 0}).sort("name", 1).to_list(200)
+    async def get_opponents(team_type: str = None, current_user: dict = Depends(get_current_user)):
+        query = {}
+        if team_type:
+            query["team_type"] = team_type
+        opponents = await db.opponents.find(query, {"_id": 0}).sort("name", 1).to_list(200)
         return opponents
 
     @router.put("/admin/opponents/{opponent_id}")
     async def update_opponent(opponent_id: str, body: dict, current_user: dict = Depends(get_current_user)):
         update_data = {}
-        for key in ["name", "logo_url", "venue", "location", "location_url", "notes"]:
+        for key in ["name", "logo_url", "venue", "location", "location_url", "team_type", "notes"]:
             if key in body:
                 update_data[key] = body[key]
         update_data["updated_at"] = datetime.now(timezone.utc).isoformat()

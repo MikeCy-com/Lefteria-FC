@@ -22,6 +22,8 @@ def setup_resource_routes(db, get_current_user):
             "has_lighting": body.get("has_lighting", False),
             "has_changing_rooms": body.get("has_changing_rooms", False),
             "address": body.get("address", ""),
+            "location_url": body.get("location_url", ""),
+            "team_type": body.get("team_type", ""),
             "notes": body.get("notes", ""),
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -30,15 +32,18 @@ def setup_resource_routes(db, get_current_user):
         return {"id": facility["id"], "message": "Facility created"}
 
     @router.get("/admin/facilities")
-    async def get_facilities(current_user: dict = Depends(get_current_user)):
-        facilities = await db.facilities.find({"is_active": True}, {"_id": 0}).sort("name", 1).to_list(100)
+    async def get_facilities(team_type: str = None, current_user: dict = Depends(get_current_user)):
+        query = {"is_active": True}
+        if team_type:
+            query["team_type"] = team_type
+        facilities = await db.facilities.find(query, {"_id": 0}).sort("name", 1).to_list(100)
         return facilities
 
     @router.put("/admin/facilities/{facility_id}")
     async def update_facility(facility_id: str, body: dict, current_user: dict = Depends(get_current_user)):
         update_data = {}
         for key in ["name", "type", "surface", "capacity", "dimensions",
-                     "has_lighting", "has_changing_rooms", "address", "notes", "is_active"]:
+                     "has_lighting", "has_changing_rooms", "address", "location_url", "team_type", "notes", "is_active"]:
             if key in body:
                 update_data[key] = body[key]
         update_data["updated_at"] = datetime.now(timezone.utc).isoformat()

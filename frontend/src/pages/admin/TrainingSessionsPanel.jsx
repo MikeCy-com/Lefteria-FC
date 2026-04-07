@@ -171,14 +171,14 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [] }) => {
   // Venue/Location fields shared between single and bulk forms
   const VenueFields = ({ values, onChange }) => (
     <div className="space-y-3 border-t border-[#262626] pt-4 mt-2">
-      <h4 className="text-white text-xs font-semibold flex items-center gap-1.5"><MapPin size={13} className="text-[#F5A623]" /> Τοποθεσία</h4>
+      <h4 className="text-white text-xs font-semibold flex items-center gap-1.5"><MapPin size={13} className="text-[#F5A623]" /> Γήπεδο</h4>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-zinc-400 mb-1 block">Γήπεδο</label>
           <select value={values.venue_id || ""} onChange={e => {
             if (e.target.value) {
               const fac = facilities.find(f => f.id === e.target.value);
-              if (fac) onChange({ ...values, venue: fac.name, venue_id: fac.id, location: fac.address || values.location });
+              if (fac) onChange({ ...values, venue: fac.name, venue_id: fac.id, location_url: fac.location_url || values.location_url });
             } else {
               onChange({ ...values, venue_id: "" });
             }
@@ -195,17 +195,10 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [] }) => {
             className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-arrival-time" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-zinc-400 mb-1 block">Τοποθεσία</label>
-          <input value={values.location || ""} onChange={e => onChange({ ...values, location: e.target.value })}
-            placeholder="Διεύθυνση" className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-location-input" />
-        </div>
-        <div>
-          <label className="text-xs text-zinc-400 mb-1 block">Google Maps Link</label>
-          <input value={values.location_url || ""} onChange={e => onChange({ ...values, location_url: e.target.value })}
-            placeholder="https://maps.google.com/..." className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-location-url" />
-        </div>
+      <div>
+        <label className="text-xs text-zinc-400 mb-1 block">Google Maps Link</label>
+        <input value={values.location_url || ""} onChange={e => onChange({ ...values, location_url: e.target.value })}
+          placeholder="https://maps.google.com/..." className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" data-testid="training-location-url" />
       </div>
     </div>
   );
