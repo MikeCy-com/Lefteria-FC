@@ -1,0 +1,93 @@
+{
+  "summary": "Iteration 33 - Testing sidebar restructure with ΣΥΛΛΟΓΟΣ and ΑΚΑΔΗΜΙΑ sections, scoped opponents/venues. All 9 backend tests passed (100%). All frontend UI tests passed - sidebar structure correct, dashboards load, opponents/venues CRUD works with team_type scoping.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter33_sidebar_scoped.py",
+    "/app/test_reports/pytest/pytest_results_iter33.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iter33_sidebar_scoped.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "admin_cms": {
+      "username": "Lefteria FC",
+      "password": "L3ft3r1@FC#2024$Secure!",
+      "url": "/admin/login"
+    }
+  },
+  "seed_data_creation": "Test data created and cleaned up during tests (TEST_ prefixed items)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sidebar restructure verified: 1) ΣΥΛΛΟΓΟΣ section has sub-items: Ομάδες, Αντίπαλοι, Γήπεδα. 2) ΑΚΑΔΗΜΙΑ section has sub-items: Ομάδες, Εγγραφές, Αντίπαλοι, Γήπεδα. 3) Standalone Ημερολόγιο and Παρουσίες are NOT in sidebar. 4) Clicking section headers shows SectionDashboard with calendar and stats. 5) Club opponents/venues use team_type='First Team', Academy uses team_type='Academy'. 6) Backend filtering by team_type works correctly.",
+  "features_tested": {
+    "sidebar_club_section": {
+      "status": "PASS",
+      "details": "ΣΥΛΛΟΓΟΣ group header exists with sub-items: Ομάδες, Αντίπαλοι, Γήπεδα (data-testid: admin-group-club_section, admin-tab-teams, admin-tab-club_opponents, admin-tab-club_venues)"
+    },
+    "sidebar_academy_section": {
+      "status": "PASS",
+      "details": "ΑΚΑΔΗΜΙΑ group header exists with sub-items: Ομάδες, Εγγραφές, Αντίπαλοι, Γήπεδα (data-testid: admin-group-academy_section, admin-tab-academy, admin-tab-registrations, admin-tab-academy_opponents, admin-tab-academy_venues)"
+    },
+    "standalone_calendar_attendance_removed": {
+      "status": "PASS",
+      "details": "Standalone Ημερολόγιο and Παρουσίες are NOT present in sidebar"
+    },
+    "club_dashboard": {
+      "status": "PASS",
+      "details": "Clicking ΣΥΛΛΟΓΟΣ header shows Club Dashboard with calendar and stats (data-testid: club-dashboard)"
+    },
+    "academy_dashboard": {
+      "status": "PASS",
+      "details": "Clicking ΑΚΑΔΗΜΙΑ header shows Academy Dashboard with calendar and stats (data-testid: academy-dashboard)"
+    },
+    "club_opponents_create": {
+      "status": "PASS",
+      "details": "Club Αντίπαλοι page can create opponent with name (team_type=First Team). Title shows 'ΑΝΤΙΠΑΛΟΙ ΣΥΛΛΟΓΟΥ'"
+    },
+    "club_venues_create": {
+      "status": "PASS",
+      "details": "Club Γήπεδα page can create venue with name + Google Maps link (team_type=First Team). Title shows 'ΓΗΠΕΔΑ ΣΥΛΛΟΓΟΥ'"
+    },
+    "academy_opponents_create": {
+      "status": "PASS",
+      "details": "Academy Αντίπαλοι page creates opponents with team_type=Academy. Title shows 'ΑΝΤΙΠΑΛΟΙ ΑΚΑΔΗΜΙΑΣ'"
+    },
+    "academy_venues_create": {
+      "status": "PASS",
+      "details": "Academy Γήπεδα page creates venues with team_type=Academy. Title shows 'ΓΗΠΕΔΑ ΑΚΑΔΗΜΙΑΣ' with subtitle 'Κοινά γήπεδα για όλες τις ομάδες ακαδημίας'"
+    },
+    "backend_opponents_filter": {
+      "status": "PASS",
+      "details": "GET /api/admin/opponents?team_type=Academy returns only Academy opponents. GET /api/admin/opponents?team_type=First%20Team returns only First Team opponents."
+    },
+    "backend_facilities_filter": {
+      "status": "PASS",
+      "details": "GET /api/admin/facilities?team_type=First%20Team returns only First Team venues. GET /api/admin/facilities?team_type=Academy returns only Academy venues."
+    },
+    "scoped_separation": {
+      "status": "PASS",
+      "details": "Club opponents are NOT visible in Academy opponents page and vice versa - verified via backend API filtering"
+    },
+    "calendar_in_dashboard": {
+      "status": "PASS",
+      "details": "Calendar shows in SectionDashboard with upcoming events and day-click detail view"
+    }
+  },
+  "mocked_apis": {
+    "twilio_sms": "OTP returned in API response debug field for testing"
+  }
+}

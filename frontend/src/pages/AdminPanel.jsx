@@ -19,6 +19,8 @@ import PlayerEvaluationPanel from "./admin/PlayerEvaluationPanel";
 import FinancialDashboard from "./admin/FinancialDashboard";
 import VideoAnalyticsPanel from "./admin/VideoAnalyticsPanel";
 import ResourceManagement from "./admin/ResourceManagement";
+import SectionDashboard from "./admin/SectionDashboard";
+import { OpponentsTab as ScopedOpponentsTab, VenuesTab as ScopedVenuesTab } from "./admin/ScopedManagement";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
@@ -1974,56 +1976,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
     } catch (err) { alert("Σφάλμα ανεβάσματος"); } finally { setUploadingBanner(false); }
   };
 
-  // Opponent & Venue management (scoped to First Team)
-  const teamOpponents = opponents.filter(o => o.team_type === "First Team");
-  const teamFacilities = facilities.filter(f => f.team_type === "First Team");
-  const [showOppForm, setShowOppForm] = useState(false);
-  const [editOpp, setEditOpp] = useState(null);
-  const [oppSaving, setOppSaving] = useState(false);
-  const [oppForm, setOppForm] = useState({ name: "", logo_url: "" });
-  const [showVenueForm, setShowVenueForm] = useState(false);
-  const [editVenueItem, setEditVenueItem] = useState(null);
-  const [venueSaving, setVenueSaving] = useState(false);
-  const [venueForm, setVenueForm] = useState({ name: "", address: "", location_url: "", surface: "" });
-
-  const handleSaveOpp = async () => {
-    if (!oppForm.name) return;
-    setOppSaving(true);
-    try {
-      const payload = { ...oppForm, team_type: "First Team" };
-      if (editOpp) await axios.put(`${API}/admin/opponents/${editOpp.id}`, payload, { headers: getAuthHeaders() });
-      else await axios.post(`${API}/admin/opponents`, payload, { headers: getAuthHeaders() });
-      setShowOppForm(false); setEditOpp(null); onRefresh();
-    } catch (e) { alert("Σφάλμα"); } finally { setOppSaving(false); }
-  };
-  const handleDeleteOpp = async (id) => {
-    if (!window.confirm("Διαγραφή αντίπαλου;")) return;
-    try { await axios.delete(`${API}/admin/opponents/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
-  };
-  const handleOppLogoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await axios.post(`${API}/admin/opponents/upload-logo`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
-      setOppForm(prev => ({ ...prev, logo_url: res.data.url }));
-    } catch (e) { alert("Σφάλμα"); }
-  };
-
-  const handleSaveVenue = async () => {
-    if (!venueForm.name) return;
-    setVenueSaving(true);
-    try {
-      const payload = { ...venueForm, team_type: "First Team" };
-      if (editVenueItem) await axios.put(`${API}/admin/facilities/${editVenueItem.id}`, payload, { headers: getAuthHeaders() });
-      else await axios.post(`${API}/admin/facilities`, payload, { headers: getAuthHeaders() });
-      setShowVenueForm(false); setEditVenueItem(null); onRefresh();
-    } catch (e) { alert("Σφάλμα"); } finally { setVenueSaving(false); }
-  };
-  const handleDeleteVenue = async (id) => {
-    if (!window.confirm("Διαγραφή γηπέδου;")) return;
-    try { await axios.delete(`${API}/admin/facilities/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
-  };
+  // Opponent & Venue management removed - now in standalone tabs
 
   useEffect(() => {
     if (selectedTeam) {
@@ -2075,8 +2028,6 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
             { id: "team_staff", label: "Staff", icon: UserCog, count: teamStaff.length },
             { id: "standings_tab", label: "Βαθμολογία", icon: Trophy, count: standings?.length || 0 },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
-            { id: "opponents", label: "Αντίπαλοι", icon: Shield, count: teamOpponents.length },
-            { id: "venues", label: "Γήπεδα", icon: MapPin, count: teamFacilities.length },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDetailTab(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
@@ -2243,76 +2194,6 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
             )}
           </div>
         )}
-
-        {/* ── Opponents (First Team) ── */}
-        {detailTab === "opponents" && (
-          <div data-testid="team-opponents-tab">
-            <div className="flex justify-end mb-4">
-              <button onClick={() => { setOppForm({ name: "", logo_url: "" }); setEditOpp(null); setShowOppForm(true); }} className="admin-btn-primary" data-testid="add-team-opponent-btn"><Plus size={14} /> Νέος Αντίπαλος</button>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {teamOpponents.map(o => (
-                <div key={o.id} className="admin-card p-4 flex items-center gap-3" data-testid={`opponent-${o.id}`}>
-                  {o.logo_url ? <img src={o.logo_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${o.logo_url}` : o.logo_url} alt="" className="w-10 h-10 rounded-full object-cover border border-[#262626]" /> : <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center"><Shield size={16} className="text-zinc-600" /></div>}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{o.name}</p>
-                    {o.venue && <p className="text-zinc-500 text-xs">{o.venue}</p>}
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => { setOppForm({ name: o.name, logo_url: o.logo_url || "" }); setEditOpp(o); setShowOppForm(true); }} className="admin-icon-btn"><Edit2 size={13} /></button>
-                    <button onClick={() => handleDeleteOpp(o.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
-                  </div>
-                </div>
-              ))}
-              {teamOpponents.length === 0 && <div className="col-span-full"><EmptyState icon={Shield} text="Δεν υπάρχουν αντίπαλοι" /></div>}
-            </div>
-            {showOppForm && (
-              <FormModal title={editOpp ? "Επεξεργασία Αντίπαλου" : "Νέος Αντίπαλος"} onClose={() => setShowOppForm(false)} onSave={handleSaveOpp} saving={oppSaving}>
-                <Field label="Όνομα *"><AdminInput value={oppForm.name} onChange={e => setOppForm({...oppForm, name: e.target.value})} data-testid="team-opp-name" /></Field>
-                <Field label="Logo">
-                  <div className="flex items-center gap-3">
-                    {oppForm.logo_url && <img src={oppForm.logo_url.startsWith("http") ? oppForm.logo_url : `${process.env.REACT_APP_BACKEND_URL}${oppForm.logo_url}`} alt="" className="w-10 h-10 rounded-full object-cover" />}
-                    <label className="admin-btn-ghost text-xs cursor-pointer" data-testid="team-opp-logo-upload">Ανέβασμα Logo<input type="file" accept="image/*" className="hidden" onChange={handleOppLogoUpload} /></label>
-                  </div>
-                </Field>
-              </FormModal>
-            )}
-          </div>
-        )}
-
-        {/* ── Venues (First Team) ── */}
-        {detailTab === "venues" && (
-          <div data-testid="team-venues-tab">
-            <div className="flex justify-end mb-4">
-              <button onClick={() => { setVenueForm({ name: "", address: "", location_url: "", surface: "" }); setEditVenueItem(null); setShowVenueForm(true); }} className="admin-btn-primary" data-testid="add-team-venue-btn"><Plus size={14} /> Νέο Γήπεδο</button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {teamFacilities.map(v => (
-                <div key={v.id} className="admin-card p-5" data-testid={`venue-${v.id}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{v.name}</h3>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setVenueForm({ name: v.name, address: v.address || "", location_url: v.location_url || "", surface: v.surface || "" }); setEditVenueItem(v); setShowVenueForm(true); }} className="admin-icon-btn"><Edit2 size={13} /></button>
-                      <button onClick={() => handleDeleteVenue(v.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
-                    </div>
-                  </div>
-                  {v.address && <p className="text-zinc-500 text-xs flex items-center gap-1"><MapPin size={11} /> {v.address}</p>}
-                  {v.surface && <p className="text-zinc-600 text-xs mt-1">{v.surface}</p>}
-                  {v.location_url && <a href={v.location_url} target="_blank" rel="noreferrer" className="text-blue-400 text-xs mt-1 hover:underline flex items-center gap-1"><MapPin size={10} /> Google Maps</a>}
-                </div>
-              ))}
-              {teamFacilities.length === 0 && <EmptyState icon={MapPin} text="Δεν υπάρχουν γήπεδα" />}
-            </div>
-            {showVenueForm && (
-              <FormModal title={editVenueItem ? "Επεξεργασία Γηπέδου" : "Νέο Γήπεδο"} onClose={() => setShowVenueForm(false)} onSave={handleSaveVenue} saving={venueSaving}>
-                <Field label="Όνομα *"><AdminInput value={venueForm.name} onChange={e => setVenueForm({...venueForm, name: e.target.value})} data-testid="team-venue-name" /></Field>
-                <Field label="Διεύθυνση"><AdminInput value={venueForm.address} onChange={e => setVenueForm({...venueForm, address: e.target.value})} /></Field>
-                <Field label="Google Maps Link"><AdminInput value={venueForm.location_url} onChange={e => setVenueForm({...venueForm, location_url: e.target.value})} placeholder="https://maps.google.com/..." data-testid="team-venue-maps" /></Field>
-                <Field label="Επιφάνεια"><AdminInput value={venueForm.surface} onChange={e => setVenueForm({...venueForm, surface: e.target.value})} placeholder="Φυσικός χλοοτάπητας" /></Field>
-              </FormModal>
-            )}
-          </div>
-        )}
       </div>
     );
   }
@@ -2459,52 +2340,6 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   // Scoped Academy opponents & venues (shared across all academy groups)
   const academyOpponents = opponents.filter(o => o.team_type === "Academy");
   const academyFacilities = facilities.filter(f => f.team_type === "Academy");
-  const [showOppForm, setShowOppForm] = useState(false);
-  const [editOpp, setEditOpp] = useState(null);
-  const [oppSaving, setOppSaving] = useState(false);
-  const [oppForm, setOppForm] = useState({ name: "", logo_url: "" });
-  const [showVenueForm, setShowVenueForm] = useState(false);
-  const [editVenueItem, setEditVenueItem] = useState(null);
-  const [venueSaving, setVenueSaving] = useState(false);
-  const [venueForm, setVenueForm] = useState({ name: "", address: "", location_url: "", surface: "" });
-
-  const handleSaveOpp = async () => {
-    if (!oppForm.name) return;
-    setOppSaving(true);
-    try {
-      const payload = { ...oppForm, team_type: "Academy" };
-      if (editOpp) await axios.put(`${API}/admin/opponents/${editOpp.id}`, payload, { headers: getAuthHeaders() });
-      else await axios.post(`${API}/admin/opponents`, payload, { headers: getAuthHeaders() });
-      setShowOppForm(false); setEditOpp(null); onRefresh();
-    } catch (e) { alert("Σφάλμα"); } finally { setOppSaving(false); }
-  };
-  const handleDeleteOpp = async (id) => {
-    if (!window.confirm("Διαγραφή αντίπαλου;")) return;
-    try { await axios.delete(`${API}/admin/opponents/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
-  };
-  const handleOppLogoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await axios.post(`${API}/admin/opponents/upload-logo`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
-      setOppForm(prev => ({ ...prev, logo_url: res.data.url }));
-    } catch (e) { alert("Σφάλμα"); }
-  };
-  const handleSaveVenue = async () => {
-    if (!venueForm.name) return;
-    setVenueSaving(true);
-    try {
-      const payload = { ...venueForm, team_type: "Academy" };
-      if (editVenueItem) await axios.put(`${API}/admin/facilities/${editVenueItem.id}`, payload, { headers: getAuthHeaders() });
-      else await axios.post(`${API}/admin/facilities`, payload, { headers: getAuthHeaders() });
-      setShowVenueForm(false); setEditVenueItem(null); onRefresh();
-    } catch (e) { alert("Σφάλμα"); } finally { setVenueSaving(false); }
-  };
-  const handleDeleteVenue = async (id) => {
-    if (!window.confirm("Διαγραφή γηπέδου;")) return;
-    try { await axios.delete(`${API}/admin/facilities/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
-  };
 
   const openCreatePlayer = () => { setPlayerForm({...emptyPlayer}); setEditPlayer(null); setShowPlayerForm(true); };
   const openEditPlayer = (p) => {
@@ -2642,8 +2477,6 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
             { id: "training", label: "Προπονήσεις", icon: Dumbbell, count: null },
             { id: "videos", label: "Βίντεο", icon: Video, count: null },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
-            { id: "opponents", label: "Αντίπαλοι", icon: Shield, count: academyOpponents.length },
-            { id: "venues", label: "Γήπεδα", icon: MapPin, count: academyFacilities.length },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDetailTab(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
@@ -2879,77 +2712,6 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
                   </div>
                 </Field>
                 <Field label="Περιγραφή"><AdminInput value={galleryForm.description} onChange={e => setGalleryForm({...galleryForm, description: e.target.value})} /></Field>
-              </FormModal>
-            )}
-          </div>
-        )}
-
-        {/* ── Opponents (Academy - shared) ── */}
-        {detailTab === "opponents" && (
-          <div data-testid="academy-opponents-tab">
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-xs text-zinc-500">Κοινοί αντίπαλοι για όλες τις ομάδες ακαδημίας</p>
-              <button onClick={() => { setOppForm({ name: "", logo_url: "" }); setEditOpp(null); setShowOppForm(true); }} className="admin-btn-primary" data-testid="add-academy-opponent-btn"><Plus size={14} /> Νέος Αντίπαλος</button>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {academyOpponents.map(o => (
-                <div key={o.id} className="admin-card p-4 flex items-center gap-3" data-testid={`academy-opponent-${o.id}`}>
-                  {o.logo_url ? <img src={o.logo_url.startsWith("/") ? `${process.env.REACT_APP_BACKEND_URL}${o.logo_url}` : o.logo_url} alt="" className="w-10 h-10 rounded-full object-cover border border-[#262626]" /> : <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center"><Shield size={16} className="text-zinc-600" /></div>}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{o.name}</p>
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => { setOppForm({ name: o.name, logo_url: o.logo_url || "" }); setEditOpp(o); setShowOppForm(true); }} className="admin-icon-btn"><Edit2 size={13} /></button>
-                    <button onClick={() => handleDeleteOpp(o.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
-                  </div>
-                </div>
-              ))}
-              {academyOpponents.length === 0 && <div className="col-span-full"><EmptyState icon={Shield} text="Δεν υπάρχουν αντίπαλοι" /></div>}
-            </div>
-            {showOppForm && (
-              <FormModal title={editOpp ? "Επεξεργασία Αντίπαλου" : "Νέος Αντίπαλος"} onClose={() => setShowOppForm(false)} onSave={handleSaveOpp} saving={oppSaving}>
-                <Field label="Όνομα *"><AdminInput value={oppForm.name} onChange={e => setOppForm({...oppForm, name: e.target.value})} data-testid="academy-opp-name" /></Field>
-                <Field label="Logo">
-                  <div className="flex items-center gap-3">
-                    {oppForm.logo_url && <img src={oppForm.logo_url.startsWith("http") ? oppForm.logo_url : `${process.env.REACT_APP_BACKEND_URL}${oppForm.logo_url}`} alt="" className="w-10 h-10 rounded-full object-cover" />}
-                    <label className="admin-btn-ghost text-xs cursor-pointer" data-testid="academy-opp-logo-upload">Ανέβασμα Logo<input type="file" accept="image/*" className="hidden" onChange={handleOppLogoUpload} /></label>
-                  </div>
-                </Field>
-              </FormModal>
-            )}
-          </div>
-        )}
-
-        {/* ── Venues (Academy - shared) ── */}
-        {detailTab === "venues" && (
-          <div data-testid="academy-venues-tab">
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-xs text-zinc-500">Κοινά γήπεδα για όλες τις ομάδες ακαδημίας</p>
-              <button onClick={() => { setVenueForm({ name: "", address: "", location_url: "", surface: "" }); setEditVenueItem(null); setShowVenueForm(true); }} className="admin-btn-primary" data-testid="add-academy-venue-btn"><Plus size={14} /> Νέο Γήπεδο</button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {academyFacilities.map(v => (
-                <div key={v.id} className="admin-card p-5" data-testid={`academy-venue-${v.id}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{v.name}</h3>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setVenueForm({ name: v.name, address: v.address || "", location_url: v.location_url || "", surface: v.surface || "" }); setEditVenueItem(v); setShowVenueForm(true); }} className="admin-icon-btn"><Edit2 size={13} /></button>
-                      <button onClick={() => handleDeleteVenue(v.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
-                    </div>
-                  </div>
-                  {v.address && <p className="text-zinc-500 text-xs flex items-center gap-1"><MapPin size={11} /> {v.address}</p>}
-                  {v.surface && <p className="text-zinc-600 text-xs mt-1">{v.surface}</p>}
-                  {v.location_url && <a href={v.location_url} target="_blank" rel="noreferrer" className="text-blue-400 text-xs mt-1 hover:underline flex items-center gap-1"><MapPin size={10} /> Google Maps</a>}
-                </div>
-              ))}
-              {academyFacilities.length === 0 && <EmptyState icon={MapPin} text="Δεν υπάρχουν γήπεδα" />}
-            </div>
-            {showVenueForm && (
-              <FormModal title={editVenueItem ? "Επεξεργασία Γηπέδου" : "Νέο Γήπεδο"} onClose={() => setShowVenueForm(false)} onSave={handleSaveVenue} saving={venueSaving}>
-                <Field label="Όνομα *"><AdminInput value={venueForm.name} onChange={e => setVenueForm({...venueForm, name: e.target.value})} data-testid="academy-venue-name" /></Field>
-                <Field label="Διεύθυνση"><AdminInput value={venueForm.address} onChange={e => setVenueForm({...venueForm, address: e.target.value})} /></Field>
-                <Field label="Google Maps Link"><AdminInput value={venueForm.location_url} onChange={e => setVenueForm({...venueForm, location_url: e.target.value})} placeholder="https://maps.google.com/..." data-testid="academy-venue-maps" /></Field>
-                <Field label="Επιφάνεια"><AdminInput value={venueForm.surface} onChange={e => setVenueForm({...venueForm, surface: e.target.value})} placeholder="Φυσικός χλοοτάπητας" /></Field>
               </FormModal>
             )}
           </div>
@@ -3569,20 +3331,21 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "item", id: "dashboard", label: "Πίνακας", icon: BarChart3 },
     { type: "item", id: "livescore", label: "Live Score", icon: Zap },
     { type: "divider" },
-    { type: "group", id: "club_section", label: "Συλλόγος", icon: Building2, items: [
+    { type: "group", id: "club_section", label: "Συλλόγος", icon: Building2, dashboard: "club_dashboard", items: [
       { id: "teams", label: "Ομάδες", icon: Shield },
+      { id: "club_opponents", label: "Αντίπαλοι", icon: Shield },
+      { id: "club_venues", label: "Γήπεδα", icon: MapPin },
     ]},
-    { type: "group", id: "academy_section", label: "Ακαδημία", icon: GraduationCap, items: [
+    { type: "group", id: "academy_section", label: "Ακαδημία", icon: GraduationCap, dashboard: "academy_dashboard", items: [
       { id: "academy", label: "Ομάδες", icon: Users },
       { id: "registrations", label: "Εγγραφές", icon: ClipboardList },
+      { id: "academy_opponents", label: "Αντίπαλοι", icon: Shield },
+      { id: "academy_venues", label: "Γήπεδα", icon: MapPin },
     ]},
     { type: "divider" },
     { type: "item", id: "news", label: "Νέα", icon: Newspaper },
     { type: "item", id: "wall", label: "Ανακοινώσεις", icon: MessageSquare },
     { type: "item", id: "messages", label: "Μηνύματα", icon: Mail },
-    { type: "divider" },
-    { type: "item", id: "calendar", label: "Ημερολόγιο", icon: Calendar },
-    { type: "item", id: "attendance", label: "Παρουσίες", icon: Check },
     { type: "divider" },
     { type: "group", id: "management_section", label: "Διαχείριση", icon: Landmark, items: [
       { id: "financial", label: "Οικονομικά", icon: DollarSign },
@@ -3621,6 +3384,12 @@ const AdminPanel = ({ user, onLogout }) => {
     switch (activeTab) {
       case "dashboard": return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
       case "livescore": return <LiveScoreTab fixtures={data.fixtures} players={data.players} onRefresh={fetchAll} />;
+      case "club_dashboard": return <SectionDashboard scope="club" teams={data.teams} academyGroups={data.academyGroups} opponents={data.opponents} facilities={data.facilities} />;
+      case "academy_dashboard": return <SectionDashboard scope="academy" teams={data.teams} academyGroups={data.academyGroups} opponents={data.opponents} facilities={data.facilities} />;
+      case "club_opponents": return <ScopedOpponentsTab opponents={data.opponents} teamType="First Team" onRefresh={fetchAll} />;
+      case "club_venues": return <ScopedVenuesTab facilities={data.facilities} teamType="First Team" onRefresh={fetchAll} />;
+      case "academy_opponents": return <ScopedOpponentsTab opponents={data.opponents} teamType="Academy" onRefresh={fetchAll} />;
+      case "academy_venues": return <ScopedVenuesTab facilities={data.facilities} teamType="Academy" onRefresh={fetchAll} />;
       case "teams": return <TeamsTab teams={data.teams} players={data.players} fixtures={data.fixtures} staff={data.staff} standings={data.standings} opponents={data.opponents} facilities={data.facilities} onRefresh={fetchAll} onTabChange={setActiveTab} />;
       case "standings": return <StandingsTab standings={data.standings} onRefresh={fetchAll} />;
       case "academy": return <EnhancedAcademyTab groups={data.academyGroups} players={data.players} opponents={data.opponents} facilities={data.facilities} onRefresh={fetchAll} />;
@@ -3703,13 +3472,20 @@ const AdminPanel = ({ user, onLogout }) => {
 
               if (item.type === "group") {
                 const isExpanded = expandedGroups.includes(item.id);
-                const hasActiveChild = isTabInGroup(item.items);
+                const hasActiveChild = isTabInGroup(item.items) || (item.dashboard && activeTab === item.dashboard);
                 return (
                   <div key={item.id}>
                     <button
-                      onClick={() => toggleGroup(item.id)}
+                      onClick={() => {
+                        if (item.dashboard) {
+                          setActiveTab(item.dashboard);
+                          if (!isExpanded) toggleGroup(item.id);
+                        } else {
+                          toggleGroup(item.id);
+                        }
+                      }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all ${
-                        hasActiveChild ? 'text-[#F5A623]' : 'text-zinc-400 hover:text-zinc-200'
+                        hasActiveChild || (item.dashboard && activeTab === item.dashboard) ? 'text-[#F5A623]' : 'text-zinc-400 hover:text-zinc-200'
                       }`}
                       data-testid={`admin-group-${item.id}`}
                     >
