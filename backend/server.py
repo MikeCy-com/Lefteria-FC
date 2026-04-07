@@ -195,6 +195,7 @@ class AcademyGroup(BaseModel):
     description: str
     max_players: int = 25
     season: str = "2025/26"
+    banner_url: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class AcademyGroupCreate(BaseModel):
@@ -206,12 +207,14 @@ class AcademyGroupCreate(BaseModel):
     description: str
     max_players: int = 25
     season: str = "2025/26"
+    banner_url: Optional[str] = None
 
 # Team Model (Senior Teams)
 class TeamCreate(BaseModel):
     name: str
     level: str = "Α' Ομάδα"
     description: str = ""
+    banner_url: Optional[str] = None
 
 class Team(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -219,6 +222,7 @@ class Team(BaseModel):
     name: str
     level: str = "Α' Ομάδα"
     description: str = ""
+    banner_url: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # Academy Registration Model
@@ -485,16 +489,20 @@ class Fixture(BaseModel):
     away_score: Optional[int] = None
     match_date: str
     match_time: Optional[str] = None
+    arrival_time: Optional[str] = None
     venue: str
     venue_id: Optional[str] = None
+    location: Optional[str] = None
+    location_url: Optional[str] = None
     competition: str
     season: str = "2025/26"
     status: MatchStatus = MatchStatus.SCHEDULED
     academy_group_id: Optional[str] = None
+    opponent_id: Optional[str] = None
     # Player Performances
     player_performances: List[PlayerPerformance] = Field(default_factory=list)
     # Match Events
-    scorers: List[Dict[str, Any]] = Field(default_factory=list)  # [{player_id, player_name, minute, type}]
+    scorers: List[Dict[str, Any]] = Field(default_factory=list)
     # Meta
     attendance: Optional[int] = None
     referee: Optional[str] = None
@@ -509,12 +517,16 @@ class FixtureCreate(BaseModel):
     away_score: Optional[int] = None
     match_date: str
     match_time: Optional[str] = None
+    arrival_time: Optional[str] = None
     venue: str
     venue_id: Optional[str] = None
+    location: Optional[str] = None
+    location_url: Optional[str] = None
     competition: str
     season: str = "2025/26"
     status: MatchStatus = MatchStatus.SCHEDULED
     academy_group_id: Optional[str] = None
+    opponent_id: Optional[str] = None
     player_performances: List[PlayerPerformance] = Field(default_factory=list)
     scorers: List[Dict[str, Any]] = Field(default_factory=list)
     attendance: Optional[int] = None
@@ -3373,16 +3385,19 @@ from routes.financial import router as financial_router, setup_financial_routes
 from routes.videos import router as video_router, setup_video_routes
 from routes.resources import router as resource_router, setup_resource_routes
 from routes.mobile_auth import router as mobile_router, setup_mobile_routes
+from routes.opponents import router as opponents_router, setup_opponents_routes
 
 setup_financial_routes(db, get_current_user)
 setup_video_routes(db, get_current_user)
 setup_resource_routes(db, get_current_user)
 setup_mobile_routes(db)
+setup_opponents_routes(db, get_current_user)
 
 app.include_router(financial_router)
 app.include_router(video_router)
 app.include_router(resource_router)
 app.include_router(mobile_router)
+app.include_router(opponents_router)
 
 app.add_middleware(
     CORSMiddleware,

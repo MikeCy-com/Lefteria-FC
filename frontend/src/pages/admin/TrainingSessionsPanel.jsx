@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Save, RefreshCw, Trash2, Edit2, Clock, Dumbbell, Tag, Users, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, X, Save, RefreshCw, Trash2, Edit2, Clock, Dumbbell, Tag, Users, ChevronDown, ChevronRight, Calendar } from "lucide-react";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -26,13 +26,25 @@ const INTENSITY_MAP = {
 const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
   const [sessions, setSessions] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showBulkForm, setShowBulkForm] = useState(false);
   const [editSession, setEditSession] = useState(null);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [form, setForm] = useState({
-    title: "", date: "", duration_minutes: 90, intensity: "medium",
+    title: "", date: "", start_time: "16:00", duration_minutes: 90, intensity: "medium",
     tags: [], notes: "", player_count: 0,
     exercises: [{ name: "", description: "", duration_minutes: 15, equipment: "" }],
+  });
+  const [bulkForm, setBulkForm] = useState({
+    title: "Προπόνηση",
+    days_of_week: [],
+    start_time: "16:00",
+    duration_minutes: 60,
+    intensity: "medium",
+    season_start: "",
+    season_end: "",
+    tags: [],
+    notes: "",
   });
 
   const fetchSessions = useCallback(async () => {
@@ -110,14 +122,106 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId }) => {
     setForm(prev => ({ ...prev, exercises: prev.exercises.filter((_, i) => i !== idx) }));
   };
 
+  const handleBulkCreate = async () => {
+    if (!bulkForm.days_of_week.length || !bulkForm.season_start || !bulkForm.season_end) {
+      alert("Επιλέξτε μέρες, ημερομηνία έναρξης και λήξης σεζόν");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await axios.post(`${API}/admin/training-sessions/bulk`, {
+        ...bulkForm,
+        team_id: teamId || null,
+        academy_group_id: academyGroupId || null,
+      }, { headers: getAuthHeaders() });
+      alert(`Δημιουργήθηκαν ${res.data.count} προπονήσεις!`);
+      setShowBulkForm(false);
+      fetchSessions();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
+  };
+
+  const toggleBulkDay = (day) => {
+    setBulkForm(prev => ({
+      ...prev,
+      days_of_week: prev.days_of_week.includes(day) ? prev.days_of_week.filter(d => d !== day) : [...prev.days_of_week, day],
+    }));
+  };
+
+  const DAYS = [
+    { value: 0, label: "Δευτέρα" }, { value: 1, label: "Τρίτη" }, { value: 2, label: "Τετάρτη" },
+    { value: 3, label: "Πέμπτη" }, { value: 4, label: "Παρασκευή" }, { value: 5, label: "Σάββατο" },
+    { value: 6, label: "Κυριακή" },
+  ];
+
   return (
     <div data-testid="training-sessions-panel">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-white text-sm font-medium">{sessions.length} Προπονήσεις</h3>
-        <button onClick={openCreate} className="admin-btn-primary" data-testid="add-training-btn">
-          <Plus size={14} /> Νέα Προπόνηση
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowBulkForm(true)} className="admin-btn-ghost text-xs" data-testid="bulk-training-btn">
+            <Calendar size={12} /> Πρόγραμμα Σεζόν
+          </button>
+          <button onClick={openCreate} className="admin-btn-primary" data-testid="add-training-btn">
+            <Plus size={14} /> Νέα Προπόνηση
+          </button>
+        </div>
       </div>
+
+      {/* Bulk Season Creation Form */}
+      {showBulkForm && (
+        <div className="bg-[#0e0e0e] border border-[#F5A623]/30 rounded-xl p-5 mb-4 space-y-4" data-testid="bulk-training-form">
+          <h4 className="text-white font-medium text-sm flex items-center gap-2"><Calendar size={16} className="text-[#F5A623]" /> Πρόγραμμα Σεζόν</h4>
+          <p className="text-xs text-zinc-500">Δημιουργήστε αυτόματα εβδομαδιαίες προπονήσεις για ολόκληρη τη σεζόν.</p>
+          <div>
+            <label className="text-xs text-zinc-400 mb-2 block">Τίτλος</label>
+            <input value={bulkForm.title} onChange={e => setBulkForm({...bulkForm, title: e.target.value})} className="admin-input w-full" data-testid="bulk-title" />
+          </div>
+          <div>
+            <label className="text-xs text-zinc-400 mb-2 block">Ημέρες Εβδομάδας *</label>
+            <div className="flex flex-wrap gap-2">
+              {DAYS.map(d => (
+                <button key={d.value} onClick={() => toggleBulkDay(d.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${bulkForm.days_of_week.includes(d.value) ? 'bg-[#F5A623] text-black border-[#F5A623]' : 'bg-[#1a1a1a] text-zinc-400 border-[#262626] hover:border-zinc-500'}`}
+                  data-testid={`bulk-day-${d.value}`}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Ώρα Έναρξης</label>
+              <input type="time" value={bulkForm.start_time} onChange={e => setBulkForm({...bulkForm, start_time: e.target.value})} className="admin-input w-full" data-testid="bulk-start-time" />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Διάρκεια (λεπτά)</label>
+              <input type="number" value={bulkForm.duration_minutes} onChange={e => setBulkForm({...bulkForm, duration_minutes: parseInt(e.target.value) || 60})} className="admin-input w-full" data-testid="bulk-duration" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Έναρξη Σεζόν *</label>
+              <input type="date" value={bulkForm.season_start} onChange={e => setBulkForm({...bulkForm, season_start: e.target.value})} className="admin-input w-full" data-testid="bulk-season-start" />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Λήξη Σεζόν *</label>
+              <input type="date" value={bulkForm.season_end} onChange={e => setBulkForm({...bulkForm, season_end: e.target.value})} className="admin-input w-full" data-testid="bulk-season-end" />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-zinc-400 mb-1 block">Ένταση</label>
+            <select value={bulkForm.intensity} onChange={e => setBulkForm({...bulkForm, intensity: e.target.value})} className="admin-input w-full">
+              <option value="low">Χαμηλή</option><option value="medium">Μέτρια</option><option value="high">Υψηλή</option>
+            </select>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={handleBulkCreate} disabled={saving} className="admin-btn-primary flex-1" data-testid="bulk-create-btn">
+              {saving ? <><RefreshCw size={14} className="animate-spin" /> Δημιουργία...</> : <><Calendar size={14} /> Δημιουργία Προγράμματος</>}
+            </button>
+            <button onClick={() => setShowBulkForm(false)} className="admin-btn-ghost">Ακύρωση</button>
+          </div>
+        </div>
+      )}
 
       {sessions.length > 0 ? (
         <div className="space-y-2">

@@ -1209,15 +1209,18 @@ const StaffTab = ({ staff, onRefresh }) => {
 };
 
 // ==================== FIXTURES TAB ====================
-const FixturesTab = ({ fixtures, onRefresh }) => {
+const FixturesTab = ({ fixtures, opponents = [], facilities = [], onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editFixture, setEditFixture] = useState(null);
   const [saving, setSaving] = useState(false);
-  const emptyFixture = { home_team: "LEFTERIA FC", away_team: "", home_score: "", away_score: "", match_date: "", match_time: "", venue: "Γήπεδο Αετού", competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", status: "Scheduled", attendance: "", referee: "" };
+  const [showOpponentModal, setShowOpponentModal] = useState(false);
+  const [oppForm, setOppForm] = useState({ name: "", logo_url: "", venue: "", location: "", location_url: "" });
+  const [oppSaving, setOppSaving] = useState(false);
+  const emptyFixture = { home_team: "LEFTERIA FC", away_team: "", away_team_logo: "", home_score: "", away_score: "", match_date: "", match_time: "", arrival_time: "", venue: "", venue_id: "", location: "", location_url: "", competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", status: "Scheduled", attendance: "", referee: "", opponent_id: "" };
   const [form, setForm] = useState(emptyFixture);
 
   const openCreate = () => { setForm(emptyFixture); setEditFixture(null); setShowForm(true); };
-  const openEdit = (f) => { setForm({ home_team: f.home_team, away_team: f.away_team, home_score: f.home_score ?? "", away_score: f.away_score ?? "", match_date: f.match_date ? f.match_date.split('T')[0] : "", match_time: f.match_time || "", venue: f.venue, competition: f.competition, season: f.season || "2025/26", status: f.status, attendance: f.attendance ?? "", referee: f.referee || "" }); setEditFixture(f); setShowForm(true); };
+  const openEdit = (f) => { setForm({ home_team: f.home_team, away_team: f.away_team, away_team_logo: f.away_team_logo || "", home_score: f.home_score ?? "", away_score: f.away_score ?? "", match_date: f.match_date ? f.match_date.split('T')[0] : "", match_time: f.match_time || "", arrival_time: f.arrival_time || "", venue: f.venue, venue_id: f.venue_id || "", location: f.location || "", location_url: f.location_url || "", competition: f.competition, season: f.season || "2025/26", status: f.status, attendance: f.attendance ?? "", referee: f.referee || "", opponent_id: f.opponent_id || "" }); setEditFixture(f); setShowForm(true); };
 
   const handleSave = async () => {
     setSaving(true);
@@ -1235,21 +1238,64 @@ const FixturesTab = ({ fixtures, onRefresh }) => {
     try { await axios.delete(`${API}/admin/fixtures/${id}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
   };
 
+  const handleSaveOpponent = async () => {
+    if (!oppForm.name) return;
+    setOppSaving(true);
+    try {
+      await axios.post(`${API}/admin/opponents`, oppForm, { headers: getAuthHeaders() });
+      setShowOpponentModal(false);
+      setOppForm({ name: "", logo_url: "", venue: "", location: "", location_url: "" });
+      onRefresh();
+    } catch (e) { alert("Σφάλμα"); } finally { setOppSaving(false); }
+  };
+
+  const handleOppLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await axios.post(`${API}/admin/opponents/upload-logo`, fd, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      setOppForm({ ...oppForm, logo_url: res.data.url });
+    } catch (e) { alert("Σφάλμα ανεβάσματος"); }
+  };
+
+  const selectOpponent = (oppId) => {
+    const opp = opponents.find(o => o.id === oppId);
+    if (opp) {
+      setForm({ ...form, away_team: opp.name, away_team_logo: opp.logo_url, opponent_id: opp.id, location: opp.location || form.location, location_url: opp.location_url || form.location_url });
+    }
+  };
+
+  const selectVenue = (facId) => {
+    const fac = facilities.find(f => f.id === facId);
+    if (fac) {
+      setForm({ ...form, venue: fac.name, venue_id: fac.id, location: fac.address || form.location });
+    }
+  };
+
   return (
     <div data-testid="admin-fixtures-tab">
       <TabHeader title="Αγώνες" count={fixtures.length}>
+        <button onClick={() => setShowOpponentModal(true)} className="admin-btn-ghost text-xs" data-testid="manage-opponents-btn"><Plus size={12} /> Αντίπαλος</button>
         <button onClick={openCreate} className="admin-btn-primary" data-testid="add-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
       </TabHeader>
       <div className="admin-table-wrap">
         <table className="admin-table" data-testid="admin-fixtures-table">
-          <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Κατάσταση</th><th></th></tr></thead>
+          <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Γήπεδο</th><th>Κατάσταση</th><th></th></tr></thead>
           <tbody>
             {fixtures.map(f => (
               <tr key={f.id}>
-                <td className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
+                <td className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}{f.arrival_time && <span className="block text-[10px] text-zinc-600">Άφιξη: {f.arrival_time}</span>}</td>
                 <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.home_team}</td>
                 <td className="font-['Bebas_Neue'] text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
-                <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.away_team}</td>
+                <td className="text-zinc-300">
+                  <div className="flex items-center gap-1.5">
+                    {f.away_team_logo && <img src={f.away_team_logo.startsWith("http") ? f.away_team_logo : `${process.env.REACT_APP_BACKEND_URL}${f.away_team_logo}`} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                    <span className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : ''}>{f.away_team}</span>
+                  </div>
+                </td>
+                <td className="text-xs text-zinc-500">{f.venue}{f.location_url && <a href={f.location_url} target="_blank" rel="noreferrer" className="text-blue-400 ml-1"><MapPin size={10} className="inline" /></a>}</td>
                 <td><span className={f.status === 'Completed' ? 'badge-completed' : f.status === 'Live' ? 'badge-live' : 'admin-badge admin-badge-default'}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span></td>
                 <td><div className="flex gap-1"><button onClick={() => openEdit(f)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(f.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
               </tr>
@@ -1259,27 +1305,61 @@ const FixturesTab = ({ fixtures, onRefresh }) => {
       </div>
       {showForm && (
         <FormModal title={editFixture ? "Επεξεργασία Αγώνα" : "Νέος Αγώνας"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Γηπεδούχος *"><AdminInput value={form.home_team} onChange={e => setForm({...form, home_team: e.target.value})} data-testid="fixture-home-input" /></Field>
-            <Field label="Φιλοξενούμενος *"><AdminInput value={form.away_team} onChange={e => setForm({...form, away_team: e.target.value})} data-testid="fixture-away-input" /></Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+          <Field label="Γηπεδούχος *"><AdminInput value={form.home_team} onChange={e => setForm({...form, home_team: e.target.value})} data-testid="fixture-home-input" /></Field>
+          <Field label="Αντίπαλος *">
+            <AdminSelect value={form.opponent_id} onChange={e => selectOpponent(e.target.value)} data-testid="fixture-opponent-select">
+              <option value="">— Επιλέξτε ή πληκτρολογήστε —</option>
+              {opponents.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </AdminSelect>
+            <AdminInput value={form.away_team} onChange={e => setForm({...form, away_team: e.target.value})} placeholder="Ή πληκτρολογήστε όνομα" className="mt-1" data-testid="fixture-away-input" />
+          </Field>
+          <div className="grid grid-cols-3 gap-4">
             <Field label="Ημερομηνία *"><AdminInput type="date" value={form.match_date} onChange={e => setForm({...form, match_date: e.target.value})} data-testid="fixture-date-input" /></Field>
-            <Field label="Ώρα"><AdminInput type="time" value={form.match_time} onChange={e => setForm({...form, match_time: e.target.value})} /></Field>
+            <Field label="Ώρα Έναρξης"><AdminInput type="time" value={form.match_time} onChange={e => setForm({...form, match_time: e.target.value})} /></Field>
+            <Field label="Ώρα Άφιξης"><AdminInput type="time" value={form.arrival_time} onChange={e => setForm({...form, arrival_time: e.target.value})} data-testid="fixture-arrival-input" /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Σκορ Γηπ."><AdminInput type="number" value={form.home_score} onChange={e => setForm({...form, home_score: e.target.value})} /></Field>
             <Field label="Σκορ Φιλ."><AdminInput type="number" value={form.away_score} onChange={e => setForm({...form, away_score: e.target.value})} /></Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Γήπεδο"><AdminInput value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} /></Field>
-            <Field label="Διοργάνωση"><AdminInput value={form.competition} onChange={e => setForm({...form, competition: e.target.value})} /></Field>
-          </div>
-          <Field label="Κατάσταση">
-            <AdminSelect value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
-              <option value="Scheduled">Προγραμματισμένος</option><option value="Live">Live</option><option value="Completed">Ολοκληρωμένος</option><option value="Postponed">Αναβλήθηκε</option>
+          <Field label="Γήπεδο">
+            <AdminSelect value={form.venue_id} onChange={e => selectVenue(e.target.value)} data-testid="fixture-venue-select">
+              <option value="">— Επιλέξτε ή πληκτρολογήστε —</option>
+              {facilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </AdminSelect>
+            <AdminInput value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} placeholder="Ή πληκτρολογήστε γήπεδο" className="mt-1" />
           </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Τοποθεσία"><AdminInput value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="Διεύθυνση" /></Field>
+            <Field label="Google Maps Link"><AdminInput value={form.location_url} onChange={e => setForm({...form, location_url: e.target.value})} placeholder="https://maps.google.com/..." data-testid="fixture-location-url" /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Διοργάνωση"><AdminInput value={form.competition} onChange={e => setForm({...form, competition: e.target.value})} /></Field>
+            <Field label="Κατάσταση">
+              <AdminSelect value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+                <option value="Scheduled">Προγραμματισμένος</option><option value="Live">Live</option><option value="Completed">Ολοκληρωμένος</option><option value="Postponed">Αναβλήθηκε</option>
+              </AdminSelect>
+            </Field>
+          </div>
+        </FormModal>
+      )}
+      {showOpponentModal && (
+        <FormModal title="Νέος Αντίπαλος" onClose={() => setShowOpponentModal(false)} onSave={handleSaveOpponent} saving={oppSaving}>
+          <Field label="Όνομα *"><AdminInput value={oppForm.name} onChange={e => setOppForm({...oppForm, name: e.target.value})} data-testid="opp-name" /></Field>
+          <Field label="Logo">
+            <div className="flex items-center gap-3">
+              {oppForm.logo_url && <img src={oppForm.logo_url.startsWith("http") ? oppForm.logo_url : `${process.env.REACT_APP_BACKEND_URL}${oppForm.logo_url}`} alt="" className="w-10 h-10 rounded-full object-cover" />}
+              <label className="admin-btn-ghost text-xs cursor-pointer">
+                Ανέβασμα Logo
+                <input type="file" accept="image/*" className="hidden" onChange={handleOppLogoUpload} />
+              </label>
+            </div>
+          </Field>
+          <Field label="Γήπεδο"><AdminInput value={oppForm.venue} onChange={e => setOppForm({...oppForm, venue: e.target.value})} /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Τοποθεσία"><AdminInput value={oppForm.location} onChange={e => setOppForm({...oppForm, location: e.target.value})} /></Field>
+            <Field label="Google Maps"><AdminInput value={oppForm.location_url} onChange={e => setOppForm({...oppForm, location_url: e.target.value})} placeholder="https://maps.google.com/..." /></Field>
+          </div>
         </FormModal>
       )}
     </div>
@@ -1807,7 +1887,7 @@ const GalleryTab = ({ onRefresh: parentRefresh }) => {
 };
 
 // ==================== TEAMS TAB (with drill-down) ====================
-const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTabChange }) => {
+const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], facilities = [], onRefresh, onTabChange }) => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [viewingPlayer, setViewingPlayer] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -2166,7 +2246,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, onRefresh, onTab
 };
 
 // ==================== ENHANCED ACADEMY TAB (full CRUD + drill-down) ====================
-const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
+const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], onRefresh }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [viewingPlayer, setViewingPlayer] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -2192,7 +2272,7 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
   // Fixtures state
   const [groupFixtures, setGroupFixtures] = useState([]);
   const [showFixtureForm, setShowFixtureForm] = useState(false);
-  const [fixtureForm, setFixtureForm] = useState({ home_team: "LEFTERIA FC", away_team: "", match_date: "", venue: "", competition: "", season: "2025/26" });
+  const [fixtureForm, setFixtureForm] = useState({ home_team: "LEFTERIA FC", away_team: "", away_team_logo: "", match_date: "", match_time: "", arrival_time: "", venue: "", venue_id: "", location: "", location_url: "", competition: "", season: "2025/26", opponent_id: "" });
   const [savingFixture, setSavingFixture] = useState(false);
   const [editFixture, setEditFixture] = useState(null);
   const [matchStatsFixture, setMatchStatsFixture] = useState(null);
@@ -2515,13 +2595,29 @@ const EnhancedAcademyTab = ({ groups, players, onRefresh }) => {
             </div>
             {showFixtureForm && (
               <FormModal title="Νέος Αγώνας" onClose={() => setShowFixtureForm(false)} onSave={handleSaveFixture} saving={savingFixture}>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Γηπεδούχος *"><AdminInput value={fixtureForm.home_team} onChange={e => setFixtureForm({...fixtureForm, home_team: e.target.value})} /></Field>
-                  <Field label="Φιλοξενούμενος *"><AdminInput value={fixtureForm.away_team} onChange={e => setFixtureForm({...fixtureForm, away_team: e.target.value})} /></Field>
+                <Field label="Γηπεδούχος *"><AdminInput value={fixtureForm.home_team} onChange={e => setFixtureForm({...fixtureForm, home_team: e.target.value})} /></Field>
+                <Field label="Αντίπαλος *">
+                  <AdminSelect value={fixtureForm.opponent_id} onChange={e => { const opp = opponents.find(o => o.id === e.target.value); if (opp) setFixtureForm({...fixtureForm, away_team: opp.name, away_team_logo: opp.logo_url, opponent_id: opp.id, location: opp.location || fixtureForm.location, location_url: opp.location_url || fixtureForm.location_url}); }}>
+                    <option value="">— Επιλέξτε ή πληκτρολογήστε —</option>
+                    {opponents.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </AdminSelect>
+                  <AdminInput value={fixtureForm.away_team} onChange={e => setFixtureForm({...fixtureForm, away_team: e.target.value})} placeholder="Ή πληκτρολογήστε" className="mt-1" />
+                </Field>
+                <div className="grid grid-cols-3 gap-4">
+                  <Field label="Ημερομηνία *"><AdminInput type="date" value={fixtureForm.match_date?.split('T')[0] || fixtureForm.match_date} onChange={e => setFixtureForm({...fixtureForm, match_date: e.target.value})} /></Field>
+                  <Field label="Ώρα Έναρξης"><AdminInput type="time" value={fixtureForm.match_time} onChange={e => setFixtureForm({...fixtureForm, match_time: e.target.value})} /></Field>
+                  <Field label="Ώρα Άφιξης"><AdminInput type="time" value={fixtureForm.arrival_time} onChange={e => setFixtureForm({...fixtureForm, arrival_time: e.target.value})} /></Field>
                 </div>
+                <Field label="Γήπεδο">
+                  <AdminSelect value={fixtureForm.venue_id} onChange={e => { const fac = facilities.find(f => f.id === e.target.value); if (fac) setFixtureForm({...fixtureForm, venue: fac.name, venue_id: fac.id, location: fac.address || fixtureForm.location}); }}>
+                    <option value="">— Επιλέξτε ή πληκτρολογήστε —</option>
+                    {facilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </AdminSelect>
+                  <AdminInput value={fixtureForm.venue} onChange={e => setFixtureForm({...fixtureForm, venue: e.target.value})} placeholder="Ή πληκτρολογήστε" className="mt-1" />
+                </Field>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Ημ/νία & Ώρα *"><AdminInput type="datetime-local" value={fixtureForm.match_date} onChange={e => setFixtureForm({...fixtureForm, match_date: e.target.value})} /></Field>
-                  <Field label="Γήπεδο"><AdminInput value={fixtureForm.venue} onChange={e => setFixtureForm({...fixtureForm, venue: e.target.value})} /></Field>
+                  <Field label="Τοποθεσία"><AdminInput value={fixtureForm.location} onChange={e => setFixtureForm({...fixtureForm, location: e.target.value})} /></Field>
+                  <Field label="Google Maps"><AdminInput value={fixtureForm.location_url} onChange={e => setFixtureForm({...fixtureForm, location_url: e.target.value})} placeholder="https://maps.google.com/..." /></Field>
                 </div>
                 <Field label="Διοργάνωση"><AdminInput value={fixtureForm.competition} onChange={e => setFixtureForm({...fixtureForm, competition: e.target.value})} placeholder="Πρωτάθλημα U12" /></Field>
               </FormModal>
@@ -3130,7 +3226,7 @@ const AdminPanel = ({ user, onLogout }) => {
   const [data, setData] = useState({
     stats: {}, players: [], fixtures: [], news: [], standings: [],
     academyGroups: [], staff: [], venues: [], seasons: [], messages: [], club: {},
-    teams: []
+    teams: [], opponents: [], facilities: []
   });
 
   const toggleGroup = (groupId) => {
@@ -3140,7 +3236,7 @@ const AdminPanel = ({ user, onLogout }) => {
   const fetchAll = useCallback(async () => {
     try {
       const headers = getAuthHeaders();
-      const [stats, players, fixtures, news, standings, groups, staffRes, venues, seasons, messages, club, teamsRes] = await Promise.all([
+      const [stats, players, fixtures, news, standings, groups, staffRes, venues, seasons, messages, club, teamsRes, opponentsRes, facilitiesRes] = await Promise.all([
         axios.get(`${API}/admin/dashboard`, { headers }),
         axios.get(`${API}/players?is_active=true`),
         axios.get(`${API}/fixtures`),
@@ -3153,12 +3249,15 @@ const AdminPanel = ({ user, onLogout }) => {
         axios.get(`${API}/admin/contact`, { headers }),
         axios.get(`${API}/club`),
         axios.get(`${API}/teams`),
+        axios.get(`${API}/admin/opponents`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/facilities`, { headers }).catch(() => ({ data: [] })),
       ]);
       setData({
         stats: stats.data, players: players.data, fixtures: fixtures.data,
         news: news.data, standings: standings.data, academyGroups: groups.data,
         staff: staffRes.data, venues: venues.data, seasons: seasons.data,
-        messages: messages.data, club: club.data, teams: teamsRes.data
+        messages: messages.data, club: club.data, teams: teamsRes.data,
+        opponents: opponentsRes.data, facilities: facilitiesRes.data
       });
     } catch (e) {
       console.error("Error fetching admin data:", e);
@@ -3224,9 +3323,9 @@ const AdminPanel = ({ user, onLogout }) => {
     switch (activeTab) {
       case "dashboard": return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
       case "livescore": return <LiveScoreTab fixtures={data.fixtures} players={data.players} onRefresh={fetchAll} />;
-      case "teams": return <TeamsTab teams={data.teams} players={data.players} fixtures={data.fixtures} staff={data.staff} standings={data.standings} onRefresh={fetchAll} onTabChange={setActiveTab} />;
+      case "teams": return <TeamsTab teams={data.teams} players={data.players} fixtures={data.fixtures} staff={data.staff} standings={data.standings} opponents={data.opponents} facilities={data.facilities} onRefresh={fetchAll} onTabChange={setActiveTab} />;
       case "standings": return <StandingsTab standings={data.standings} onRefresh={fetchAll} />;
-      case "academy": return <EnhancedAcademyTab groups={data.academyGroups} players={data.players} onRefresh={fetchAll} />;
+      case "academy": return <EnhancedAcademyTab groups={data.academyGroups} players={data.players} opponents={data.opponents} facilities={data.facilities} onRefresh={fetchAll} />;
       case "registrations": return <RegistrationsTab academyGroups={data.academyGroups} onRefresh={fetchAll} />;
       case "news": return <NewsTab news={data.news} onRefresh={fetchAll} />;
       case "gallery": return <GalleryTab onRefresh={fetchAll} />;
@@ -3245,7 +3344,7 @@ const AdminPanel = ({ user, onLogout }) => {
       // Legacy tabs (accessible from dashboard stats)
       case "players": return <PlayersTab players={data.players} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
       case "staff": return <StaffTab staff={data.staff} onRefresh={fetchAll} />;
-      case "fixtures": return <FixturesTab fixtures={data.fixtures} onRefresh={fetchAll} />;
+      case "fixtures": return <FixturesTab fixtures={data.fixtures} opponents={data.opponents} facilities={data.facilities} onRefresh={fetchAll} />;
       case "club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
       case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
       case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
