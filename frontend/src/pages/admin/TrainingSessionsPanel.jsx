@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Save, RefreshCw, Trash2, Edit2, Clock, Dumbbell, Tag, Users, ChevronDown, ChevronRight, Calendar, MapPin } from "lucide-react";
+import { Plus, X, Save, RefreshCw, Trash2, Edit2, Clock, Dumbbell, Tag, Users, ChevronDown, ChevronRight, Calendar, MapPin, Check, UserX } from "lucide-react";
 import axios from "axios";
+import InlineAttendance from "./InlineAttendance";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const getAuthHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("adminToken")}` });
@@ -23,7 +24,7 @@ const INTENSITY_MAP = {
   high: { label: "Υψηλή", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20" },
 };
 
-const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [] }) => {
+const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], players = [] }) => {
   const [sessions, setSessions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
@@ -353,6 +354,10 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [] }) => {
                         </div>
                       </div>
                     )}
+                    {/* Inline Attendance */}
+                    <div className="border-t border-[#1e1e1e] pt-3 mt-2">
+                      <InlineAttendance eventId={s.id} players={players} />
+                    </div>
                   </div>
                 )}
               </div>

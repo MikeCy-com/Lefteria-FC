@@ -3096,9 +3096,8 @@ async def get_event_attendance(event_id: str, current_user: dict = Depends(get_c
     return records
 
 @api_router.get("/admin/attendance/stats")
-async def get_attendance_stats(team_id: str = None, academy_group_id: str = None, current_user: dict = Depends(get_current_user)):
-    """Get attendance statistics: per-player attendance rates"""
-    # Get all events for this team/group
+async def get_attendance_stats(team_id: str = None, academy_group_id: str = None, player_id: str = None, current_user: dict = Depends(get_current_user)):
+    """Get attendance statistics: per-player attendance rates. Includes events, fixtures, and training sessions."""
     event_query = {}
     if team_id:
         event_query["team_id"] = team_id
@@ -3108,7 +3107,6 @@ async def get_attendance_stats(team_id: str = None, academy_group_id: str = None
     events = await db.events.find(event_query, {"_id": 0, "id": 1}).to_list(500)
     event_ids = [e["id"] for e in events]
 
-    # Also include fixtures
     fixture_query = {}
     if team_id:
         fixture_query["team_id"] = team_id
@@ -3117,13 +3115,24 @@ async def get_attendance_stats(team_id: str = None, academy_group_id: str = None
     fixtures = await db.fixtures.find(fixture_query, {"_id": 0, "id": 1}).to_list(500)
     event_ids.extend([f["id"] for f in fixtures])
 
+    # Include training sessions
+    training_query = {}
+    if team_id:
+        training_query["team_id"] = team_id
+    if academy_group_id:
+        training_query["academy_group_id"] = academy_group_id
+    trainings = await db.training_sessions.find(training_query, {"_id": 0, "id": 1}).to_list(500)
+    event_ids.extend([t["id"] for t in trainings])
+
     if not event_ids:
         return {"total_events": 0, "player_stats": [], "overall": {"going": 0, "not_going": 0, "no_response": 0}}
 
-    # Get all attendance records for these events
-    all_records = await db.event_attendance.find({"event_id": {"$in": event_ids}}, {"_id": 0}).to_list(5000)
+    att_query = {"event_id": {"$in": event_ids}}
+    if player_id:
+        att_query["player_id"] = player_id
 
-    # Aggregate per player
+    all_records = await db.event_attendance.find(att_query, {"_id": 0}).to_list(5000)
+
     player_map = {}
     for r in all_records:
         pid = r["player_id"]

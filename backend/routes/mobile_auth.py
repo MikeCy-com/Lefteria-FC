@@ -261,6 +261,37 @@ def setup_mobile_routes(db):
         events = await db.events.find({"date": {"$gte": now}}, {"_id": 0}).sort("date", 1).to_list(20)
         relevant_events = [e for e in events if not e.get("academy_group_id") or e.get("academy_group_id") in group_ids]
 
+        # Also include training sessions as events
+        for gid in group_ids:
+            trainings = await db.training_sessions.find({"academy_group_id": gid, "date": {"$gte": now}}, {"_id": 0}).sort("date", 1).to_list(20)
+            for t in trainings:
+                relevant_events.append({
+                    "id": t["id"],
+                    "title": t.get("title", "Προπόνηση"),
+                    "date": t.get("date", ""),
+                    "start_time": t.get("start_time", ""),
+                    "location": t.get("venue", ""),
+                    "location_url": t.get("location_url", ""),
+                    "arrival_time": t.get("arrival_time", ""),
+                    "event_type": "training",
+                    "type": "training",
+                })
+        # Add upcoming fixtures as events too
+        for fx in fixtures:
+            if fx.get("match_date", "") >= now:
+                relevant_events.append({
+                    "id": fx["id"],
+                    "title": f"{fx.get('home_team', '')} vs {fx.get('away_team', '')}",
+                    "date": fx.get("match_date", ""),
+                    "start_time": fx.get("match_time", ""),
+                    "location": fx.get("venue", ""),
+                    "location_url": fx.get("location_url", ""),
+                    "arrival_time": fx.get("arrival_time", ""),
+                    "event_type": "match",
+                    "type": "match",
+                })
+        relevant_events.sort(key=lambda e: e.get("date", ""))
+
         # Announcements
         posts = await db.posts.find({}, {"_id": 0}).sort("created_at", -1).to_list(10)
         relevant_posts = [p for p in posts if not p.get("academy_group_id") or p.get("academy_group_id") in group_ids]
@@ -271,11 +302,11 @@ def setup_mobile_routes(db):
             recs = await db.financial_records.find({"player_id": pid}, {"_id": 0}).sort("created_at", -1).to_list(20)
             fin_records.extend(recs)
 
-        # Attendance stats
+        # Attendance stats from unified event_attendance
         attendance_data = []
         for pid in player_ids:
-            att = await db.attendance.find({"player_id": pid, "status": "going"}, {"_id": 0}).to_list(200)
-            total_att = await db.attendance.find({"player_id": pid}, {"_id": 0}).to_list(200)
+            att = await db.event_attendance.find({"player_id": pid, "status": "going"}, {"_id": 0}).to_list(500)
+            total_att = await db.event_attendance.find({"player_id": pid}, {"_id": 0}).to_list(500)
             attendance_data.append({
                 "player_id": pid,
                 "attended": len(att),
@@ -460,12 +491,41 @@ def setup_mobile_routes(db):
             upsert=True
         )
 
+        # Also sync to event_attendance for admin visibility
+        player_doc = await db.players.find_one({"id": player_id}, {"_id": 0, "name": 1})
+        await db.event_attendance.update_one(
+            {"event_id": event_id, "player_id": player_id},
+            {"$set": {
+                "event_id": event_id,
+                "player_id": player_id,
+                "player_name": player_doc.get("name", "") if player_doc else "",
+                "status": status,
+                "marked_at": datetime.now(timezone.utc).isoformat(),
+                "marked_by": f"mobile:{user['role']}",
+                "source": "mobile",
+            }},
+            upsert=True
+        )
+
         return {"message": "Availability submitted", "status": status}
 
     # ==================== GET AVAILABILITY FOR EVENT ====================
     @router.get("/mobile/availability/{event_id}")
     async def get_availability(event_id: str, user: dict = Depends(get_mobile_user)):
         avails = await db.availability.find({"event_id": event_id}, {"_id": 0}).to_list(100)
+        return avails
+
+    @router.get("/mobile/my-availability")
+    async def get_my_availability(user: dict = Depends(get_mobile_user)):
+        """Get all availability responses for the current user's linked players."""
+        player_ids = []
+        if user.get("linked_player_id"):
+            player_ids.append(user["linked_player_id"])
+        if user["role"] == "parent" and user.get("children_ids"):
+            player_ids.extend(user["children_ids"])
+        if not player_ids:
+            return []
+        avails = await db.availability.find({"player_id": {"$in": player_ids}}, {"_id": 0}).to_list(500)
         return avails
 
     # ==================== ROLE DETECTION HELPER ====================

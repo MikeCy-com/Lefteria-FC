@@ -86,6 +86,49 @@ const EmptyState = ({ icon: Icon, text }) => (
   </div>
 );
 
+// ==================== PLAYER ATTENDANCE STATS ====================
+const PlayerAttendanceStats = ({ playerId }) => {
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    if (!playerId) return;
+    axios.get(`${API}/admin/attendance/stats?player_id=${playerId}`, { headers: getAuthHeaders() })
+      .then(res => setStats(res.data))
+      .catch(() => {});
+  }, [playerId]);
+
+  if (!stats || !stats.player_stats?.length) return null;
+  const ps = stats.player_stats[0];
+
+  return (
+    <div className="mt-6 bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-attendance-stats">
+      <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Παρουσίες</h3>
+      <div className="grid grid-cols-4 gap-3">
+        <div className="text-center">
+          <p className="text-2xl font-['Bebas_Neue'] text-emerald-400">{ps.going || 0}</p>
+          <p className="text-[10px] text-zinc-500">Παρών</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-['Bebas_Neue'] text-red-400">{ps.not_going || 0}</p>
+          <p className="text-[10px] text-zinc-500">Απών</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-['Bebas_Neue'] text-zinc-400">{ps.no_response || 0}</p>
+          <p className="text-[10px] text-zinc-500">Χ. Απάντ.</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-['Bebas_Neue'] text-[#F5A623]">{ps.attendance_rate || 0}%</p>
+          <p className="text-[10px] text-zinc-500">Ποσοστό</p>
+        </div>
+      </div>
+      {/* Progress bar */}
+      <div className="mt-3 h-2 rounded-full bg-[#1a1a1a] overflow-hidden">
+        <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${ps.attendance_rate || 0}%` }} />
+      </div>
+      <p className="text-[10px] text-zinc-500 mt-1">Σύνολο: {ps.total || 0} εκδηλώσεις (αγώνες + προπονήσεις)</p>
+    </div>
+  );
+};
+
 // ==================== ADMIN PLAYER PROFILE VIEW ====================
 const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) => {
   const [editing, setEditing] = useState(false);
@@ -228,6 +271,9 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
             <PlayerEvaluationPanel playerId={player.id} />
           </div>
         </div>
+
+        {/* Attendance Stats */}
+        <PlayerAttendanceStats playerId={player.id} />
         </>
       ) : (
         <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:p-8" data-testid="player-edit-form">
@@ -2119,7 +2165,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
         )}
 
         {detailTab === "training" && (
-          <TrainingSessionsPanel teamId={selectedTeam.id} facilities={facilities} />
+          <TrainingSessionsPanel teamId={selectedTeam.id} facilities={facilities} players={teamPlayers} />
         )}
 
         {detailTab === "videos" && (
@@ -2673,7 +2719,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
 
         {/* ── Training Sessions ── */}
         {detailTab === "training" && (
-          <TrainingSessionsPanel academyGroupId={selectedGroup.id} facilities={facilities} />
+          <TrainingSessionsPanel academyGroupId={selectedGroup.id} facilities={facilities} players={groupPlayers} />
         )}
 
         {/* ── Video Analytics ── */}
