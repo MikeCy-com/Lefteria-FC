@@ -1,7 +1,7 @@
 # Lefteria FC - Football Club CMS & Public Website
 
 ## Original Problem Statement
-Complete football club CMS and public website for "Lefteria FC". Fully functioning CMS + Public facing club hub, entirely in Greek. Mobile PWA with Role-based OTP login, advanced scheduling, scoped venues/opponents, and interactive mobile attendance tracking. Mobile PWA redesigned with PlayerDex-inspired expandable drill-down UI and public/private chat system.
+Complete football club CMS and public website for "Lefteria FC". Fully functioning CMS + Public facing club hub, entirely in Greek. Mobile PWA with Role-based OTP login. Mobile PWA redesigned with premium dark-mode card-based UI inspired by 3 soccer app design references.
 
 ## Architecture
 - **Frontend**: React, Tailwind CSS, PWA
@@ -13,7 +13,7 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Academy age groups: **U6 to U12** only
 - Currency: **Euro** symbol
 - OTP via Twilio is **mocked**
-- Mobile PWA uses ONLY bottom navigation (no top tabs)
+- Mobile PWA uses ONLY bottom navigation (5 tabs, no top tabs)
 
 ## What's Been Implemented
 
@@ -29,25 +29,40 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Homepage, Team hub, Academy pages, Match reports
 - News, Contact, Customer auth, Shop, POTM voting
 
-### Mobile PWA - PlayerDex-Inspired Redesign (COMPLETED)
-- **Bottom Navigation**: 4 tabs only (Home, Schedule, Chat, Profile)
-- **Home View**: Team cards, children quick-access, quick stats, upcoming events
-- **Team Drill-Down**: Expandable sections - Events, Roster, Staff, Announcements
-- **Chat System**: Team chats + private messaging, message polling
-- **Profile Page**: Avatar upload, editable name/email, logout
+### Mobile PWA - Premium Redesign (COMPLETED Feb 2026)
+**5-Tab Bottom Navigation:**
+- Αρχικη (Home) → Dashboard
+- Ημερολογιο (Calendar) → Schedule
+- Αγωνες (Matches) → Central elevated tab, upcoming/completed matches
+- Μηνυματα (Chat) → Team + private messaging
+- Προφιλ (Profile) → User profile with avatar
 
-### Codebase Refactoring (COMPLETED - Feb 2026)
-**Backend server.py: 3638 → 2782 lines (-24%)**
-- Extracted `models.py` (785 lines) - All Pydantic models + Enums
-- Extracted `auth.py` (106 lines) - JWT auth helpers + dependencies
-- Extracted `database.py` (7 lines) - MongoDB connection module
+**Home Dashboard (Card-based):**
+- Welcome header with avatar + greeting ("Καλως ηρθες, [name]")
+- 3 Quick Stat cards (Teams, Upcoming Matches, Attendance %)
+- Next Match card with VS layout
+- My Kids horizontal scrollable cards
+- Teams list with age range badges
+- Recent Results with W/D/L indicators
 
-**Frontend AdminPanel.jsx: 3669 → 2223 lines (-39%)**
-- Extracted `admin/TeamsTab.jsx` (429 lines) - Teams CRUD with drill-down
-- Extracted `admin/EnhancedAcademyTab.jsx` (526 lines) - Academy CRUD with drill-down
-- Extracted `admin/RegistrationsTab.jsx` (201 lines) - Academy registrations management
-- Extracted `admin/ShopTabs.jsx` (287 lines) - Products, Tickets, Orders
-- Extracted `admin/shared.jsx` (70 lines) - FormModal, Field, AdminInput, etc.
+**Matches Page (NEW):**
+- Upcoming/Completed filter pills
+- Match score cards with team shields, VS/score, competition badge
+- Date/venue/map info
+- Availability buttons (Παω/Δεν παω)
+
+**Team Drill-Down:**
+- Expandable accordion sections: Events, Roster, Staff, Announcements
+- Player profile view with stats (Goals, Assists, Minutes)
+- Event detail with availability prompt
+
+**Chat System:**
+- Team chats per academy group
+- Private messaging between parents/coaches
+
+### Codebase Refactoring (COMPLETED)
+- Backend: server.py 3638→2782 lines; extracted models.py, auth.py, database.py
+- Frontend: AdminPanel.jsx 3669→2223 lines; extracted TeamsTab, AcademyTab, RegistrationsTab, ShopTabs
 
 ## Prioritized Backlog
 ### P2
@@ -59,18 +74,18 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Multi-language support (English toggle)
 
 ## Key Files
-### Backend (refactored)
-- `/app/backend/server.py` - Main server routes (2782 lines)
-- `/app/backend/models.py` - All Pydantic models + Enums (785 lines)
-- `/app/backend/auth.py` - Auth helpers (106 lines)
-- `/app/backend/database.py` - MongoDB connection (7 lines)
-- `/app/backend/routes/mobile_auth.py` - Mobile auth + chat + profile APIs
+### Mobile PWA
+- `/app/frontend/src/mobile/MobileApp.jsx` - 5-tab routing
+- `/app/frontend/src/mobile/components/BottomNav.jsx` - 5-tab nav with center elevated
+- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` - Dashboard-style home
+- `/app/frontend/src/mobile/pages/MatchesPage.jsx` - Matches page
+- `/app/frontend/src/mobile/pages/ChatPage.jsx` - Chat system
+- `/app/frontend/src/mobile/pages/SchedulePage.jsx` - Calendar
+- `/app/frontend/src/mobile/pages/ProfilePage.jsx` - Profile
+- `/app/frontend/src/mobile/components/SharedComponents.jsx` - Shared UI components
 
-### Frontend (refactored)
-- `/app/frontend/src/pages/AdminPanel.jsx` - Admin orchestrator (2223 lines)
-- `/app/frontend/src/pages/admin/TeamsTab.jsx` - Teams tab
-- `/app/frontend/src/pages/admin/EnhancedAcademyTab.jsx` - Academy tab
-- `/app/frontend/src/pages/admin/RegistrationsTab.jsx` - Registrations tab
-- `/app/frontend/src/pages/admin/ShopTabs.jsx` - Products/Tickets/Orders
-- `/app/frontend/src/pages/admin/shared.jsx` - Shared components
-- `/app/frontend/src/mobile/` - Mobile PWA components
+### Backend
+- `/app/backend/server.py` - Main routes (2782 lines)
+- `/app/backend/models.py` - Pydantic models (785 lines)
+- `/app/backend/auth.py` - Auth helpers (106 lines)
+- `/app/backend/routes/mobile_auth.py` - Mobile auth + chat + availability
