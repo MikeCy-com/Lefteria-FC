@@ -12,7 +12,7 @@ const BottomNav = ({ activeTab, onTabChange, unreadCount = 0 }) => {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-[9999]"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", marginBottom: "32px" }}
       data-testid="bottom-nav"
     >
       <div className="bg-[#0a0a0a]/90 backdrop-blur-xl border-t border-white/[0.06]">

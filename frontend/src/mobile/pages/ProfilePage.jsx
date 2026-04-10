@@ -187,7 +187,7 @@ const ProfilePage = () => {
       {/* Logout */}
       <button
         onClick={handleLogout}
-        className="w-full mt-6 bg-red-500/10 border border-red-500/20 rounded-2xl py-3.5 text-red-400 font-medium flex items-center justify-center gap-2"
+        className="w-full mt-6 mb-10 bg-red-500/10 border border-red-500/20 rounded-2xl py-3.5 text-red-400 font-medium flex items-center justify-center gap-2"
         data-testid="logout-btn"
       >
         <LogOut size={18} />

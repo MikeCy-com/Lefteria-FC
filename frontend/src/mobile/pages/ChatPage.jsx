@@ -158,7 +158,7 @@ const ChatPage = () => {
       : selectedConvo.other_user?.name || "Συζήτηση";
 
     return (
-      <div className="flex flex-col h-[calc(100vh-120px)]" data-testid="conversation-view">
+      <div className="flex flex-col h-[calc(100vh-180px)]" data-testid="conversation-view">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1e1e1e] flex-shrink-0">
           <button onClick={() => { setView("list"); clearInterval(pollRef.current); fetchConversations(); }}
@@ -216,7 +216,7 @@ const ChatPage = () => {
         </div>
 
         {/* Input */}
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-[#1e1e1e] flex-shrink-0 bg-[#0a0a0a]">
+        <div className="flex items-center gap-2 px-4 py-3 pb-6 border-t border-[#1e1e1e] flex-shrink-0 bg-[#0a0a0a]">
           <input value={newMsg} onChange={e => setNewMsg(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
             placeholder="Γράψτε μήνυμα..."

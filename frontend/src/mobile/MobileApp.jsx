@@ -40,7 +40,7 @@ const MobileApp = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white max-w-md mx-auto relative" data-testid="mobile-app">
-      <div className="pb-20">
+      <div className="pb-36">
         {renderContent()}
       </div>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
