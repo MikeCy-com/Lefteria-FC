@@ -6,30 +6,40 @@ load_dotenv(ROOT_DIR / '.env')
 
 from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Response, Depends, UploadFile, File
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 import aiofiles
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
-from enum import Enum
-import bcrypt
-import jwt
-import base64
 import json
 from pywebpush import webpush, WebPushException
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# JWT Config
-JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-secret-key')
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+# Shared modules
+from database import db, client
+from auth import (
+    hash_password, verify_password, create_access_token,
+    get_current_user, get_current_customer, get_optional_customer,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+)
+from models import (
+    PlayerPosition, MatchStatus, TeamType, StaffRole, EventType, GalleryCategory,
+    LoginRequest, LoginResponse,
+    AcademyGroup, AcademyGroupCreate, Team, TeamCreate,
+    RegistrationCreate, Registration,
+    PlayerStatistics, PreviousClub, Player, PlayerCreate, PlayerUpdate,
+    Staff, StaffCreate, PlayerPerformance, Fixture, FixtureCreate,
+    MatchEvent, MatchEventCreate, MatchStats, MatchStatsUpdate,
+    Standing, StandingCreate, Venue, VenueCreate, Season, SeasonCreate,
+    ClubProfile, News, NewsCreate, ContactMessage, ContactMessageCreate,
+    Transfer, TransferCreate, GalleryItem, GalleryItemCreate,
+    PushSubscription, PushSubscriptionCreate,
+    StandingsColumnConfig, SiteSettings,
+    ProductCreate, ProductUpdate, TicketCreate, TicketUpdate,
+    CartItemAdd, CartItemUpdate, CartTicketAdd, OrderCreate,
+    CustomerRegister, CustomerLogin, CustomerChangePassword, CustomerUpdateProfile,
+    PotmVote,
+)
 
 # VAPID Config for Web Push
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
@@ -53,778 +63,6 @@ async def serve_upload(path: str):
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(str(file_path))
-
-# ==================== ENUMS ====================
-class PlayerPosition(str, Enum):
-    GOALKEEPER = "Goalkeeper"
-    DEFENDER = "Defender"
-    MIDFIELDER = "Midfielder"
-    FORWARD = "Forward"
-
-class MatchStatus(str, Enum):
-    SCHEDULED = "Scheduled"
-    LIVE = "Live"
-    HALF_TIME = "Half Time"
-    COMPLETED = "Completed"
-    POSTPONED = "Postponed"
-
-class TeamType(str, Enum):
-    FIRST_TEAM = "First Team"
-    ACADEMY = "Academy"
-
-class StaffRole(str, Enum):
-    HEAD_COACH = "Head Coach"
-    ASSISTANT_COACH = "Assistant Coach"
-    GOALKEEPER_COACH = "Goalkeeper Coach"
-    FITNESS_COACH = "Fitness Coach"
-    PHYSIO = "Physiotherapist"
-    TEAM_MANAGER = "Team Manager"
-    YOUTH_COACH = "Youth Coach"
-    SCOUT = "Scout"
-
-# ==================== AUTH HELPERS ====================
-
-def hash_password(password: str) -> str:
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
-
-def create_access_token(user_id: str, username: str, role: str = "admin") -> str:
-    payload = {
-        "sub": user_id,
-        "username": username,
-        "role": role,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        "type": "access"
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-def _extract_token(request: Request) -> str:
-    token = request.cookies.get("access_token")
-    if not token:
-        token = request.cookies.get("user_access_token")
-    if not token:
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-    return token
-
-async def get_current_user(request: Request) -> dict:
-    token = _extract_token(request)
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
-        user = await db.admin_users.find_one({"id": payload["sub"]}, {"_id": 0})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        user.pop("password_hash", None)
-        return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-async def get_current_customer(request: Request) -> dict:
-    token = request.cookies.get("user_access_token")
-    if not token:
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-    if not token:
-        raise HTTPException(status_code=401, detail="Πρέπει να συνδεθείτε")
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access" or payload.get("role") != "customer":
-            raise HTTPException(status_code=401, detail="Invalid token")
-        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        user.pop("password_hash", None)
-        return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-async def get_optional_customer(request: Request):
-    token = request.cookies.get("user_access_token")
-    if not token:
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-    if not token:
-        return None
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("role") != "customer":
-            return None
-        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
-        if user:
-            user.pop("password_hash", None)
-        return user
-    except Exception:
-        return None
-
-# ==================== MODELS ====================
-
-# Auth Models
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-class LoginResponse(BaseModel):
-    id: str
-    username: str
-    token: str
-
-# Academy Group Model
-class AcademyGroup(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str  # e.g., "U12", "U10", "U8"
-    age_range: str  # e.g., "16-18 ετών"
-    coach_id: Optional[str] = None
-    coach_name: Optional[str] = None
-    training_schedule: str
-    description: str
-    max_players: int = 25
-    season: str = "2025/26"
-    banner_url: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class AcademyGroupCreate(BaseModel):
-    name: str
-    age_range: str
-    coach_id: Optional[str] = None
-    coach_name: Optional[str] = None
-    training_schedule: str
-    description: str
-    max_players: int = 25
-    season: str = "2025/26"
-    banner_url: Optional[str] = None
-
-# Team Model (Senior Teams)
-class TeamCreate(BaseModel):
-    name: str
-    level: str = "Α' Ομάδα"
-    description: str = ""
-    banner_url: Optional[str] = None
-
-class Team(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    level: str = "Α' Ομάδα"
-    description: str = ""
-    banner_url: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-# Academy Registration Model
-class RegistrationCreate(BaseModel):
-    # Player Info
-    player_first_name: str
-    player_last_name: str
-    player_dob: str
-    player_gender: str
-    player_address: str
-    player_city: str
-    player_postal_code: str
-    # Parent/Guardian Info
-    parent_name: str
-    parent_relationship: str
-    parent_phone: str
-    parent_email: str
-    # Emergency Contact
-    emergency_name: str
-    emergency_phone: str
-    emergency_relationship: str
-    # Medical Info
-    has_allergies: bool = False
-    allergies_details: str = ""
-    has_conditions: bool = False
-    conditions_details: str = ""
-    has_medication: bool = False
-    medication_details: str = ""
-    # Consents
-    consent_participation: bool = False
-    consent_medical_auth: bool = False
-    consent_gdpr: bool = False
-    consent_media: Optional[bool] = None
-    consent_communications: bool = False
-    comm_email: bool = False
-    comm_sms: bool = False
-    consent_liability: bool = False
-    consent_financial: bool = False
-    # Payment
-    payment_method: str = "cash"
-    # Signature
-    signature_data: str = ""
-    signature_date: str = ""
-
-class Registration(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    # Player
-    player_first_name: str
-    player_last_name: str
-    player_dob: str
-    player_gender: str
-    player_address: str
-    player_city: str
-    player_postal_code: str
-    # Parent/Guardian
-    parent_name: str
-    parent_relationship: str
-    parent_phone: str
-    parent_email: str
-    # Emergency
-    emergency_name: str
-    emergency_phone: str
-    emergency_relationship: str
-    # Medical
-    has_allergies: bool = False
-    allergies_details: str = ""
-    has_conditions: bool = False
-    conditions_details: str = ""
-    has_medication: bool = False
-    medication_details: str = ""
-    # Consents
-    consent_participation: bool = False
-    consent_medical_auth: bool = False
-    consent_gdpr: bool = False
-    consent_media: Optional[bool] = None
-    consent_communications: bool = False
-    comm_email: bool = False
-    comm_sms: bool = False
-    consent_liability: bool = False
-    consent_financial: bool = False
-    # Payment & Signature
-    payment_method: str = "cash"
-    signature_data: str = ""
-    signature_date: str = ""
-    # Status
-    status: str = "pending"
-    assigned_group_id: Optional[str] = None
-    admin_notes: str = ""
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-# Player Profile Model (Extended)
-class PlayerStatistics(BaseModel):
-    appearances: int = 0
-    goals: int = 0
-    assists: int = 0
-    yellow_cards: int = 0
-    red_cards: int = 0
-    minutes_played: int = 0
-    clean_sheets: int = 0  # for goalkeepers
-
-class PreviousClub(BaseModel):
-    club_name: str
-    from_year: str
-    to_year: str
-    appearances: int = 0
-    goals: int = 0
-
-class Player(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    # Basic Info
-    name: str
-    number: int
-    position: PlayerPosition
-    nationality: str
-    date_of_birth: Optional[str] = None
-    age: int
-    height: Optional[str] = None  # e.g., "1.85m"
-    weight: Optional[str] = None  # e.g., "78kg"
-    preferred_foot: Optional[str] = None  # Left/Right/Both
-    # Team Info
-    team_type: TeamType = TeamType.FIRST_TEAM
-    academy_group_id: Optional[str] = None
-    academy_group_name: Optional[str] = None
-    team_id: Optional[str] = None
-    # Profile
-    image_url: Optional[str] = None
-    bio: Optional[str] = None
-    # Statistics
-    statistics: PlayerStatistics = Field(default_factory=PlayerStatistics)
-    season_statistics: Dict[str, PlayerStatistics] = Field(default_factory=dict)
-    # Career History
-    previous_clubs: List[PreviousClub] = Field(default_factory=list)
-    joined_date: Optional[str] = None
-    contract_until: Optional[str] = None
-    # Social Media
-    instagram: Optional[str] = None
-    twitter: Optional[str] = None
-    facebook: Optional[str] = None
-    # Parent/Guardian Contact (for academy players)
-    parent_name: Optional[str] = None
-    parent_phone: Optional[str] = None
-    parent_email: Optional[str] = None
-    phone: Optional[str] = None
-    # Multi-group support (academy)
-    academy_group_ids: List[str] = Field(default_factory=list)
-    # Meta
-    is_active: bool = True
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class PlayerCreate(BaseModel):
-    name: str
-    number: int
-    position: PlayerPosition
-    nationality: str
-    date_of_birth: Optional[str] = None
-    age: int
-    height: Optional[str] = None
-    weight: Optional[str] = None
-    preferred_foot: Optional[str] = None
-    team_type: TeamType = TeamType.FIRST_TEAM
-    academy_group_id: Optional[str] = None
-    team_id: Optional[str] = None
-    image_url: Optional[str] = None
-    bio: Optional[str] = None
-    previous_clubs: List[PreviousClub] = Field(default_factory=list)
-    joined_date: Optional[str] = None
-    contract_until: Optional[str] = None
-    instagram: Optional[str] = None
-    twitter: Optional[str] = None
-    facebook: Optional[str] = None
-    parent_name: Optional[str] = None
-    parent_phone: Optional[str] = None
-    parent_email: Optional[str] = None
-    phone: Optional[str] = None
-    academy_group_ids: List[str] = Field(default_factory=list)
-
-class PlayerUpdate(BaseModel):
-    name: Optional[str] = None
-    number: Optional[int] = None
-    position: Optional[PlayerPosition] = None
-    nationality: Optional[str] = None
-    date_of_birth: Optional[str] = None
-    age: Optional[int] = None
-    height: Optional[str] = None
-    weight: Optional[str] = None
-    preferred_foot: Optional[str] = None
-    team_type: Optional[TeamType] = None
-    academy_group_id: Optional[str] = None
-    team_id: Optional[str] = None
-    image_url: Optional[str] = None
-    bio: Optional[str] = None
-    previous_clubs: Optional[List[PreviousClub]] = None
-    joined_date: Optional[str] = None
-    contract_until: Optional[str] = None
-    instagram: Optional[str] = None
-    twitter: Optional[str] = None
-    facebook: Optional[str] = None
-    is_active: Optional[bool] = None
-    statistics: Optional[PlayerStatistics] = None
-    parent_name: Optional[str] = None
-    parent_phone: Optional[str] = None
-    parent_email: Optional[str] = None
-    phone: Optional[str] = None
-    academy_group_ids: Optional[List[str]] = None
-
-# Staff Model
-class Staff(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    role: StaffRole
-    nationality: str
-    date_of_birth: Optional[str] = None
-    image_url: Optional[str] = None
-    bio: Optional[str] = None
-    phone: Optional[str] = None
-    team_type: TeamType = TeamType.FIRST_TEAM
-    academy_group_id: Optional[str] = None
-    joined_date: Optional[str] = None
-    previous_experience: List[Dict[str, str]] = Field(default_factory=list)
-    qualifications: List[str] = Field(default_factory=list)
-    is_active: bool = True
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class StaffCreate(BaseModel):
-    name: str
-    role: StaffRole
-    nationality: str
-    date_of_birth: Optional[str] = None
-    image_url: Optional[str] = None
-    bio: Optional[str] = None
-    phone: Optional[str] = None
-    team_type: TeamType = TeamType.FIRST_TEAM
-    academy_group_id: Optional[str] = None
-    joined_date: Optional[str] = None
-    previous_experience: List[Dict[str, str]] = Field(default_factory=list)
-    qualifications: List[str] = Field(default_factory=list)
-
-# Fixture with Player Performance
-class PlayerPerformance(BaseModel):
-    player_id: str
-    player_name: str
-    minutes_played: int = 0
-    goals: int = 0
-    assists: int = 0
-    yellow_card: bool = False
-    red_card: bool = False
-    rating: Optional[float] = None
-    is_starter: bool = True
-    substituted_in: Optional[int] = None
-    substituted_out: Optional[int] = None
-
-class Fixture(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    home_team: str
-    home_team_logo: Optional[str] = None
-    away_team: str
-    away_team_logo: Optional[str] = None
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    match_date: str
-    match_time: Optional[str] = None
-    arrival_time: Optional[str] = None
-    venue: str
-    venue_id: Optional[str] = None
-    location: Optional[str] = None
-    location_url: Optional[str] = None
-    competition: str
-    season: str = "2025/26"
-    status: MatchStatus = MatchStatus.SCHEDULED
-    academy_group_id: Optional[str] = None
-    opponent_id: Optional[str] = None
-    # Player Performances
-    player_performances: List[PlayerPerformance] = Field(default_factory=list)
-    # Match Events
-    scorers: List[Dict[str, Any]] = Field(default_factory=list)
-    # Meta
-    attendance: Optional[int] = None
-    referee: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class FixtureCreate(BaseModel):
-    home_team: str
-    home_team_logo: Optional[str] = None
-    away_team: str
-    away_team_logo: Optional[str] = None
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    match_date: str
-    match_time: Optional[str] = None
-    arrival_time: Optional[str] = None
-    venue: str
-    venue_id: Optional[str] = None
-    location: Optional[str] = None
-    location_url: Optional[str] = None
-    competition: str
-    season: str = "2025/26"
-    status: MatchStatus = MatchStatus.SCHEDULED
-    academy_group_id: Optional[str] = None
-    opponent_id: Optional[str] = None
-    player_performances: List[PlayerPerformance] = Field(default_factory=list)
-    scorers: List[Dict[str, Any]] = Field(default_factory=list)
-    attendance: Optional[int] = None
-    referee: Optional[str] = None
-
-# ==================== MATCH EVENTS & LIVE STATS ====================
-class EventType(str, Enum):
-    GOAL = "goal"
-    YELLOW_CARD = "yellow_card"
-    RED_CARD = "red_card"
-    SECOND_YELLOW = "second_yellow"
-    SUBSTITUTION = "substitution"
-    PENALTY_SCORED = "penalty_scored"
-    PENALTY_MISSED = "penalty_missed"
-    OWN_GOAL = "own_goal"
-    VAR_DECISION = "var_decision"
-
-class MatchEvent(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    fixture_id: str
-    event_type: EventType
-    minute: int
-    added_time: Optional[int] = None
-    team: str  # "home" or "away"
-    player_name: Optional[str] = None
-    player_id: Optional[str] = None
-    secondary_player_name: Optional[str] = None  # for subs: player coming in
-    secondary_player_id: Optional[str] = None
-    description: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class MatchEventCreate(BaseModel):
-    event_type: EventType
-    minute: int
-    added_time: Optional[int] = None
-    team: str
-    player_name: Optional[str] = None
-    player_id: Optional[str] = None
-    secondary_player_name: Optional[str] = None
-    secondary_player_id: Optional[str] = None
-    description: Optional[str] = None
-
-class MatchStats(BaseModel):
-    fixture_id: str
-    home_possession: int = 50
-    away_possession: int = 50
-    home_shots: int = 0
-    away_shots: int = 0
-    home_shots_on_target: int = 0
-    away_shots_on_target: int = 0
-    home_corners: int = 0
-    away_corners: int = 0
-    home_fouls: int = 0
-    away_fouls: int = 0
-    home_offsides: int = 0
-    away_offsides: int = 0
-    home_saves: int = 0
-    away_saves: int = 0
-    match_minute: int = 0
-    half: int = 1  # 1 or 2
-    injury_time: int = 0
-
-class MatchStatsUpdate(BaseModel):
-    home_possession: Optional[int] = None
-    away_possession: Optional[int] = None
-    home_shots: Optional[int] = None
-    away_shots: Optional[int] = None
-    home_shots_on_target: Optional[int] = None
-    away_shots_on_target: Optional[int] = None
-    home_corners: Optional[int] = None
-    away_corners: Optional[int] = None
-    home_fouls: Optional[int] = None
-    away_fouls: Optional[int] = None
-    home_offsides: Optional[int] = None
-    away_offsides: Optional[int] = None
-    home_saves: Optional[int] = None
-    away_saves: Optional[int] = None
-    match_minute: Optional[int] = None
-    half: Optional[int] = None
-    injury_time: Optional[int] = None
-
-# Standing with Logo
-class Standing(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    team_name: str
-    team_logo: Optional[str] = None
-    played: int = 0
-    won: int = 0
-    drawn: int = 0
-    lost: int = 0
-    goals_for: int = 0
-    goals_against: int = 0
-    goal_difference: int = 0
-    points: int = 0
-    competition: str
-    season: str = "2025/26"
-    position: Optional[int] = None
-    form: Optional[str] = None  # e.g., "WWDLW"
-
-class StandingCreate(BaseModel):
-    team_name: str
-    team_logo: Optional[str] = None
-    played: int = 0
-    won: int = 0
-    drawn: int = 0
-    lost: int = 0
-    goals_for: int = 0
-    goals_against: int = 0
-    points: int = 0
-    competition: str
-    season: str = "2025/26"
-    form: Optional[str] = None
-
-# Venue Model
-class Venue(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    address: str
-    city: str
-    country: str
-    capacity: Optional[int] = None
-    surface: Optional[str] = None  # e.g., "Natural Grass"
-    image_url: Optional[str] = None
-    map_url: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    is_home_ground: bool = False
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class VenueCreate(BaseModel):
-    name: str
-    address: str
-    city: str
-    country: str
-    capacity: Optional[int] = None
-    surface: Optional[str] = None
-    image_url: Optional[str] = None
-    map_url: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    is_home_ground: bool = False
-
-# Season Archive
-class Season(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str  # e.g., "2025/26"
-    start_date: str
-    end_date: str
-    is_current: bool = False
-    competitions: List[str] = Field(default_factory=list)
-    achievements: List[str] = Field(default_factory=list)
-    final_position: Optional[int] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class SeasonCreate(BaseModel):
-    name: str
-    start_date: str
-    end_date: str
-    is_current: bool = False
-    competitions: List[str] = Field(default_factory=list)
-    achievements: List[str] = Field(default_factory=list)
-    final_position: Optional[int] = None
-
-# Club Profile
-class ClubProfile(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = "club-profile"
-    name: str = "LEFTERIA FC"
-    greek_name: str = "ΛΕΥΤΕΡΙΑ"
-    founded: int = 2024
-    logo_url: str = ""
-    stadium: str = "Γήπεδο Αετού"
-    city: str = "Λεμεσός"
-    country: str = "Κύπρος"
-    description: str = ""
-    primary_color: str = "#F5A623"
-    secondary_color: str = "#000000"
-    website: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    facebook: Optional[str] = None
-    instagram: Optional[str] = None
-    twitter: Optional[str] = None
-    youtube: Optional[str] = None
-
-# News Model
-class News(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    title: str
-    content: str
-    excerpt: str
-    image_url: Optional[str] = None
-    category: str = "Νέα"
-    is_featured: bool = False
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class NewsCreate(BaseModel):
-    title: str
-    content: str
-    excerpt: str
-    image_url: Optional[str] = None
-    category: str = "Νέα"
-    is_featured: bool = False
-
-# Contact Message
-class ContactMessage(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    email: str
-    subject: str
-    message: str
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class ContactMessageCreate(BaseModel):
-    name: str
-    email: str
-    subject: str
-    message: str
-
-# Transfer Model
-class Transfer(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    player_id: str
-    player_name: str
-    from_team: str
-    to_team: str
-    transfer_date: str
-    transfer_type: str  # "In", "Out", "Loan In", "Loan Out"
-    fee: Optional[str] = None
-    notes: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class TransferCreate(BaseModel):
-    player_id: str
-    player_name: str
-    from_team: str
-    to_team: str
-    transfer_date: str
-    transfer_type: str
-    fee: Optional[str] = None
-    notes: Optional[str] = None
-
-# ==================== GALLERY MODELS ====================
-class GalleryCategory(str, Enum):
-    MATCH_DAY = "Match Day"
-    TRAINING = "Training"
-    TEAM_EVENTS = "Team Events"
-    ACADEMY = "Academy"
-    FANS = "Fans"
-    OTHER = "Other"
-
-class GalleryItem(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    title: str
-    image_url: str
-    category: str = "Other"
-    description: Optional[str] = None
-    match_id: Optional[str] = None
-    player_id: Optional[str] = None
-    team_id: Optional[str] = None
-    academy_group_id: Optional[str] = None
-    tags: List[str] = []
-    is_featured: bool = False
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class GalleryItemCreate(BaseModel):
-    title: str
-    image_url: str
-    category: str = "Other"
-    description: Optional[str] = None
-    match_id: Optional[str] = None
-    player_id: Optional[str] = None
-    team_id: Optional[str] = None
-    academy_group_id: Optional[str] = None
-    tags: List[str] = []
-    is_featured: bool = False
-
-# ==================== PUSH SUBSCRIPTION MODELS ====================
-class PushSubscriptionKeys(BaseModel):
-    p256dh: str
-    auth: str
-
-class PushSubscription(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    endpoint: str
-    keys: PushSubscriptionKeys
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class PushSubscriptionCreate(BaseModel):
-    endpoint: str
-    keys: PushSubscriptionKeys
 
 # ==================== AUTH ROUTES ====================
 @api_router.post("/auth/login", response_model=LoginResponse)
@@ -1946,19 +1184,6 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
 
 
 # ==================== SITE SETTINGS ====================
-class StandingsColumnConfig(BaseModel):
-    played: bool = True
-    won: bool = True
-    drawn: bool = True
-    lost: bool = True
-    goals_for: bool = False
-    goals_against: bool = False
-    goal_difference: bool = True
-    points: bool = True
-    form: bool = False
-
-class SiteSettings(BaseModel):
-    standings_columns: StandingsColumnConfig = StandingsColumnConfig()
 
 @api_router.get("/settings/standings-columns")
 async def get_standings_columns():
@@ -2281,27 +1506,6 @@ async def seed_data():
     return {"message": "Τα δεδομένα φορτώθηκαν επιτυχώς"}
 
 # ==================== ADMIN PRODUCT MANAGEMENT ====================
-class ProductCreate(BaseModel):
-    name: str
-    description: str = ""
-    price: float
-    image_url: str = ""
-    category: str = "clothing"
-    sizes: list = []
-    in_stock: bool = True
-    product_type: str = "merchandise"  # merchandise or ticket
-    delivery_options: list = []
-
-class ProductUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    price: Optional[float] = None
-    image_url: Optional[str] = None
-    category: Optional[str] = None
-    sizes: Optional[list] = None
-    in_stock: Optional[bool] = None
-    product_type: Optional[str] = None
-    delivery_options: Optional[list] = None
 
 @api_router.get("/admin/products")
 async def admin_get_products(current_user: dict = Depends(get_current_user)):
@@ -2344,23 +1548,6 @@ async def admin_delete_product(product_id: str, current_user: dict = Depends(get
     return {"message": "Διαγράφηκε"}
 
 # ==================== TICKETS ====================
-class TicketCreate(BaseModel):
-    name: str
-    description: str = ""
-    price: float
-    ticket_type: str = "match"  # match or seasonal
-    fixture_id: Optional[str] = None
-    available: bool = True
-    max_quantity: int = 100
-
-class TicketUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    price: Optional[float] = None
-    ticket_type: Optional[str] = None
-    fixture_id: Optional[str] = None
-    available: Optional[bool] = None
-    max_quantity: Optional[int] = None
 
 @api_router.get("/tickets")
 async def get_tickets():
@@ -2416,9 +1603,6 @@ async def admin_delete_ticket(ticket_id: str, current_user: dict = Depends(get_c
     return {"message": "Διαγράφηκε"}
 
 # Cart: add ticket to cart
-class CartTicketAdd(BaseModel):
-    ticket_id: str
-    quantity: int = 1
 
 @api_router.post("/cart/add-ticket")
 async def add_ticket_to_cart(body: CartTicketAdd, user: dict = Depends(get_current_customer)):
@@ -2461,28 +1645,6 @@ async def add_ticket_to_cart(body: CartTicketAdd, user: dict = Depends(get_curre
             )
 
     return {"message": "Το εισιτήριο προστέθηκε στο καλάθι"}
-
-# ==================== CUSTOMER AUTH MODELS ====================
-class CustomerRegister(BaseModel):
-    name: str
-    email: str
-    password: str
-    phone: Optional[str] = None
-
-class CustomerLogin(BaseModel):
-    email: str
-    password: str
-
-class CustomerChangePassword(BaseModel):
-    current_password: str
-    new_password: str
-
-class CustomerUpdateProfile(BaseModel):
-    name: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    postal_code: Optional[str] = None
 
 # ==================== CUSTOMER AUTH ROUTES ====================
 @api_router.post("/customer/register")
@@ -2674,13 +1836,6 @@ async def get_product(product_id: str):
     return product
 
 # ==================== CART ====================
-class CartItemAdd(BaseModel):
-    product_id: str
-    quantity: int = 1
-    size: Optional[str] = None
-
-class CartItemUpdate(BaseModel):
-    quantity: int
 
 @api_router.get("/cart")
 async def get_cart(user: dict = Depends(get_current_customer)):
@@ -2789,13 +1944,6 @@ async def get_cart_count(user: dict = Depends(get_current_customer)):
     return {"count": sum(item.get("quantity", 0) for item in cart.get("items", []))}
 
 # ==================== ORDERS ====================
-class OrderCreate(BaseModel):
-    shipping_name: str
-    shipping_address: str
-    shipping_city: str
-    shipping_postal_code: str
-    shipping_phone: str
-    notes: Optional[str] = ""
 
 @api_router.post("/orders")
 async def create_order(body: OrderCreate, user: dict = Depends(get_current_customer)):
@@ -3242,9 +2390,6 @@ async def get_comments(post_id: str):
     return comments
 
 # ==================== PLAYER OF THE MONTH VOTING ====================
-class PotmVote(BaseModel):
-    player_id: str
-
 @api_router.post("/votes/potm")
 async def cast_potm_vote(vote: PotmVote, user: dict = Depends(get_current_customer)):
     now = datetime.now(timezone.utc)
