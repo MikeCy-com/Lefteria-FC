@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
-  DollarSign, TrendingUp, AlertCircle, Clock, CheckCircle, Plus, X, Save,
+  Euro, TrendingUp, AlertCircle, Clock, CheckCircle, Plus, X, Save,
   RefreshCw, Search, Filter, Users, ChevronDown, CreditCard, Banknote,
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
@@ -218,7 +218,7 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
             <KPICard icon={TrendingUp} label="Σύνολο Εσόδων" value={`€${stats.total_revenue.toLocaleString('el-GR', { minimumFractionDigits: 2 })}`} color="text-emerald-400" bg="bg-emerald-500/10" />
             <KPICard icon={Clock} label="Εκκρεμή" value={`€${stats.total_pending.toLocaleString('el-GR', { minimumFractionDigits: 2 })}`} sub={`${stats.pending_count} εγγραφές`} color="text-yellow-400" bg="bg-yellow-500/10" />
             <KPICard icon={AlertCircle} label="Ληξιπρόθεσμα" value={`€${stats.total_overdue.toLocaleString('el-GR', { minimumFractionDigits: 2 })}`} sub={`${stats.overdue_count} εγγραφές`} color="text-red-400" bg="bg-red-500/10" />
-            <KPICard icon={DollarSign} label="Αναμενόμενα" value={`€${stats.total_expected.toLocaleString('el-GR', { minimumFractionDigits: 2 })}`} sub={`${stats.record_count} σύνολο`} color="text-[#F5A623]" bg="bg-[#F5A623]/10" />
+            <KPICard icon={Euro} label="Αναμενόμενα" value={`€${stats.total_expected.toLocaleString('el-GR', { minimumFractionDigits: 2 })}`} sub={`${stats.record_count} σύνολο`} color="text-[#F5A623]" bg="bg-[#F5A623]/10" />
           </div>
 
           {/* Revenue Chart */}

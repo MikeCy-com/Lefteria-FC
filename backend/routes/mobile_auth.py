@@ -314,11 +314,31 @@ def setup_mobile_routes(db):
                 "rate": round(len(att) / max(len(total_att), 1) * 100),
             })
 
+        # Get all players in child's groups (for roster view)
+        group_players = {}
+        for gid in group_ids:
+            gp = await db.players.find(
+                {"$or": [{"academy_group_ids": gid}, {"academy_group_id": gid}]},
+                {"_id": 0}
+            ).to_list(100)
+            group_players[gid] = gp
+
+        # Get training sessions for groups
+        training_sessions = []
+        for gid in group_ids:
+            ts = await db.training_sessions.find(
+                {"academy_group_id": gid, "date": {"$gte": now}},
+                {"_id": 0}
+            ).sort("date", 1).to_list(20)
+            training_sessions.extend(ts)
+
         return {
             "children": children,
             "groups": groups,
-            "fixtures": fixtures[:10],
-            "events": relevant_events[:10],
+            "group_players": group_players,
+            "fixtures": fixtures[:20],
+            "training_sessions": training_sessions[:20],
+            "events": relevant_events[:20],
             "announcements": relevant_posts[:10],
             "financial_records": fin_records,
             "attendance": attendance_data,
@@ -527,6 +547,50 @@ def setup_mobile_routes(db):
             return []
         avails = await db.availability.find({"player_id": {"$in": player_ids}}, {"_id": 0}).to_list(500)
         return avails
+
+    # ==================== PROFILE UPDATE ====================
+    @router.put("/mobile/profile")
+    async def update_mobile_profile(body: dict, user: dict = Depends(get_mobile_user)):
+        """Update mobile user profile (name, email). Phone is locked."""
+        allowed_fields = {"name", "email"}
+        update = {k: v for k, v in body.items() if k in allowed_fields and v is not None}
+        if not update:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+        update["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.mobile_users.update_one({"id": user["id"]}, {"$set": update})
+        updated = await db.mobile_users.find_one({"id": user["id"]}, {"_id": 0})
+        return updated
+
+    # ==================== AVATAR UPLOAD ====================
+    @router.post("/mobile/profile/avatar")
+    async def upload_mobile_avatar(request: Request, user: dict = Depends(get_mobile_user)):
+        """Upload avatar for mobile user profile."""
+        from fastapi import UploadFile
+        import shutil
+
+        form = await request.form()
+        file = form.get("file")
+        if not file:
+            raise HTTPException(status_code=400, detail="No file provided")
+
+        # Save file
+        ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+        filename = f"mobile_avatar_{user['id']}.{ext}"
+        upload_dir = "/app/backend/uploads/avatars"
+        os.makedirs(upload_dir, exist_ok=True)
+        filepath = os.path.join(upload_dir, filename)
+
+        contents = await file.read()
+        with open(filepath, "wb") as f:
+            f.write(contents)
+
+        avatar_url = f"/api/uploads/avatars/{filename}"
+        await db.mobile_users.update_one(
+            {"id": user["id"]},
+            {"$set": {"avatar_url": avatar_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        return {"avatar_url": avatar_url}
+
 
     # ==================== ROLE DETECTION HELPER ====================
     async def _detect_role(db, phone: str):

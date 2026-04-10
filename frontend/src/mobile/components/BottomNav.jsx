@@ -1,4 +1,4 @@
-import { Home, Calendar, Bell, User, BarChart3, Users, DollarSign, ClipboardList } from "lucide-react";
+import { Home, Calendar, Bell, User, BarChart3, Users, Euro, ClipboardList } from "lucide-react";
 import { useMobileAuth } from "../MobileAuthContext";
 
 const ROLE_TABS = {
@@ -25,7 +25,7 @@ const ROLE_TABS = {
   management: [
     { id: "home", label: "Αρχική", icon: Home },
     { id: "teams", label: "Ομάδες", icon: Users },
-    { id: "financial", label: "Οικονομικά", icon: DollarSign },
+    { id: "financial", label: "Οικονομικά", icon: Euro },
     { id: "news", label: "Νέα", icon: Bell },
     { id: "profile", label: "Προφίλ", icon: User },
   ],

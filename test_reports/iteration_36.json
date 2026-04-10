@@ -1,0 +1,61 @@
+{
+  "summary": "Tested mobile PWA features for iteration 36: header sizing, currency (€), parent dashboard team-first navigation, profile page with avatar upload and edit mode, Going/Not Going availability. All backend tests passed (13/13). All frontend features verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mobile_pwa_features.py",
+    "/app/test_reports/pytest/pytest_results_iter36.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_mobile_pwa_features.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "Parent OTP login: phone='99555666' at /app/login. OTP returned in debug response.",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile PWA features all working: header sizing (w-10 logo, text-xs title), € currency, parent dashboard with team-first navigation (home→team→child views), profile page with avatar upload and edit mode (phone locked), Going/Not Going availability buttons.",
+  "passed_tests": [
+    "Backend: OTP request returns otp_debug in simulated mode",
+    "Backend: OTP verify returns token and parent role",
+    "Backend: GET /mobile/parent/dashboard returns groups field",
+    "Backend: GET /mobile/parent/dashboard returns group_players for roster",
+    "Backend: GET /mobile/parent/dashboard returns training_sessions",
+    "Backend: GET /mobile/parent/dashboard returns fixtures",
+    "Backend: GET /mobile/parent/dashboard returns events",
+    "Backend: POST /mobile/availability accepts 'going' status",
+    "Backend: POST /mobile/availability accepts 'not_going' status",
+    "Backend: GET /mobile/auth/me returns user profile",
+    "Backend: PUT /mobile/profile updates name and email",
+    "Backend: PUT /mobile/profile rejects phone update (locked)",
+    "Backend: POST /mobile/profile/avatar endpoint exists",
+    "Frontend: Header logo has w-10 class (bigger logo)",
+    "Frontend: Header title has text-xs class (smaller text)",
+    "Frontend: Currency uses € symbol (not $)",
+    "Frontend: Parent dashboard shows team cards (academy groups)",
+    "Frontend: Team card click → team view with roster",
+    "Frontend: Team view shows roster with player list",
+    "Frontend: Team view shows fixtures with Going/Not Going buttons",
+    "Frontend: Child card click → child view with stats",
+    "Frontend: Child view shows stats (appearances, goals, assists, minutes)",
+    "Frontend: Profile page shows avatar with camera upload button",
+    "Frontend: Profile edit mode shows name and email inputs",
+    "Frontend: Profile phone field is locked/disabled",
+    "Frontend: Going button works and shows green selected state",
+    "Frontend: Not Going button works and shows red selected state",
+    "Frontend: Bottom nav has correct tabs (Αρχική, Πρόγραμμα, Νέα, Προφίλ)"
+  ],
+  "failed_tests": []
+}

@@ -3,7 +3,7 @@ import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
 import { LoadingSpinner, ErrorState, SectionHeader, EventCard, AnnouncementCard, EmptyCard } from "./ParentDashboard";
 import {
-  Users, DollarSign, TrendingUp, AlertCircle, ClipboardList, Calendar,
+  Users, Euro, TrendingUp, AlertCircle, ClipboardList, Calendar,
   ChevronRight, Trophy, BarChart3
 } from "lucide-react";
 
@@ -51,7 +51,7 @@ const ManagementDashboard = ({ onTabChange }) => {
       {/* Financial Summary */}
       <div className="bg-[#121212] border border-[#1e1e1e] rounded-2xl p-4">
         <h3 className="text-white font-medium text-sm mb-3 flex items-center gap-2">
-          <DollarSign size={16} className="text-[#F5A623]" /> Οικονομικά
+          <Euro size={16} className="text-[#F5A623]" /> Οικονομικά
         </h3>
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center">

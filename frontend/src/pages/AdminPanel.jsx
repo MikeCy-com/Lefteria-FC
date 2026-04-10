@@ -6,7 +6,7 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
-  DollarSign, Video, Landmark, Upload
+  Euro, Video, Landmark, Upload
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -3465,7 +3465,7 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "item", id: "messages", label: "Μηνύματα", icon: Mail },
     { type: "divider" },
     { type: "group", id: "management_section", label: "Διαχείριση", icon: Landmark, items: [
-      { id: "financial", label: "Οικονομικά", icon: DollarSign },
+      { id: "financial", label: "Οικονομικά", icon: Euro },
       { id: "resources", label: "Εγκαταστάσεις", icon: MapPin },
     ]},
     { type: "divider" },
