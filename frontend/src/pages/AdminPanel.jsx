@@ -3607,7 +3607,7 @@ const AdminPanel = ({ user, onLogout }) => {
                       data-testid={`admin-group-${item.id}`}
                     >
                       <item.icon size={15} />
-                      <span className="flex-1 text-left">{item.label}</span>
+                      <span className="flex-1 text-left">{stripGreekAccents(item.label)}</span>
                       <ChevronDown size={13} className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
                     </button>
                     {isExpanded && (

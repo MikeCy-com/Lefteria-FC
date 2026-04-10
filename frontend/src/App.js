@@ -524,10 +524,10 @@ const HomePage = () => {
               const us = standings.find(s => s.team_name === OUR_TEAM);
               const pos = standings.findIndex(s => s.team_name === OUR_TEAM) + 1;
               return [
-                { label: "Θέση Πρωταθλήματος", value: pos > 0 ? `${pos}η` : "-" },
-                { label: "Αγώνες", value: us ? us.played : "-" },
+                { label: "Θεση Πρωταθληματος", value: pos > 0 ? `${pos}η` : "-" },
+                { label: "Αγωνες", value: us ? us.played : "-" },
                 { label: "Γκολ", value: us ? us.goals_for : "-" },
-                { label: "Βαθμοί", value: us ? us.points : "-" },
+                { label: "Βαθμοι", value: us ? us.points : "-" },
               ];
             })().map((stat, i) => (
               <div key={i} className="text-center">
