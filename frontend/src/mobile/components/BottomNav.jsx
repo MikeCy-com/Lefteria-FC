@@ -38,7 +38,7 @@ const BottomNav = ({ activeTab, onTabChange }) => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-[#1e1e1e] z-50"
+      className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-[#1e1e1e] z-[9999]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       data-testid="bottom-nav"
     >
