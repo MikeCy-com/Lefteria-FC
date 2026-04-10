@@ -13,6 +13,7 @@ Complete football club CMS and public website for "Lefteria FC", including a cen
 - **Greek ALL CAPS text must NOT have accent marks** (applied via `stripGreekAccents` utility)
 - Academy age groups: **U6 to U12** only
 - OTP via Twilio is **mocked** (returns OTP in API response)
+- Currency: **€** (Euro) everywhere
 
 ## What's Been Implemented
 
@@ -22,10 +23,10 @@ Complete football club CMS and public website for "Lefteria FC", including a cen
 - Team management (CRUD, roster, staff, standings, gallery)
 - Academy group management (CRUD, roster, transfers, fixtures, gallery)
 - Player profiles with image uploads
-- Fixture/Match management with opponent & venue scoping
-- Training session management with bulk creation
+- Fixture/Match management with inline attendance (expandable cards)
+- Training session management with bulk creation + inline attendance
 - News, announcements, wall posts
-- Financial dashboard
+- Financial dashboard (€ currency)
 - Resource/facility management with booking
 - Shop: products, tickets, orders
 - Season management
@@ -36,28 +37,27 @@ Complete football club CMS and public website for "Lefteria FC", including a cen
 - Team hub with tabs (roster, results, schedule, venues, stats, gallery)
 - Academy group pages
 - Match report pages with live events
-- News pages
-- Contact form
-- Customer auth (login/register/profile)
-- Shop with cart
-- Vote for Player of the Match
+- News, Contact form, Customer auth, Shop
 
 ### Mobile PWA
 - OTP role-based login (Parent, Coach, Player, Management)
+- **Parent Dashboard (Team-First Navigation)**:
+  - Home: Team cards (groups kids are in), children cards, quick stats, upcoming events with Going/Not Going
+  - Team View: Click team → roster (with parent's kids highlighted), fixtures with Going/Not Going, training sessions
+  - Child View: Click kid → personal stats (appearances, goals, assists, minutes), attendance rate, upcoming events, financial obligations
+- **Parent Profile**: Avatar upload, editable name/email, locked phone number
 - Schedule page with attendance (Going/Not Going)
-- Parent dashboard with child availability sync
-- News feed
-- Push notifications (web push)
+- News feed, Push notifications
 
 ### Recent Changes (Feb 2026)
-- **P0 DONE**: Stripped Greek accents from ALL CAPS text (CSS uppercase, Bebas Neue font, btn-primary/btn-secondary). Created `stripGreekAccents` utility at `/app/frontend/src/utils/greekText.js`.
-- **P0 DONE**: Changed academy age bounds from U8-U18 to U6-U12 across frontend and backend seed data.
-- **P1 DONE**: Added inline attendance tracking to Match/Fixture cards (expandable card UI with InlineAttendance component) — works in: FixturesTab, TeamsTab schedule, AcademyTab fixtures.
-- Sidebar restructure: Club vs Academy dashboards
-- Scoped venues and opponents (Main teams vs Academy)
-- Inline attendance for training sessions
-- Profile picture uploads, banner uploads
-- Bulk training session creation
+- **P0**: Stripped Greek accents from ALL CAPS text across 30+ files. Created `stripGreekAccents()` utility at `/utils/greekText.js`.
+- **P0**: Changed academy ages U8-U18 → U6-U12. Updated backend seed data.
+- **P1**: Added inline attendance to Match/Fixture cards (FixturesTab, TeamsTab, AcademyTab).
+- **Mobile Header**: Bigger logo (w-10), smaller text (text-xs).
+- **Currency**: DollarSign → Euro icon globally.
+- **Parent Dashboard Redesign**: Team-first navigation with home/team/child views, Going/Not Going on all events.
+- **Parent Profile Enhancement**: Avatar upload (camera button), edit mode (name/email), locked phone.
+- **Backend**: Added `PUT /api/mobile/profile`, `POST /api/mobile/profile/avatar`, expanded parent dashboard with `group_players` and `training_sessions`.
 
 ## Prioritized Backlog
 
@@ -77,13 +77,9 @@ Complete football club CMS and public website for "Lefteria FC", including a cen
 ## Key Files
 - `/app/frontend/src/pages/AdminPanel.jsx` — Main admin CMS
 - `/app/frontend/src/pages/admin/InlineAttendance.jsx` — Reusable attendance
-- `/app/frontend/src/pages/admin/SectionDashboard.jsx` — Section dashboards
-- `/app/frontend/src/pages/admin/ScopedManagement.jsx` — Venues/opponents
-- `/app/frontend/src/pages/admin/TrainingSessionsPanel.jsx` — Training CRUD
+- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` — Parent mobile dashboard
+- `/app/frontend/src/mobile/pages/ProfilePage.jsx` — Parent profile with avatar
+- `/app/frontend/src/mobile/components/MobileHeader.jsx` — Mobile header
 - `/app/frontend/src/utils/greekText.js` — Greek accent stripping utility
-- `/app/frontend/src/mobile/pages/SchedulePage.jsx` — Mobile attendance
-- `/app/frontend/src/App.js` — Public pages & routing
+- `/app/backend/routes/mobile_auth.py` — Mobile auth + profile + dashboard APIs
 - `/app/backend/server.py` — All backend endpoints
-
-## DB Collections
-teams, academy_groups, players, fixtures, training_sessions, opponents, facilities, event_attendance, news, announcements, wall_posts, registrations, gallery_items, products, tickets, orders, seasons, standings, match_events, vote_sessions, votes, messages, staff, settings, users
