@@ -68,7 +68,7 @@ const NewShopPage = () => {
 
           <div className="mb-8">
             <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white" data-testid="shop-title">
-              Επίσημο <span className="text-[#F5A623]">Κατάστημα</span>
+              Επισημο <span className="text-[#F5A623]">Καταστημα</span>
             </h1>
             <p className="text-zinc-400 text-sm mt-2">Εισιτήρια αγώνων & επίσημα προϊόντα ΛΕΥΤΕΡΙΑ FC</p>
           </div>
@@ -106,7 +106,7 @@ const NewShopPage = () => {
                         <Crown size={20} className="text-[#F5A623]" />
                       </div>
                       <div>
-                        <div className="text-[10px] text-[#F5A623] uppercase tracking-widest mb-0.5">Εισιτήριο Διαρκείας</div>
+                        <div className="text-[10px] text-[#F5A623] uppercase tracking-widest mb-0.5">Εισιτηριο Διαρκειας</div>
                         <div className="font-['Bebas_Neue'] text-xl text-white">{t.name}</div>
                         <div className="text-xs text-zinc-400 mt-0.5">{t.description}</div>
                       </div>
@@ -132,7 +132,7 @@ const NewShopPage = () => {
               {/* Match Tickets */}
               {matchTickets.length > 0 ? (
                 <div className="space-y-3" data-testid="match-tickets">
-                  <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 tracking-wider">Εισιτήρια Αγώνων</h3>
+                  <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 tracking-wider">Εισιτηρια Αγωνων</h3>
                   {matchTickets.map(t => (
                     <div key={t.id} className="bg-[#111] border border-[#1a1a1a] rounded-lg p-4 hover:border-[#333] transition-colors" data-testid={`ticket-${t.id}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">

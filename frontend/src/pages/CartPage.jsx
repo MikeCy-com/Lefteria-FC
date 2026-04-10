@@ -49,7 +49,7 @@ const CartPage = () => {
         <div className="max-w-3xl mx-auto">
           <Link to="/shop" className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5A623] text-sm mb-8 transition-colors"><ArrowLeft size={14} /> Συνέχεια Αγορών</Link>
 
-          <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-8" data-testid="cart-title">Καλάθι Αγορών</h1>
+          <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-8" data-testid="cart-title">Καλαθι Αγορων</h1>
 
           {cart.items.length === 0 ? (
             <div className="text-center py-16">

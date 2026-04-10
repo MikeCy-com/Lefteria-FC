@@ -253,7 +253,7 @@ const Navigation = () => {
           <Link to={user ? "/profile" : "/login"} onClick={() => setIsOpen(false)}
             className="flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider text-white">
             <User size={24} />
-            {user ? "Προφίλ" : "Σύνδεση"}
+            {user ? "Προφιλ" : "Συνδεση"}
           </Link>
         </nav>
       </div>
@@ -282,7 +282,7 @@ const Footer = () => (
 
         {/* Quick Links */}
         <div>
-          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Γρήγοροι Σύνδεσμοι</h4>
+          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Γρηγοροι Συνδεσμοι</h4>
           <ul className="space-y-3">
             {[
               { name: "Πρώτη Ομάδα", path: "/team" },
@@ -309,7 +309,7 @@ const Footer = () => (
 
         {/* Contact Info */}
         <div>
-          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Επικοινωνία</h4>
+          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Επικοινωνια</h4>
           <ul className="space-y-3 text-sm text-zinc-400">
             <li className="flex items-center gap-3">
               <MapPin size={16} className="text-[#F5A623]" />
@@ -324,7 +324,7 @@ const Footer = () => (
 
         {/* Social */}
         <div>
-          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Ακολούθησέ μας</h4>
+          <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Ακολουθησε μας</h4>
           <div className="flex gap-4">
             {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
               <a
@@ -451,7 +451,7 @@ const HomePage = () => {
           <div className="max-w-3xl">
             <span className="badge badge-primary mb-6 animate-fadeInUp">Ιδρ. 2024</span>
             <h1 className="font-['Bebas_Neue'] text-5xl md:text-6xl lg:text-7xl text-white mb-6 animate-fadeInUp animation-delay-200">
-              Καλώς Ήρθατε στην<br/>
+              Καλως Ηρθατε στην<br/>
               <span className="text-[#F5A623]">LEFTERIA FC</span>
             </h1>
             <p className="text-lg text-zinc-300 mb-8 animate-fadeInUp animation-delay-400 max-w-xl">
@@ -459,11 +459,11 @@ const HomePage = () => {
             </p>
             <div className="flex flex-wrap gap-4 animate-fadeInUp animation-delay-600">
               <Link to="/team" className="btn-primary" data-testid="hero-view-team">
-                Δες την Ομάδα
+                Δες την Ομαδα
                 <ArrowRight size={18} />
               </Link>
               <Link to="/academy" className="btn-secondary" data-testid="hero-join-academy">
-                Ακαδημία
+                Ακαδημια
               </Link>
             </div>
           </div>
@@ -546,7 +546,7 @@ const HomePage = () => {
             <div>
               <span className="badge badge-secondary mb-3">Πρόγραμμα</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
-                Τελευταίοι <span className="text-[#F5A623]">Αγώνες</span>
+                Τελευταιοι <span className="text-[#F5A623]">Αγωνες</span>
               </h2>
             </div>
             <Link to="/team?tab=results" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline text-sm">
@@ -595,7 +595,7 @@ const HomePage = () => {
             <div className="mb-4">
               <span className="badge badge-secondary mb-3">Γενέθλια {currentMonthName}</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
-                Χρόνια <span className="text-[#F5A623]">Πολλά!</span>
+                Χρονια <span className="text-[#F5A623]">Πολλα!</span>
               </h2>
             </div>
             <div className="relative overflow-hidden">
@@ -633,7 +633,7 @@ const HomePage = () => {
             <div>
               <span className="badge badge-secondary mb-3">Ψηφοφορία</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
-                Παίκτης του <span className="text-[#F5A623]">Μήνα</span>
+                Παικτης του <span className="text-[#F5A623]">Μηνα</span>
               </h2>
             </div>
             <Link to="/vote" className="hidden md:flex items-center gap-2 text-[#F5A623] hover:underline text-sm" data-testid="potm-vote-link">
@@ -676,7 +676,7 @@ const HomePage = () => {
             <div className="text-center py-8">
               <p className="text-zinc-400 text-sm mb-4">Δεν υπάρχουν ψήφοι ακόμα. Γίνε ο πρώτος!</p>
               <Link to="/vote" className="btn-primary inline-flex" data-testid="potm-vote-cta">
-                Ψήφισε Τώρα <ArrowRight size={16} />
+                Ψηφισε Τωρα <ArrowRight size={16} />
               </Link>
             </div>
           )}
@@ -695,7 +695,7 @@ const HomePage = () => {
             <div className="min-w-0">
               <span className="badge badge-secondary mb-3">ΠΑΑΟΚ Α' Όμιλος</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
-                Βαθμολογία
+                Βαθμολογια
               </h2>
               
               <div className="overflow-x-auto">
@@ -750,7 +750,7 @@ const HomePage = () => {
             <div>
               <span className="badge badge-secondary mb-3">Ενημέρωση</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
-                Τελευταία Νέα
+                Τελευταια Νεα
               </h2>
               
               <div className="space-y-6">
@@ -804,18 +804,18 @@ const HomePage = () => {
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <span className="badge badge-primary mb-6">Ανάπτυξη Νέων</span>
           <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
-            Έλα στην <span className="text-[#F5A623]">Ακαδημία</span>
+            Ελα στην <span className="text-[#F5A623]">Ακαδημια</span>
           </h2>
           <p className="text-lg text-zinc-300 mb-8 max-w-2xl mx-auto">
-            Από U8 έως U18, η ακαδημία μας αναπτύσσει νέα ταλέντα με προπονητές και εγκαταστάσεις υψηλού επιπέδου. 
+            Από U6 έως U12, η ακαδημία μας αναπτύσσει νέα ταλέντα με προπονητές και εγκαταστάσεις υψηλού επιπέδου. 
             Ξεκίνα το ταξίδι σου για να γίνεις επαγγελματίας ποδοσφαιριστής.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/academy" className="btn-primary">
-              Εξερεύνησε την Ακαδημία <ArrowRight size={18} />
+              Εξερευνησε την Ακαδημια <ArrowRight size={18} />
             </Link>
             <Link to="/academy/registration" className="btn-secondary">
-              Δήλωσε Ενδιαφέρον
+              Δηλωσε Ενδιαφερον
             </Link>
           </div>
         </div>
@@ -832,7 +832,7 @@ const AboutPage = () => (
       <div className="max-w-7xl mx-auto">
         <span className="badge badge-secondary mb-4">Η Ιστορία μας</span>
         <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
-          Σχετικά με την <span className="text-[#F5A623]">LEFTERIA FC</span>
+          Σχετικα με την <span className="text-[#F5A623]">LEFTERIA FC</span>
         </h1>
         <p className="text-xl text-zinc-300 max-w-3xl">
           Ιδρύθηκε το 2024, η ΛΕΥΤΕΡΙΑ FC ενσαρκώνει το πνεύμα του πάθους, της αριστείας 
@@ -845,7 +845,7 @@ const AboutPage = () => (
     <section className="py-10 md:py-20 px-4 md:px-6">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
         <div>
-          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Η Ιστορία μας</h2>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Η Ιστορια μας</h2>
           <div className="space-y-4 text-zinc-300">
             <p>
               Η LEFTERIA FC ιδρύθηκε με όραμα να δημιουργήσει έναν ποδοσφαιρικό σύλλογο που συνδυάζει 
@@ -878,7 +878,7 @@ const AboutPage = () => (
     {/* Values */}
     <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 text-center">Οι Αξίες μας</h2>
+        <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 text-center">Οι Αξιες μας</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {[
             { icon: Trophy, title: "Αριστεία", desc: "Επιδιώκουμε την αριστεία σε όλα όσα κάνουμε, εντός και εκτός γηπέδου." },
@@ -901,7 +901,7 @@ const AboutPage = () => (
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           <div>
             <span className="badge badge-secondary mb-4">Έδρα</span>
-            <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Γήπεδο Αετού</h2>
+            <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Γηπεδο Αετου</h2>
             <div className="space-y-4 text-zinc-300">
               <p>
                 Η έδρα μας, το Γήπεδο Αετού, βρίσκεται στην καρδιά της Λεμεσού. 
@@ -983,7 +983,7 @@ const AcademyPage = () => {
         <div className="relative z-10 max-w-7xl mx-auto">
           <span className="badge badge-primary mb-4">Ανάπτυξη Νέων</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
-            LEFTERIA FC <span className="text-[#F5A623]">Ακαδημία</span>
+            LEFTERIA FC <span className="text-[#F5A623]">Ακαδημια</span>
           </h1>
           <p className="text-lg text-zinc-300 max-w-3xl">
             Αναπτύσσουμε την επόμενη γενιά ταλέντων του κυπριακού ποδοσφαίρου μέσω 
@@ -995,7 +995,7 @@ const AcademyPage = () => {
       {/* Age Groups */}
       <section className="py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Ηλικιακές Κατηγορίες</h2>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-12 section-heading">Ηλικιακες Κατηγοριες</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {academyInfo.map((group) => (
               <Link to={`/academy/${group.id}`} key={group.id} className="card p-6 hover:border-[#F5A623]/30 transition-all duration-300 group" data-testid={`academy-${group.name}`}>
@@ -1003,7 +1003,7 @@ const AcademyPage = () => {
                   <span className="font-['Bebas_Neue'] text-4xl text-[#F5A623]">{group.name}</span>
                   <span className="badge badge-secondary">{group.age_range}</span>
                 </div>
-                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Προπονητής: {group.coach_name}</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Προπονητης: {group.coach_name}</h3>
                 <p className="text-zinc-400 text-sm mb-4">{group.description}</p>
                 <div className="flex items-center gap-2 text-zinc-500 text-sm">
                   <Clock size={14} />
@@ -1028,7 +1028,7 @@ const AcademyPage = () => {
             <div>
               <span className="badge badge-secondary mb-4">Φιλοσοφία</span>
               <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">
-                Η Αναπτυξιακή μας Φιλοσοφία
+                Η Αναπτυξιακη μας Φιλοσοφια
               </h2>
               <div className="space-y-4 text-zinc-300">
                 <p>
@@ -1083,13 +1083,13 @@ const AcademyPage = () => {
       <section className="py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6">
-            Έτοιμος να Ξεκινήσεις το Ταξίδι σου;
+            Ετοιμος να Ξεκινησεις το Ταξιδι σου;
           </h2>
           <p className="text-zinc-300 mb-8">
             Γίνε μέλος της Ακαδημίας LEFTERIA FC και κάνε το πρώτο βήμα για να γίνεις επαγγελματίας ποδοσφαιριστής.
           </p>
           <Link to="/contact" className="btn-primary">
-            Δήλωσε Συμμετοχή για Δοκιμαστικά <ArrowRight size={18} />
+            Δηλωσε Συμμετοχη για Δοκιμαστικα <ArrowRight size={18} />
           </Link>
         </div>
       </section>
@@ -1130,7 +1130,7 @@ const FixturesPage = () => {
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
-            Αγώνες & <span className="text-[#F5A623]">Αποτελέσματα</span>
+            Αγωνες & <span className="text-[#F5A623]">Αποτελεσματα</span>
           </h1>
         </div>
       </section>
@@ -1270,7 +1270,7 @@ const NewsPage = () => {
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Τελευταία Ενημέρωση</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
-            Τα <span className="text-[#F5A623]">Νέα</span> μας
+            Τα <span className="text-[#F5A623]">Νεα</span> μας
           </h1>
         </div>
       </section>
@@ -1380,7 +1380,7 @@ const ContactPage = () => {
         <div className="max-w-7xl mx-auto">
           <span className="badge badge-secondary mb-4">Επικοινωνήστε Μαζί Μας</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
-            <span className="text-[#F5A623]">Επικοινωνία</span>
+            <span className="text-[#F5A623]">Επικοινωνια</span>
           </h1>
         </div>
       </section>
@@ -1391,13 +1391,13 @@ const ContactPage = () => {
             {/* Contact Info */}
             <div>
               <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8 section-heading">
-                Πληροφορίες Συλλόγου
+                Πληροφοριες Συλλογου
               </h2>
               <div className="space-y-6">
                 <div className="card p-6 flex items-start gap-4">
                   <MapPin className="text-[#F5A623] flex-shrink-0" size={24} />
                   <div>
-                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Διεύθυνση</h3>
+                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Διευθυνση</h3>
                     <p className="text-zinc-400">Γήπεδο Αετού<br/>Λεμεσός, Κύπρος</p>
                   </div>
                 </div>
@@ -1411,7 +1411,7 @@ const ContactPage = () => {
                 <div className="card p-6 flex items-start gap-4">
                   <Clock className="text-[#F5A623] flex-shrink-0" size={24} />
                   <div>
-                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Ώρες Γραφείου</h3>
+                    <h3 className="font-['Bebas_Neue'] text-lg text-white">Ωρες Γραφειου</h3>
                     <p className="text-zinc-400">Δευτέρα - Παρασκευή: 9:00 - 18:00<br/>Σάββατο: 10:00 - 14:00</p>
                   </div>
                 </div>
@@ -1421,7 +1421,7 @@ const ContactPage = () => {
             {/* Contact Form */}
             <div>
               <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8 section-heading">
-                Στείλτε Μήνυμα
+                Στειλτε Μηνυμα
               </h2>
               
               {submitted ? (
@@ -1429,13 +1429,13 @@ const ContactPage = () => {
                   <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <ChevronRight className="text-green-500" size={32} />
                   </div>
-                  <h3 className="font-['Bebas_Neue'] text-2xl text-white mb-2">Το Μήνυμα Εστάλη!</h3>
+                  <h3 className="font-['Bebas_Neue'] text-2xl text-white mb-2">Το Μηνυμα Εσταλη!</h3>
                   <p className="text-zinc-400">Θα επικοινωνήσουμε μαζί σας το συντομότερο δυνατό.</p>
                   <button 
                     onClick={() => setSubmitted(false)}
                     className="btn-secondary mt-6"
                   >
-                    Στείλε Άλλο Μήνυμα
+                    Στειλε Αλλο Μηνυμα
                   </button>
                 </div>
               ) : (
@@ -1496,7 +1496,7 @@ const ContactPage = () => {
                     disabled={submitting}
                     data-testid="contact-submit"
                   >
-                    {submitting ? "Αποστολή..." : "Αποστολή Μηνύματος"}
+                    {submitting ? "Αποστολη..." : "Αποστολη Μηνυματος"}
                   </button>
                 </form>
               )}
@@ -1547,7 +1547,7 @@ const AdminLoginPage = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src={CLUB_LOGO} alt="LEFTERIA FC" className="h-20 w-20 mx-auto mb-4" />
-          <h1 className="font-['Bebas_Neue'] text-4xl text-white">Σύνδεση Διαχειριστή</h1>
+          <h1 className="font-['Bebas_Neue'] text-4xl text-white">Συνδεση Διαχειριστη</h1>
           <p className="text-zinc-400 mt-2">Εισάγετε τα στοιχεία σας για πρόσβαση στο πάνελ διαχείρισης</p>
         </div>
 
@@ -1601,12 +1601,12 @@ const AdminLoginPage = () => {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
-                  Σύνδεση...
+                  Συνδεση...
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <Lock size={18} />
-                  Σύνδεση
+                  Συνδεση
                 </span>
               )}
             </button>

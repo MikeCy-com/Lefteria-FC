@@ -210,7 +210,7 @@ const ResourceManagement = ({ teams = [], academyGroups = [] }) => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Γήπεδα & Εγκαταστάσεις</h2>
+          <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Γηπεδα & Εγκαταστασεις</h2>
           <span className="text-sm text-zinc-400">{facilities.length} εγκαταστάσεις</span>
         </div>
         <div className="flex gap-2 items-center">
@@ -333,7 +333,7 @@ const ResourceManagement = ({ teams = [], academyGroups = [] }) => {
 
           {/* Today's bookings */}
           <div className="bg-[#121212] border border-[#262626] rounded-xl p-4" data-testid="today-bookings">
-            <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Σημερινές Κρατήσεις</h3>
+            <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Σημερινες Κρατησεις</h3>
             {bookings.filter(b => b.date === new Date().toISOString().split("T")[0]).length === 0 ? (
               <p className="text-sm text-zinc-500">Δεν υπάρχουν κρατήσεις σήμερα</p>
             ) : (
@@ -408,7 +408,7 @@ const ResourceManagement = ({ teams = [], academyGroups = [] }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowFacilityModal(false)}>
           <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#161616] z-10">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editingFacility ? "Επεξεργασία" : "Νέα Εγκατάσταση"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editingFacility ? "Επεξεργασια" : "Νεα Εγκατασταση"}</h2>
               <button onClick={() => setShowFacilityModal(false)} className="text-zinc-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-4">
@@ -474,7 +474,7 @@ const ResourceManagement = ({ teams = [], academyGroups = [] }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowBookingModal(false)}>
           <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#161616] z-10">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">Νέα Κράτηση</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">Νεα Κρατηση</h2>
               <button onClick={() => setShowBookingModal(false)} className="text-zinc-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-4">

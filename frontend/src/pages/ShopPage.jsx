@@ -37,9 +37,9 @@ const ShopPage = () => {
       {/* Hero */}
       <section className="py-16 px-6 bg-[#0a0a0a]">
         <div className="max-w-6xl mx-auto">
-          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Υποστήριξε την Ομάδα</span>
+          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Υποστηριξε την Ομαδα</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-6xl text-white mt-2">
-            Εισιτήρια & <span className="text-[#F5A623]">Merchandise</span>
+            Εισιτηρια & <span className="text-[#F5A623]">Merchandise</span>
           </h1>
           <p className="text-zinc-400 text-sm mt-3 max-w-2xl">
             Απόκτησε εισιτήρια για τους αγώνες μας και στήριξε τη ΛΕΥΤΕΡΙΑ 2024 
@@ -56,7 +56,7 @@ const ShopPage = () => {
             <div data-testid="tickets-section">
               <div className="flex items-center gap-3 mb-6">
                 <Ticket size={22} className="text-[#F5A623]" />
-                <h2 className="font-['Bebas_Neue'] text-2xl text-white">Εισιτήρια</h2>
+                <h2 className="font-['Bebas_Neue'] text-2xl text-white">Εισιτηρια</h2>
               </div>
 
               {nextMatches.length > 0 ? (
@@ -70,7 +70,7 @@ const ShopPage = () => {
                         <div className="text-white font-medium text-sm">{m.home_team} vs {m.away_team}</div>
                         {m.venue && <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1"><MapPin size={10} /> {m.venue}</div>}
                       </div>
-                      <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-3 py-1.5 rounded uppercase tracking-wider">Σύντομα</span>
+                      <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-3 py-1.5 rounded uppercase tracking-wider">Συντομα</span>
                     </div>
                   ))}
                 </div>
@@ -83,7 +83,7 @@ const ShopPage = () => {
               )}
 
               <div className="card p-6 mt-4 border-l-[3px] border-[#F5A623]" data-testid="ticket-info">
-                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Πληροφορίες Εισιτηρίων</h3>
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Πληροφοριες Εισιτηριων</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-3">
                     <Star size={14} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
@@ -109,7 +109,7 @@ const ShopPage = () => {
             <div data-testid="merchandise-section">
               <div className="flex items-center gap-3 mb-6">
                 <ShoppingBag size={22} className="text-[#F5A623]" />
-                <h2 className="font-['Bebas_Neue'] text-2xl text-white">Επίσημα Προϊόντα</h2>
+                <h2 className="font-['Bebas_Neue'] text-2xl text-white">Επισημα Προϊοντα</h2>
               </div>
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -147,7 +147,7 @@ const ShopPage = () => {
           <div className="space-y-6">
             {/* Contact card */}
             <div className="card p-6 border-l-[3px] border-[#F5A623]" data-testid="shop-contact-card">
-              <h3 className="font-['Bebas_Neue'] text-lg text-white mb-4">Επικοινωνία</h3>
+              <h3 className="font-['Bebas_Neue'] text-lg text-white mb-4">Επικοινωνια</h3>
               <div className="space-y-3 text-sm">
                 {clubInfo?.phone && (
                   <a href={`tel:${clubInfo.phone}`} className="flex items-center gap-2 text-zinc-400 hover:text-[#F5A623] transition-colors">
@@ -171,13 +171,13 @@ const ShopPage = () => {
             {/* Season Pass */}
             <div className="card overflow-hidden" data-testid="season-pass">
               <div className="bg-gradient-to-r from-[#F5A623]/10 to-transparent p-6">
-                <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Κάρτα Διαρκείας</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Καρτα Διαρκειας</h3>
                 <p className="text-zinc-400 text-xs mt-1">Σεζόν 2025/26</p>
               </div>
               <div className="p-6">
                 <div className="text-center mb-4">
                   <div className="font-['Bebas_Neue'] text-4xl text-[#F5A623]">€40</div>
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Όλοι οι Εντός Έδρας Αγώνες</div>
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Ολοι οι Εντος Εδρας Αγωνες</div>
                 </div>
                 <div className="space-y-2 text-xs text-zinc-400">
                   <div className="flex items-center gap-2"><Star size={10} className="text-[#F5A623]" /> Είσοδος σε όλους τους αγώνες έδρας</div>
@@ -192,7 +192,7 @@ const ShopPage = () => {
 
             {/* Payment info */}
             <div className="card p-5">
-              <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Τρόποι Πληρωμής</h4>
+              <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Τροποι Πληρωμης</h4>
               <div className="space-y-2 text-sm text-zinc-400">
                 <div>Μετρητά (στο γήπεδο)</div>
                 <div>Τραπεζική Κατάθεση</div>

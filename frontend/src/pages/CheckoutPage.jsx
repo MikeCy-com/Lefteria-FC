@@ -59,7 +59,7 @@ const CheckoutPage = () => {
     <div className="pt-24 min-h-screen bg-[#0a0a0a] flex items-center justify-center px-6" data-testid="order-success">
       <div className="text-center max-w-sm">
         <CheckCircle size={48} className="mx-auto text-green-400 mb-4" />
-        <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-2">Η παραγγελία σας καταχωρήθηκε!</h1>
+        <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-2">Η παραγγελια σας καταχωρηθηκε!</h1>
         <p className="text-zinc-400 text-sm mb-2">Αριθμός: #{orderId.slice(0, 8)}</p>
         <p className="text-zinc-500 text-xs mb-6">Η πληρωμή θα γίνει κατά την παραλαβή. Θα ενημερωθείτε για την κατάσταση.</p>
         <div className="flex gap-3 justify-center">
@@ -75,13 +75,13 @@ const CheckoutPage = () => {
       <section className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
           <Link to="/cart" className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5A623] text-sm mb-8 transition-colors"><ArrowLeft size={14} /> Καλάθι</Link>
-          <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-8" data-testid="checkout-title">Ολοκλήρωση Παραγγελίας</h1>
+          <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-8" data-testid="checkout-title">Ολοκληρωση Παραγγελιας</h1>
 
           {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>}
 
           <div className="grid lg:grid-cols-3 gap-8">
             <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-4" data-testid="checkout-form">
-              <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400">Στοιχεία Αποστολής</h3>
+              <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400">Στοιχεια Αποστολης</h3>
               {[
                 { key: "shipping_name", label: "Ονοματεπώνυμο", required: true },
                 { key: "shipping_address", label: "Διεύθυνση", required: true },
@@ -108,7 +108,7 @@ const CheckoutPage = () => {
             </form>
 
             <div className="bg-[#111] border border-[#222] rounded-lg p-5 h-fit">
-              <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 mb-4">Σύνοψη</h3>
+              <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 mb-4">Συνοψη</h3>
               <div className="space-y-2">
                 {cart.items.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm">

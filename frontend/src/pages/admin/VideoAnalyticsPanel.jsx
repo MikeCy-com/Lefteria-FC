@@ -216,7 +216,7 @@ const VideoAnalyticsPanel = ({ teamId, academyGroupId, players = [] }) => {
           {/* Markers Panel */}
           <div className="bg-[#121212] border border-[#262626] rounded-xl p-4" data-testid="markers-panel">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white">Σημάνσεις</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white">Σημανσεις</h3>
               <button onClick={() => setShowMarkerForm(true)} className="admin-btn-primary text-xs" data-testid="add-marker-btn">
                 <Plus size={12} /> Νέα
               </button>
@@ -287,7 +287,7 @@ const VideoAnalyticsPanel = ({ teamId, academyGroupId, players = [] }) => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h3 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">Βίντεο & Ανάλυση</h3>
+          <h3 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">Βιντεο & Αναλυση</h3>
           <span className="text-sm text-zinc-400">{videos.length} βίντεο</span>
         </div>
         <div className="flex gap-2 items-center">
@@ -347,7 +347,7 @@ const VideoAnalyticsPanel = ({ teamId, academyGroupId, players = [] }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowModal(false)}>
           <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#161616] z-10">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">Νέο Βίντεο</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">Νεο Βιντεο</h2>
               <button onClick={() => setShowModal(false)} className="text-zinc-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-4">

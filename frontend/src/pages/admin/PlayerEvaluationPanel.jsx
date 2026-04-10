@@ -88,7 +88,7 @@ const PlayerEvaluationPanel = ({ playerId }) => {
   return (
     <div data-testid="player-evaluation-panel">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-['Bebas_Neue'] text-xl text-white">Αξιολογήσεις</h3>
+        <h3 className="font-['Bebas_Neue'] text-xl text-white">Αξιολογησεις</h3>
         <button onClick={openCreate} className="admin-btn-primary text-xs" data-testid="add-evaluation-btn">
           <Plus size={12} /> Νέα Αξιολόγηση
         </button>
@@ -124,19 +124,19 @@ const PlayerEvaluationPanel = ({ playerId }) => {
                 <div className="px-4 pb-4 space-y-2">
                   {ev.strengths && (
                     <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-                      <span className="text-[9px] text-emerald-400 uppercase tracking-wider block mb-0.5">Δυνατά Σημεία</span>
+                      <span className="text-[9px] text-emerald-400 uppercase tracking-wider block mb-0.5">Δυνατα Σημεια</span>
                       <p className="text-xs text-zinc-300">{ev.strengths}</p>
                     </div>
                   )}
                   {ev.areas_to_improve && (
                     <div className="p-2.5 rounded-lg bg-[#F5A623]/5 border border-[#F5A623]/10">
-                      <span className="text-[9px] text-[#F5A623] uppercase tracking-wider block mb-0.5">Προς Βελτίωση</span>
+                      <span className="text-[9px] text-[#F5A623] uppercase tracking-wider block mb-0.5">Προς Βελτιωση</span>
                       <p className="text-xs text-zinc-300">{ev.areas_to_improve}</p>
                     </div>
                   )}
                   {ev.coach_notes && (
                     <div className="p-2.5 rounded-lg bg-[#1a1a1a]">
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-wider block mb-0.5">Σημειώσεις Προπονητή</span>
+                      <span className="text-[9px] text-zinc-500 uppercase tracking-wider block mb-0.5">Σημειωσεις Προπονητη</span>
                       <p className="text-xs text-zinc-300">{ev.coach_notes}</p>
                     </div>
                   )}
@@ -174,12 +174,12 @@ const PlayerEvaluationPanel = ({ playerId }) => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center overflow-y-auto" data-testid="eval-form-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-lg mx-4 my-8">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-xl text-white">Νέα Αξιολόγηση</h2>
+              <h2 className="font-['Bebas_Neue'] text-xl text-white">Νεα Αξιολογηση</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Περίοδος *</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Περιοδος *</label>
                 <input value={form.period} onChange={e => setForm({...form, period: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                   placeholder="Π.χ. Φεβ 2026" data-testid="eval-period-input" />
@@ -187,7 +187,7 @@ const PlayerEvaluationPanel = ({ playerId }) => {
 
               {/* Rating Sliders */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-zinc-300 uppercase tracking-wider">Βαθμολογία (1-10)</label>
+                <label className="block text-sm font-medium text-zinc-300 uppercase tracking-wider">Βαθμολογια (1-10)</label>
                 {RATING_CATEGORIES.map(cat => (
                   <RatingInput key={cat.key} label={cat.label} value={form.ratings[cat.key]} color={cat.color}
                     onChange={(v) => updateRating(cat.key, v)} />
@@ -201,19 +201,19 @@ const PlayerEvaluationPanel = ({ playerId }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Δυνατά Σημεία</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Δυνατα Σημεια</label>
                 <textarea value={form.strengths} onChange={e => setForm({...form, strengths: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={2}
                   data-testid="eval-strengths-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Προς Βελτίωση</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Προς Βελτιωση</label>
                 <textarea value={form.areas_to_improve} onChange={e => setForm({...form, areas_to_improve: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={2}
                   data-testid="eval-improve-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Σημειώσεις Προπονητή</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Σημειωσεις Προπονητη</label>
                 <textarea value={form.coach_notes} onChange={e => setForm({...form, coach_notes: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={2}
                   data-testid="eval-notes-input" />

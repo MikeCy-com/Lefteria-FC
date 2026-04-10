@@ -213,7 +213,7 @@ export default function RegistrationPage() {
           <div className="w-20 h-20 bg-[#F5A623]/15 rounded-full flex items-center justify-center mx-auto mb-6">
             <Check size={40} className="text-[#F5A623]" />
           </div>
-          <h1 className="font-['Bebas_Neue'] text-4xl text-white mb-4">Η Εγγραφή Υποβλήθηκε!</h1>
+          <h1 className="font-['Bebas_Neue'] text-4xl text-white mb-4">Η Εγγραφη Υποβληθηκε!</h1>
           <p className="text-zinc-300 text-lg mb-2">Ευχαριστούμε για το ενδιαφέρον σας.</p>
           <p className="text-zinc-500 mb-8">Θα επικοινωνήσουμε μαζί σας σύντομα στο <strong className="text-zinc-300">{form.parent_email}</strong> για τα επόμενα βήματα.</p>
           <Link to="/" className="inline-flex items-center gap-2 bg-[#F5A623] text-black font-semibold px-6 py-3 rounded-lg hover:bg-[#e09520] transition-colors" data-testid="back-home-btn">
@@ -229,9 +229,9 @@ export default function RegistrationPage() {
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-10">
-          <span className="inline-block bg-[#F5A623]/15 text-[#F5A623] text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Ακαδημία Ποδοσφαίρου</span>
+          <span className="inline-block bg-[#F5A623]/15 text-[#F5A623] text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Ακαδημια Ποδοσφαιρου</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white tracking-wide">
-            Έντυπο <span className="text-[#F5A623]">Εγγραφής</span>
+            Εντυπο <span className="text-[#F5A623]">Εγγραφης</span>
           </h1>
           <p className="text-zinc-400 mt-2 text-base">Συμπληρώστε τη φόρμα για να εγγράψετε τον αθλητή στην ακαδημία.</p>
         </div>
@@ -268,7 +268,7 @@ export default function RegistrationPage() {
           {/* Step 1: Player Info */}
           {step === 1 && (
             <div className="space-y-5" data-testid="step-1">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Στοιχεία Παίκτη</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Στοιχεια Παικτη</h2>
               <p className="text-zinc-500 text-sm mb-4">Συμπληρώστε τα βασικά στοιχεία του αθλητή.</p>
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="Όνομα" required error={errors.player_first_name}>
@@ -307,7 +307,7 @@ export default function RegistrationPage() {
           {/* Step 2: Parent + Emergency */}
           {step === 2 && (
             <div className="space-y-5" data-testid="step-2">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Στοιχεία Γονέα / Κηδεμόνα</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Στοιχεια Γονεα / Κηδεμονα</h2>
               <p className="text-zinc-500 text-sm mb-4">Κύρια στοιχεία επικοινωνίας του γονέα ή κηδεμόνα.</p>
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="Ονοματεπώνυμο" required error={errors.parent_name}>
@@ -332,7 +332,7 @@ export default function RegistrationPage() {
               </div>
 
               <div className="border-t border-[#262626] pt-5 mt-6">
-                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Στοιχεία Έκτακτης Ανάγκης</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Στοιχεια Εκτακτης Αναγκης</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField label="Ονοματεπώνυμο" required error={errors.emergency_name}>
                     <Input value={form.emergency_name} onChange={e => set("emergency_name", e.target.value)} data-testid="emergency-name" />
@@ -353,7 +353,7 @@ export default function RegistrationPage() {
           {/* Step 3: Medical */}
           {step === 3 && (
             <div className="space-y-5" data-testid="step-3">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Ιατρικές Πληροφορίες</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Ιατρικες Πληροφοριες</h2>
               <p className="text-zinc-500 text-sm mb-4">Δηλώστε τυχόν πληροφορίες που αφορούν την υγεία του παιδιού.</p>
 
               <div className="bg-[#0d0d0d] border border-[#262626] rounded-lg p-5 space-y-4">
@@ -400,7 +400,7 @@ export default function RegistrationPage() {
           {/* Step 4: Terms & Consents */}
           {step === 4 && (
             <div className="space-y-5" data-testid="step-4">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Όροι & Συγκαταθέσεις</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Οροι & Συγκαταθεσεις</h2>
               <p className="text-zinc-500 text-sm mb-4">Διαβάστε και αποδεχτείτε τους όρους συμμετοχής.</p>
 
               {/* 6.1 Participation */}
@@ -485,7 +485,7 @@ export default function RegistrationPage() {
           {/* Step 5: Payment & Signature */}
           {step === 5 && (
             <div className="space-y-5" data-testid="step-5">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Πληρωμή & Υπογραφή</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white mb-1">Πληρωμη & Υπογραφη</h2>
               <p className="text-zinc-500 text-sm mb-4">Επιλέξτε τρόπο πληρωμής και υπογράψτε.</p>
 
               <FormField label="Τρόπος Πληρωμής" required>
@@ -513,7 +513,7 @@ export default function RegistrationPage() {
               </FormField>
 
               <div className="border-t border-[#262626] pt-5">
-                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Τελική Δήλωση</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-2">Τελικη Δηλωση</h3>
                 <p className="text-zinc-400 text-xs leading-relaxed mb-4">
                   Δηλώνω υπεύθυνα ότι όλα τα ανωτέρω στοιχεία είναι αληθή και ότι αποδέχομαι πλήρως τους όρους της παρούσας Συμφωνίας.
                 </p>

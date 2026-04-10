@@ -94,7 +94,7 @@ const AdminAttendanceTab = ({ teams = [], academyGroups = [], players = [] }) =>
     <div data-testid="admin-attendance-tab">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Παρουσίες</h1>
+          <h1 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Παρουσιες</h1>
           <p className="text-zinc-500 text-sm">Παρακολούθηση συμμετοχής ανά ομάδα</p>
         </div>
       </div>
@@ -123,19 +123,19 @@ const AdminAttendanceTab = ({ teams = [], academyGroups = [], players = [] }) =>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-5 text-center" data-testid="attendance-rate-card">
               <div className="font-['Bebas_Neue'] text-4xl text-[#F5A623]">{overallRate}%</div>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Παρουσία</div>
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Παρουσια</div>
             </div>
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-5 text-center">
               <div className="font-['Bebas_Neue'] text-4xl text-emerald-400">{overallGoing}</div>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Παρόντες</div>
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Παροντες</div>
             </div>
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-5 text-center">
               <div className="font-['Bebas_Neue'] text-4xl text-red-400">{overallNot}</div>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Απόντες</div>
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Αποντες</div>
             </div>
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-5 text-center">
               <div className="font-['Bebas_Neue'] text-4xl text-zinc-500">{stats.total_events}</div>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Εκδηλώσεις</div>
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Εκδηλωσεις</div>
             </div>
           </div>
 
@@ -222,7 +222,7 @@ const AdminAttendanceTab = ({ teams = [], academyGroups = [], players = [] }) =>
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-lg mx-4">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
               <div>
-                <h2 className="font-['Bebas_Neue'] text-xl text-white">Καταγραφή Παρουσιών</h2>
+                <h2 className="font-['Bebas_Neue'] text-xl text-white">Καταγραφη Παρουσιων</h2>
                 <p className="text-xs text-zinc-500">{markingEvent.title}</p>
               </div>
               <button onClick={() => setMarkingEvent(null)} className="admin-icon-btn"><XIcon size={18} /></button>

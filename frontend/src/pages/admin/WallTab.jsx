@@ -82,7 +82,7 @@ const AdminWallTab = ({ teams = [], academyGroups = [] }) => {
     <div data-testid="admin-wall-tab">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Ανακοινώσεις</h1>
+          <h1 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Ανακοινωσεις</h1>
           <p className="text-zinc-500 text-sm">{posts.length} δημοσιεύσεις</p>
         </div>
         <button onClick={() => setShowForm(true)} className="admin-btn-primary" data-testid="add-post-btn">
@@ -186,18 +186,18 @@ const AdminWallTab = ({ teams = [], academyGroups = [] }) => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" data-testid="create-post-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-lg mx-4">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">Νέα Ανακοίνωση</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">Νεα Ανακοινωση</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Κείμενο *</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Κειμενο *</label>
                 <textarea value={form.content} onChange={e => setForm({...form, content: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={4}
                   placeholder="Γράψε εδώ..." data-testid="post-content-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ομάδα</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ομαδα</label>
                 <select value={form.team_id || form.academy_group_id || ""} onChange={e => {
                   const sel = allGroups.find(g => g.id === e.target.value);
                   if (sel?.type === "team") setForm({...form, team_id: sel.id, academy_group_id: ""});
@@ -212,7 +212,7 @@ const AdminWallTab = ({ teams = [], academyGroups = [] }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Εικόνα URL (προαιρετικό)</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Εικονα URL (προαιρετικο)</label>
                 <input value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                   placeholder="https://..." data-testid="post-image-input" />

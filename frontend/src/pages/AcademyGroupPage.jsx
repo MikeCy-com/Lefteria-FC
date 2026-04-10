@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { stripGreekAccents } from "../utils/greekText";
 import { ChevronRight, Users, Calendar, Clock, Image as ImageIcon, MapPin, BarChart3, Trophy, Target, Shield } from "lucide-react";
 import axios from "axios";
 
@@ -52,7 +53,7 @@ const AcademyGroupPage = () => {
 
   if (!group) return (
     <div className="pt-28 text-center min-h-screen bg-[#050505]">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Η ομάδα δεν βρέθηκε</h2>
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Η ομαδα δεν βρεθηκε</h2>
       <Link to="/academy" className="text-[#F5A623] hover:underline text-sm mt-2 inline-block">Επιστροφή στην Ακαδημία</Link>
     </div>
   );
@@ -173,7 +174,7 @@ const AcademyGroupPage = () => {
                 }`}
                 data-testid={`group-tab-${tab.id}`}
               >
-                <span className="font-['Bebas_Neue'] text-lg tracking-wide">{tab.label}</span>
+                <span className="font-['Bebas_Neue'] text-lg tracking-wide">{stripGreekAccents(tab.label)}</span>
                 {tab.count !== null && <span className="text-xs text-zinc-500 ml-1.5">({tab.count})</span>}
                 {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />}
               </button>
@@ -188,7 +189,7 @@ const AcademyGroupPage = () => {
         {activeTab === "roster" && (
           <div data-testid="group-roster-section">
             <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8">
-              Ρόστερ <span className="text-[#F5A623]">{group.name}</span>
+              Ροστερ <span className="text-[#F5A623]">{group.name}</span>
             </h2>
             {players.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -246,12 +247,12 @@ const AcademyGroupPage = () => {
         {activeTab === "schedule" && (
           <div data-testid="group-schedule-section">
             <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8">
-              Πρόγραμμα <span className="text-[#F5A623]">{group.name}</span>
+              Προγραμμα <span className="text-[#F5A623]">{group.name}</span>
             </h2>
 
             {upcoming.length > 0 && (
               <div className="mb-10">
-                <h3 className="text-sm text-zinc-400 uppercase tracking-wider mb-4 font-medium">Επόμενοι Αγώνες</h3>
+                <h3 className="text-sm text-zinc-400 uppercase tracking-wider mb-4 font-medium">Επομενοι Αγωνες</h3>
                 <div className="space-y-3">
                   {upcoming.map(f => (
                     <div key={f.id} className="card p-5 flex flex-col sm:flex-row sm:items-center gap-3" data-testid={`upcoming-fixture-${f.id}`}>
@@ -277,7 +278,7 @@ const AcademyGroupPage = () => {
 
             {completed.length > 0 && (
               <div>
-                <h3 className="text-sm text-zinc-400 uppercase tracking-wider mb-4 font-medium">Αποτελέσματα</h3>
+                <h3 className="text-sm text-zinc-400 uppercase tracking-wider mb-4 font-medium">Αποτελεσματα</h3>
                 <div className="space-y-3">
                   {completed.map(f => (
                     <div key={f.id} className="card p-5 flex flex-col sm:flex-row sm:items-center gap-3" data-testid={`completed-fixture-${f.id}`}>
@@ -316,7 +317,7 @@ const AcademyGroupPage = () => {
         {activeTab === "stats" && (
           <div data-testid="group-stats-section">
             <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8">
-              Στατιστικά Σεζόν <span className="text-[#F5A623]">{group.season || "2025/26"}</span>
+              Στατιστικα Σεζον <span className="text-[#F5A623]">{group.season || "2025/26"}</span>
             </h2>
 
             {/* Season Record Cards */}
@@ -341,7 +342,7 @@ const AcademyGroupPage = () => {
                 {/* Win/Draw/Loss Bar */}
                 <div className="card p-6" data-testid="wdl-chart">
                   <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
-                    <Trophy size={18} className="text-[#F5A623]" /> Αποτελέσματα
+                    <Trophy size={18} className="text-[#F5A623]" /> Αποτελεσματα
                   </h3>
                   <div className="flex h-8 rounded-lg overflow-hidden mb-4">
                     {seasonStats.wins > 0 && (
@@ -391,22 +392,22 @@ const AcademyGroupPage = () => {
                 {/* Goals Summary */}
                 <div className="card p-6" data-testid="goals-summary">
                   <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
-                    <Target size={18} className="text-[#F5A623]" /> Τέρματα
+                    <Target size={18} className="text-[#F5A623]" /> Τερματα
                   </h3>
                   <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="text-center">
                       <div className="font-['Bebas_Neue'] text-3xl text-emerald-400">{seasonStats.goalsFor}</div>
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Υπέρ</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Υπερ</div>
                     </div>
                     <div className="text-center">
                       <div className="font-['Bebas_Neue'] text-3xl text-red-400">{seasonStats.goalsAgainst}</div>
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Κατά</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Κατα</div>
                     </div>
                     <div className="text-center">
                       <div className={`font-['Bebas_Neue'] text-3xl ${seasonStats.goalDiff >= 0 ? 'text-[#F5A623]' : 'text-red-400'}`}>
                         {seasonStats.goalDiff > 0 ? '+' : ''}{seasonStats.goalDiff}
                       </div>
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Διαφορά</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Διαφορα</div>
                     </div>
                   </div>
                   {seasonStats.played > 0 && (
@@ -431,7 +432,7 @@ const AcademyGroupPage = () => {
               {/* Top Scorers */}
               <div className="card p-6" data-testid="top-scorers">
                 <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
-                  <Target size={18} className="text-[#F5A623]" /> Σκόρερ
+                  <Target size={18} className="text-[#F5A623]" /> Σκορερ
                 </h3>
                 {topScorers.length > 0 ? (
                   <div className="space-y-2">
@@ -463,7 +464,7 @@ const AcademyGroupPage = () => {
               {/* Top Assisters */}
               <div className="card p-6" data-testid="top-assisters">
                 <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
-                  <Users size={18} className="text-[#F5A623]" /> Ασίστ
+                  <Users size={18} className="text-[#F5A623]" /> Ασιστ
                 </h3>
                 {topAssisters.length > 0 ? (
                   <div className="space-y-2">
@@ -495,7 +496,7 @@ const AcademyGroupPage = () => {
               {/* Most Appearances */}
               <div className="card p-6" data-testid="most-appearances">
                 <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
-                  <BarChart3 size={18} className="text-[#F5A623]" /> Συμμετοχές
+                  <BarChart3 size={18} className="text-[#F5A623]" /> Συμμετοχες
                 </h3>
                 {mostAppearances.length > 0 ? (
                   <div className="space-y-2">
@@ -531,7 +532,7 @@ const AcademyGroupPage = () => {
         {activeTab === "gallery" && (
           <div data-testid="group-gallery-section">
             <h2 className="font-['Bebas_Neue'] text-3xl text-white mb-8">
-              Γκαλερί <span className="text-[#F5A623]">{group.name}</span>
+              Γκαλερι <span className="text-[#F5A623]">{group.name}</span>
             </h2>
             {gallery.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

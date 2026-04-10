@@ -111,7 +111,7 @@ const AdminCalendarTab = ({ teams = [], academyGroups = [] }) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Ημερολόγιο</h1>
+          <h1 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Ημερολογιο</h1>
           <p className="text-zinc-500 text-sm">{events.length} εκδηλώσεις</p>
         </div>
         <button onClick={() => openCreate()} className="admin-btn-primary" data-testid="add-event-btn">
@@ -221,7 +221,7 @@ const AdminCalendarTab = ({ teams = [], academyGroups = [] }) => {
             </div>
           ) : (
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-4">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Επόμενες</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Επομενες</h3>
               <div className="space-y-2">
                 {calendarItems.filter(e => e.date && e.date >= todayStr).slice(0, 8).map(ev => {
                   const info = getTypeInfo(ev.type);
@@ -244,7 +244,7 @@ const AdminCalendarTab = ({ teams = [], academyGroups = [] }) => {
 
           {/* Legend */}
           <div className="bg-[#121212] border border-[#262626] rounded-xl p-4">
-            <h4 className="text-[10px] text-zinc-500 uppercase tracking-wider mb-3">Τύποι</h4>
+            <h4 className="text-[10px] text-zinc-500 uppercase tracking-wider mb-3">Τυποι</h4>
             <div className="space-y-1.5">
               {EVENT_TYPES.map(t => (
                 <div key={t.value} className="flex items-center gap-2">
@@ -262,19 +262,19 @@ const AdminCalendarTab = ({ teams = [], academyGroups = [] }) => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" data-testid="event-form-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-lg mx-4">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editEvent ? "Επεξεργασία" : "Νέα Εκδήλωση"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editEvent ? "Επεξεργασια" : "Νεα Εκδηλωση"}</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Τίτλος *</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Τιτλος *</label>
                 <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                   placeholder="Π.χ. Προπόνηση U12" data-testid="event-title-input" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Τύπος</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Τυπος</label>
                   <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}
                     className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                     data-testid="event-type-select">
@@ -284,7 +284,7 @@ const AdminCalendarTab = ({ teams = [], academyGroups = [] }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ομάδα</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ομαδα</label>
                   <select value={form.team_id || form.academy_group_id || ""} onChange={e => {
                     const sel = allGroups.find(g => g.id === e.target.value);
                     if (sel?.type === "team") setForm({...form, team_id: sel.id, academy_group_id: ""});
@@ -301,25 +301,25 @@ const AdminCalendarTab = ({ teams = [], academyGroups = [] }) => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ημερομηνία *</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ημερομηνια *</label>
                   <input type="datetime-local" value={form.date} onChange={e => setForm({...form, date: e.target.value})}
                     className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                     data-testid="event-date-input" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Λήξη</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ληξη</label>
                   <input type="datetime-local" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})}
                     className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Τοποθεσία</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Τοποθεσια</label>
                 <input value={form.location} onChange={e => setForm({...form, location: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                   placeholder="Γήπεδο Αετού" data-testid="event-location-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Περιγραφή</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Περιγραφη</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={2}
                   data-testid="event-description-input" />

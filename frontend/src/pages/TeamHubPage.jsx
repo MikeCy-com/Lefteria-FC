@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { stripGreekAccents } from "../utils/greekText";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Users, MapPin, Clock, Trophy, Target, Shield, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
@@ -36,8 +37,8 @@ const TeamTabBar = ({ activeTab, setActiveTab }) => {
               }`}
               data-testid={`team-tab-${tab.id}`}
             >
-              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Η Ομάδα</span>
-              <span className="font-['Bebas_Neue'] text-base sm:text-lg tracking-wide">{tab.label}</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Η Ομαδα</span>
+              <span className="font-['Bebas_Neue'] text-base sm:text-lg tracking-wide">{stripGreekAccents(tab.label)}</span>
               {activeTab === tab.id && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />
               )}
@@ -105,7 +106,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
           {/* Game Scoreboard */}
           <div className="card overflow-hidden" data-testid="game-scoreboard">
             <div className="border-l-[3px] border-[#F5A623] p-5">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Τελευταίος Αγώνας</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Τελευταιος Αγωνας</h3>
             </div>
             {lastMatch ? (
               <div className="px-5 pb-5">
@@ -128,7 +129,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
                     </div>
                   </div>
                 </div>
-                <div className="text-center text-xs text-zinc-500 uppercase tracking-wider">Τελικό Σκορ</div>
+                <div className="text-center text-xs text-zinc-500 uppercase tracking-wider">Τελικο Σκορ</div>
               </div>
             ) : (
               <div className="px-5 pb-5 text-zinc-600 text-sm">Δεν υπάρχουν ολοκληρωμένοι αγώνες</div>
@@ -138,7 +139,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
           {/* Main Roster */}
           <div className="card overflow-hidden" data-testid="main-roster-preview">
             <div className="border-l-[3px] border-[#F5A623] p-5 flex items-center justify-between">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Ρόστερ</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Ροστερ</h3>
               <button
                 onClick={() => document.querySelector('[data-testid="team-tab-roster"]')?.click()}
                 className="text-xs border border-[#333] text-zinc-400 hover:text-white hover:border-zinc-500 px-3 py-1.5 transition-colors"
@@ -152,9 +153,9 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
                 <thead>
                   <tr className="text-left text-[10px] text-zinc-500 uppercase tracking-wider border-b border-[#1e1e1e]">
                     <th className="p-3 w-10">#</th>
-                    <th className="p-3">Παίκτης</th>
-                    <th className="p-3">Θέση</th>
-                    <th className="p-3 text-center">Ηλικία</th>
+                    <th className="p-3">Παικτης</th>
+                    <th className="p-3">Θεση</th>
+                    <th className="p-3 text-center">Ηλικια</th>
                     <th className="p-3 text-center">Εθν.</th>
                   </tr>
                 </thead>
@@ -192,7 +193,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
           <div className="card overflow-hidden" data-testid="games-history">
             <div className="border-l-[3px] border-[#F5A623] p-5">
               <div className="flex items-center justify-between">
-                <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Ιστορικό</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Ιστορικο</h3>
                 <div className="flex items-center gap-3 text-[10px]">
                   <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-green-500" /> Ν</span>
                   <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-yellow-500" /> Ι</span>
@@ -233,7 +234,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
           {/* Latest Results */}
           <div className="card overflow-hidden" data-testid="latest-results-preview">
             <div className="border-l-[3px] border-[#F5A623] p-5 flex items-center justify-between">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Αποτελέσματα</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Αποτελεσματα</h3>
               <button
                 onClick={() => document.querySelector('[data-testid="team-tab-results"]')?.click()}
                 className="text-xs border border-[#333] text-zinc-400 hover:text-white hover:border-zinc-500 px-3 py-1.5 transition-colors"
@@ -258,7 +259,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
           {/* Team Statistics */}
           <div className="card overflow-hidden" data-testid="team-statistics">
             <div className="border-l-[3px] border-[#F5A623] p-5">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Στατιστικά Ομάδας</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Στατιστικα Ομαδας</h3>
             </div>
             <div className="px-5 pb-5 space-y-3">
               {teamStats ? (
@@ -285,7 +286,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
           {staff.length > 0 && (
             <div className="card overflow-hidden" data-testid="staff-preview">
               <div className="border-l-[3px] border-[#F5A623] p-5">
-                <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Τεχνικό Επιτελείο</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Τεχνικο Επιτελειο</h3>
               </div>
               <div className="divide-y divide-[#1a1a1a]">
                 {staff.slice(0, 4).map(s => {
@@ -338,18 +339,18 @@ const RosterTab = ({ players }) => {
       <div className="card overflow-hidden">
         <div className="border-l-[3px] border-[#F5A623] p-5">
           <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">
-            {filter === 'all' ? 'Πρώτη Ομάδα' : posLabels[filter]} — Σεζόν 2025/26
+            {filter === 'all' ? 'Πρωτη Ομαδα' : posLabels[filter]} — Σεζον 2025/26
           </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-testid="full-roster-table">
             <thead>
               <tr className="text-left text-[10px] text-zinc-500 uppercase tracking-wider border-b border-[#1e1e1e]">
-                <th className="p-2 sm:p-4">Παίκτης</th>
-                <th className="p-2 sm:p-4 text-center">Θέση</th>
+                <th className="p-2 sm:p-4">Παικτης</th>
+                <th className="p-2 sm:p-4 text-center">Θεση</th>
                 <th className="p-2 sm:p-4 text-center">Γκολ</th>
-                <th className="p-2 sm:p-4 text-center">Ασίστ</th>
-                <th className="p-2 sm:p-4 text-center hidden sm:table-cell">Λεπτά</th>
+                <th className="p-2 sm:p-4 text-center">Ασιστ</th>
+                <th className="p-2 sm:p-4 text-center hidden sm:table-cell">Λεπτα</th>
               </tr>
             </thead>
             <tbody>
@@ -456,7 +457,7 @@ const ScheduleTab = () => {
   const prevMonth = () => setCurrentDate(new Date(year, month - 2, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month, 1));
 
-  const monthNames = ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"];
+  const monthNames = ["Ιανουαριος", "Φεβρουαριος", "Μαρτιος", "Απριλιος", "Μαιος", "Ιουνιος", "Ιουλιος", "Αυγουστος", "Σεπτεμβριος", "Οκτωβριος", "Νοεμβριος", "Δεκεμβριος"];
   const dayNames = ["Δε", "Τρ", "Τε", "Πε", "Πα", "Σα", "Κυ"];
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = (new Date(year, month - 1, 1).getDay() + 6) % 7;
@@ -514,7 +515,7 @@ const ScheduleTab = () => {
       {/* Monthly fixtures list */}
       {fixtures.length > 0 && (
         <div className="mt-8 space-y-2">
-          <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Αγώνες {monthNames[month - 1]}</h3>
+          <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Αγωνες {monthNames[month - 1]}</h3>
           {fixtures.map(f => (
             <div key={f.id} className="card p-4 flex items-center justify-between text-sm">
               <span className="text-xs text-zinc-500 w-20">{new Date(f.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
@@ -575,7 +576,7 @@ const VenuesTab = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h2 className="font-['Bebas_Neue'] text-2xl text-white">{venue.name}</h2>
+                    <h2 className="font-['Bebas_Neue'] text-2xl text-white">{stripGreekAccents(venue.name)}</h2>
                     {venue.is_home_ground && <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded">Έδρα</span>}
                   </div>
                   <p className="text-zinc-400 text-sm flex items-center gap-1"><MapPin size={14} /> {venue.address}, {venue.city}, {venue.country}</p>
@@ -585,19 +586,19 @@ const VenuesTab = () => {
                 {venue.capacity && (
                   <div className="card p-4 text-center">
                     <div className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{venue.capacity.toLocaleString()}</div>
-                    <div className="text-[10px] text-zinc-500 uppercase">Χωρητικότητα</div>
+                    <div className="text-[10px] text-zinc-500 uppercase">Χωρητικοτητα</div>
                   </div>
                 )}
                 {venue.surface && (
                   <div className="card p-4 text-center">
                     <div className="text-sm text-white font-medium">{venue.surface}</div>
-                    <div className="text-[10px] text-zinc-500 uppercase">Επιφάνεια</div>
+                    <div className="text-[10px] text-zinc-500 uppercase">Επιφανεια</div>
                   </div>
                 )}
                 {venue.is_home_ground && (
                   <div className="card p-4 text-center">
                     <div className="text-sm text-[#F5A623] font-medium">LEFTERIA FC</div>
-                    <div className="text-[10px] text-zinc-500 uppercase">Έδρα</div>
+                    <div className="text-[10px] text-zinc-500 uppercase">Εδρα</div>
                   </div>
                 )}
               </div>
@@ -775,8 +776,8 @@ const TeamHubPage = () => {
       <div className="pt-24 min-h-screen">
         <section className="py-10 md:py-16 px-4 md:px-6 bg-[#0a0a0a]">
           <div className="max-w-6xl mx-auto">
-            <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζόν 2025/26</span>
-            <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2">Πρώτη <span className="text-[#F5A623]">Ομάδα</span></h1>
+            <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζον 2025/26</span>
+            <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2">Πρωτη <span className="text-[#F5A623]">Ομαδα</span></h1>
           </div>
         </section>
         <div className="flex items-center justify-center min-h-[300px]"><div className="spinner" /></div>
@@ -789,9 +790,9 @@ const TeamHubPage = () => {
       {/* Hero */}
       <section className="py-16 px-6 bg-[#0a0a0a]">
         <div className="max-w-6xl mx-auto">
-          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζόν 2025/26</span>
+          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Σεζον 2025/26</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2">
-            Πρώτη <span className="text-[#F5A623]">Ομάδα</span>
+            Πρωτη <span className="text-[#F5A623]">Ομαδα</span>
           </h1>
           <p className="text-zinc-400 text-sm mt-3 max-w-2xl">
             Γνωρίστε τους παίκτες που εκπροσωπούν την LEFTERIA FC στον Α' Όμιλο του ΠΑΑΟΚ.

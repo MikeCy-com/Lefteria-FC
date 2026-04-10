@@ -45,8 +45,8 @@ export const CalendarPage = () => {
     <div className="pt-28 min-h-screen bg-[#050505] pb-16" data-testid="calendar-page">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-8">
-          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Πρόγραμμα</span>
-          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Ημερολόγιο Αγώνων</h1>
+          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Προγραμμα</span>
+          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Ημερολογιο Αγωνων</h1>
         </div>
 
         {/* Month Navigation */}
@@ -101,7 +101,7 @@ export const CalendarPage = () => {
         {/* Upcoming list below calendar */}
         {fixtures.length > 0 && (
           <div className="mt-8">
-            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Αγώνες {monthNames[month - 1]}</h3>
+            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Αγωνες {monthNames[month - 1]}</h3>
             <div className="space-y-2">
               {fixtures.map(f => (
                 <div key={f.id} className="card p-4 flex items-center justify-between">
@@ -161,8 +161,8 @@ export const VenuePage = () => {
     <div className="pt-28 min-h-screen bg-[#050505] pb-16" data-testid="venue-page">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-10">
-          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Εγκαταστάσεις</span>
-          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Γήπεδα</h1>
+          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Εγκαταστασεις</span>
+          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Γηπεδα</h1>
         </div>
 
         <div className="space-y-8">
@@ -196,19 +196,19 @@ export const VenuePage = () => {
                   {venue.capacity && (
                     <div className="card p-4 text-center">
                       <div className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{venue.capacity.toLocaleString()}</div>
-                      <div className="text-[10px] text-zinc-500 uppercase">Χωρητικότητα</div>
+                      <div className="text-[10px] text-zinc-500 uppercase">Χωρητικοτητα</div>
                     </div>
                   )}
                   {venue.surface && (
                     <div className="card p-4 text-center">
                       <div className="text-sm text-white font-medium">{venue.surface}</div>
-                      <div className="text-[10px] text-zinc-500 uppercase">Επιφάνεια</div>
+                      <div className="text-[10px] text-zinc-500 uppercase">Επιφανεια</div>
                     </div>
                   )}
                   {venue.is_home_ground && (
                     <div className="card p-4 text-center">
                       <div className="text-sm text-[#F5A623] font-medium">LEFTERIA FC</div>
-                      <div className="text-[10px] text-zinc-500 uppercase">Έδρα</div>
+                      <div className="text-[10px] text-zinc-500 uppercase">Εδρα</div>
                     </div>
                   )}
                 </div>
@@ -265,8 +265,8 @@ export const SeasonsPage = () => {
     <div className="pt-28 min-h-screen bg-[#050505] pb-16" data-testid="seasons-page">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-10">
-          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Ιστορικό</span>
-          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Αρχείο Σεζόν</h1>
+          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Ιστορικο</span>
+          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Αρχειο Σεζον</h1>
         </div>
 
         {/* Season Selector */}
@@ -280,7 +280,7 @@ export const SeasonsPage = () => {
               }`}
               data-testid={`season-btn-${s.id}`}
             >
-              {s.name} {s.is_current ? '(Τρέχουσα)' : ''}
+              {s.name} {s.is_current ? '(Τρεχουσα)' : ''}
             </button>
           ))}
         </div>
@@ -302,7 +302,7 @@ export const SeasonsPage = () => {
               </div>
               {selectedSeason.achievements?.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <h3 className="text-xs text-zinc-500 uppercase mb-2">Επιτεύγματα</h3>
+                  <h3 className="text-xs text-zinc-500 uppercase mb-2">Επιτευγματα</h3>
                   <div className="flex gap-2 flex-wrap">
                     {selectedSeason.achievements.map((a, i) => (
                       <span key={i} className="text-sm text-white bg-[#1a1a1a] px-3 py-1 rounded">{a}</span>
@@ -321,7 +321,7 @@ export const SeasonsPage = () => {
             {/* Standings */}
             {seasonStandings.length > 0 && (
               <div>
-                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Βαθμολογία</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Βαθμολογια</h3>
                 <div className="card overflow-hidden">
                   <table className="standings-table" data-testid="season-standings">
                     <thead>
@@ -352,7 +352,7 @@ export const SeasonsPage = () => {
             {/* Results */}
             {seasonFixtures.length > 0 && (
               <div>
-                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Αποτελέσματα ({seasonFixtures.length} αγώνες)</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Αποτελεσματα ({seasonFixtures.length} αγωνες)</h3>
                 <div className="space-y-2">
                   {seasonFixtures.map(f => (
                     <div key={f.id} className="card p-4 flex items-center justify-between">
@@ -452,8 +452,8 @@ export const StaffPage = () => {
     <div className="pt-28 min-h-screen bg-[#050505] pb-16" data-testid="staff-page">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-10">
-          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Τεχνικό Τιμ</span>
-          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Τεχνικό Επιτελείο</h1>
+          <span className="text-xs text-[#F5A623] tracking-[0.3em] uppercase">Τεχνικο Τιμ</span>
+          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl text-white mt-2">Τεχνικο Επιτελειο</h1>
         </div>
 
         {renderGroup("Α' Ομάδα", firstTeam)}

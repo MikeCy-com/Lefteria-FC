@@ -12,7 +12,7 @@ const EVENT_COLORS = {
   other: { bg: "bg-zinc-500/15", border: "border-zinc-500/30", text: "text-zinc-400", dot: "bg-zinc-500" },
 };
 
-const MONTHS_GR = ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"];
+const MONTHS_GR = ["Ιανουαριος", "Φεβρουαριος", "Μαρτιος", "Απριλιος", "Μαιος", "Ιουνιος", "Ιουλιος", "Αυγουστος", "Σεπτεμβριος", "Οκτωβριος", "Νοεμβριος", "Δεκεμβριος"];
 const DAYS_GR = ["Δευ", "Τρι", "Τετ", "Πεμ", "Παρ", "Σαβ", "Κυρ"];
 
 // Shared Section Dashboard with scoped Calendar
@@ -103,7 +103,7 @@ const SectionDashboard = ({ scope, teams = [], academyGroups = [], opponents = [
       {/* Header with stats */}
       <div className="mb-6">
         <h2 className="font-['Bebas_Neue'] text-3xl tracking-wide" style={{ color: accentColor }}>
-          {isClub ? "Σύλλογος" : "Ακαδημία"} — Πίνακας Ελέγχου
+          {isClub ? "Συλλογος" : "Ακαδημια"} — Πινακας Ελεγχου
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
           <div className="admin-card p-4 text-center">

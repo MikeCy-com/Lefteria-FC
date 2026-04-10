@@ -187,7 +187,7 @@ class LoginResponse(BaseModel):
 class AcademyGroup(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str  # e.g., "U18", "U16", "U14"
+    name: str  # e.g., "U12", "U10", "U8"
     age_range: str  # e.g., "16-18 ετών"
     coach_id: Optional[str] = None
     coach_name: Optional[str] = None
@@ -2163,10 +2163,10 @@ async def seed_data():
     
     # Seed Academy Groups
     academy_groups = [
-        {"name": "U18", "age_range": "16-18 ετών", "coach_name": "Κώστας Παπαδόπουλος", "training_schedule": "Καθημερινά - 18:30", "description": "Προπόνηση επαγγελματικής πορείας με ενσωμάτωση στην πρώτη ομάδα."},
-        {"name": "U16", "age_range": "14-16 ετών", "coach_name": "Ανδρέας Γεωργίου", "training_schedule": "Δευ, Τετ, Παρ, Σαβ - 18:00", "description": "Προ-επαγγελματική ανάπτυξη και εντατική προπόνηση."},
-        {"name": "U14", "age_range": "12-14 ετών", "coach_name": "Δημήτρης Παπαδόπουλος", "training_schedule": "Τρι, Πεμ, Σαβ - 17:30", "description": "Προχωρημένη τακτική προπόνηση και αγωνιστικές συμμετοχές."},
-        {"name": "U12", "age_range": "10-12 ετών", "coach_name": "Γιώργος Αλεξάνδρου", "training_schedule": "Τρι, Πεμ, Σαβ - 17:00", "description": "Ανάπτυξη τακτικής αντίληψης και τεχνικών δεξιοτήτων."},
+        {"name": "U12", "age_range": "10-12 ετών", "coach_name": "Κώστας Παπαδόπουλος", "training_schedule": "Καθημερινά - 18:30", "description": "Η μεγαλύτερη ηλικιακή κατηγορία της ακαδημίας μας."},
+        {"name": "U10", "age_range": "8-10 ετών", "coach_name": "Ανδρέας Γεωργίου", "training_schedule": "Δευ, Τετ, Παρ, Σαβ - 18:00", "description": "Ανάπτυξη τακτικής αντίληψης και τεχνικών δεξιοτήτων."},
+        {"name": "U8", "age_range": "6-8 ετών", "coach_name": "Δημήτρης Παπαδόπουλος", "training_schedule": "Τρι, Πεμ, Σαβ - 17:30", "description": "Εισαγωγή στο ποδόσφαιρο μέσω παιχνιδιού και διασκέδασης."},
+        {"name": "U6", "age_range": "4-6 ετών", "coach_name": "Γιώργος Αλεξάνδρου", "training_schedule": "Τρι, Πεμ, Σαβ - 17:00", "description": "Πρώτα βήματα στο ποδόσφαιρο με παιχνίδια κινητικής ανάπτυξης."},
     ]
     
     group_ids = {}

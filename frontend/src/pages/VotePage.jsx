@@ -168,8 +168,8 @@ const VotePage = () => {
           <Link to="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5A623] text-sm mb-8 transition-colors" data-testid="vote-back-link"><ArrowLeft size={14} /> Αρχική</Link>
 
           <div className="mb-8">
-            <span className="badge badge-primary mb-3" style={{ display: 'inline-block', padding: '4px 12px', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', background: '#F5A623', color: '#000', borderRadius: '2px', fontWeight: 600 }}>Ψηφοφορία {currentMonthName}</span>
-            <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2" data-testid="vote-page-title">Παίκτης του <span className="text-[#F5A623]">Μήνα</span></h1>
+            <span className="badge badge-primary mb-3" style={{ display: 'inline-block', padding: '4px 12px', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', background: '#F5A623', color: '#000', borderRadius: '2px', fontWeight: 600 }}>Ψηφοφορια {currentMonthName}</span>
+            <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mt-2" data-testid="vote-page-title">Παικτης του <span className="text-[#F5A623]">Μηνα</span></h1>
             <div className="flex items-center gap-4 mt-3">
               <p className="text-zinc-400 text-sm">Σύνολο ψήφων: <span className="text-white font-semibold">{results.total_votes}</span></p>
             </div>
@@ -182,7 +182,7 @@ const VotePage = () => {
             <div className="mb-10 p-6 bg-[#111] border border-[#222] rounded-lg max-w-md" data-testid="vote-login-prompt">
               <div className="flex items-center gap-3 mb-3">
                 <LogIn size={20} className="text-[#F5A623]" />
-                <h3 className="font-['Bebas_Neue'] text-xl text-white">Απαιτείται Σύνδεση</h3>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white">Απαιτειται Συνδεση</h3>
               </div>
               <p className="text-zinc-500 text-sm mb-4">Συνδεθείτε στον λογαριασμό σας για να ψηφίσετε τον αγαπημένο σας παίκτη.</p>
               <div className="flex gap-3">
@@ -216,7 +216,7 @@ const VotePage = () => {
           {/* Leaderboard */}
           {results.results.length > 0 && (
             <div className="mb-10" data-testid="vote-leaderboard">
-              <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 mb-4 tracking-wider">Κατάταξη</h3>
+              <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 mb-4 tracking-wider">Καταταξη</h3>
               {results.results[0] && (
                 <button onClick={() => openPlayerDetail(results.results[0].player_id)}
                   className="w-full mb-4 p-5 bg-gradient-to-r from-[#F5A623]/10 via-[#111] to-[#111] border border-[#F5A623]/20 rounded-lg hover:border-[#F5A623]/40 transition-colors text-left" data-testid="vote-leader">
@@ -229,7 +229,7 @@ const VotePage = () => {
                       <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#F5A623] rounded-full flex items-center justify-center shadow-lg"><Trophy size={12} className="text-black" /></div>
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-[#F5A623] tracking-widest uppercase mb-0.5">Πρώτος</div>
+                      <div className="text-[10px] text-[#F5A623] tracking-widest uppercase mb-0.5">Πρωτος</div>
                       <div className="font-['Bebas_Neue'] text-xl text-white">{results.results[0].player_name}</div>
                       <div className="text-xs text-zinc-400">{results.results[0].votes} ψήφ{results.results[0].votes === 1 ? "ος" : "οι"}</div>
                     </div>
@@ -275,7 +275,7 @@ const VotePage = () => {
 
           {/* Player Grid */}
           <div>
-            <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 mb-4 tracking-wider">{hasVoted ? "Όλοι οι Παίκτες" : "Επιλέξτε Παίκτη"}</h3>
+            <h3 className="font-['Bebas_Neue'] text-lg text-zinc-400 mb-4 tracking-wider">{hasVoted ? "Ολοι οι Παικτες" : "Επιλεξτε Παικτη"}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" data-testid="vote-grid">
               {players.map((p) => {
                 const voteCount = getPlayerVotes(p.id);
@@ -296,7 +296,7 @@ const VotePage = () => {
                         <span className="text-[10px] text-zinc-500">{posLabels[p.position] || p.position}</span>
                         {user && !hasVoted && (
                           <button onClick={() => handleVote(p.id)} disabled={voting}
-                            className="text-[10px] font-semibold text-[#F5A623] hover:text-[#e6951a] transition-colors uppercase tracking-wider disabled:opacity-50" data-testid={`vote-btn-${p.id}`}>Ψήφισε</button>
+                            className="text-[10px] font-semibold text-[#F5A623] hover:text-[#e6951a] transition-colors uppercase tracking-wider disabled:opacity-50" data-testid={`vote-btn-${p.id}`}>Ψηφισε</button>
                         )}
                       </div>
                     </div>
@@ -331,11 +331,11 @@ const VotePage = () => {
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-2 gap-3 mb-5">
-                    <div className="bg-[#0a0a0a] rounded-lg p-3 text-center"><div className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{playerDetail.vote_count}</div><div className="text-[10px] text-zinc-500 uppercase tracking-wider">Ψήφοι</div></div>
-                    <div className="bg-[#0a0a0a] rounded-lg p-3 text-center"><div className="font-['Bebas_Neue'] text-2xl text-white">{playerDetail.total_month_votes > 0 ? Math.round((playerDetail.vote_count / playerDetail.total_month_votes) * 100) : 0}%</div><div className="text-[10px] text-zinc-500 uppercase tracking-wider">Ποσοστό</div></div>
+                    <div className="bg-[#0a0a0a] rounded-lg p-3 text-center"><div className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{playerDetail.vote_count}</div><div className="text-[10px] text-zinc-500 uppercase tracking-wider">Ψηφοι</div></div>
+                    <div className="bg-[#0a0a0a] rounded-lg p-3 text-center"><div className="font-['Bebas_Neue'] text-2xl text-white">{playerDetail.total_month_votes > 0 ? Math.round((playerDetail.vote_count / playerDetail.total_month_votes) * 100) : 0}%</div><div className="text-[10px] text-zinc-500 uppercase tracking-wider">Ποσοστο</div></div>
                   </div>
                   <div>
-                    <h4 className="text-xs text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2"><Users size={12} /> Ψηφοφόροι ({playerDetail.voters.length})</h4>
+                    <h4 className="text-xs text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2"><Users size={12} /> Ψηφοφοροι ({playerDetail.voters.length})</h4>
                     {playerDetail.voters.length > 0 ? (
                       <div className="space-y-1.5 max-h-48 overflow-y-auto">
                         {playerDetail.voters.map((v, i) => (

@@ -118,7 +118,7 @@ const MatchReportPage = () => {
 
   if (!data || !data.fixture) return (
     <div className="pt-28 text-center min-h-screen bg-[#050505]">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ο αγώνας δεν βρέθηκε</h2>
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ο αγωνας δεν βρεθηκε</h2>
       <Link to="/team?tab=results" className="text-[#F5A623] hover:underline text-sm mt-2 inline-block">Επιστροφή στα Αποτελέσματα</Link>
     </div>
   );
@@ -198,7 +198,7 @@ const MatchReportPage = () => {
                     fixture.status === 'Live' ? 'bg-red-500/10 text-red-400 animate-pulse' :
                     'bg-zinc-800 text-zinc-400'
                   }`}>
-                    {fixture.status === 'Completed' ? 'Τελικό' : fixture.status === 'Live' ? 'LIVE' : fixture.status === 'Half Time' ? 'Ημίχρονο' : 'Προγρ.'}
+                    {fixture.status === 'Completed' ? 'Τελικο' : fixture.status === 'Live' ? 'LIVE' : fixture.status === 'Half Time' ? 'Ημιχρονο' : 'Προγρ.'}
                   </span>
                 </div>
               </div>
@@ -235,7 +235,7 @@ const MatchReportPage = () => {
           <div>
             <h2 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
               <Flag size={18} className="text-[#F5A623]" />
-              Χρονολόγιο Αγώνα
+              Χρονολογιο Αγωνα
             </h2>
 
             {events.length > 0 ? (
@@ -250,7 +250,7 @@ const MatchReportPage = () => {
                 {firstHalfEvents.length > 0 && (
                   <>
                     <div className="text-center mb-4">
-                      <span className="text-[10px] text-zinc-600 uppercase tracking-widest bg-[#111] px-3 py-1 rounded">1ο Ημίχρονο</span>
+                      <span className="text-[10px] text-zinc-600 uppercase tracking-widest bg-[#111] px-3 py-1 rounded">1ο Ημιχρονο</span>
                     </div>
                     <div className="space-y-4 mb-6">
                       {firstHalfEvents.map(event => (
@@ -264,7 +264,7 @@ const MatchReportPage = () => {
                 {events.length > 0 && (
                   <div className="flex items-center gap-3 my-6">
                     <div className="flex-1 border-t border-[#262626]" />
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Ημίχρονο</span>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Ημιχρονο</span>
                     <div className="flex-1 border-t border-[#262626]" />
                   </div>
                 )}
@@ -273,7 +273,7 @@ const MatchReportPage = () => {
                 {secondHalfEvents.length > 0 && (
                   <>
                     <div className="text-center mb-4">
-                      <span className="text-[10px] text-zinc-600 uppercase tracking-widest bg-[#111] px-3 py-1 rounded">2ο Ημίχρονο</span>
+                      <span className="text-[10px] text-zinc-600 uppercase tracking-widest bg-[#111] px-3 py-1 rounded">2ο Ημιχρονο</span>
                     </div>
                     <div className="space-y-4">
                       {secondHalfEvents.map(event => (
@@ -287,7 +287,7 @@ const MatchReportPage = () => {
                 {fixture.status === 'Completed' && (
                   <div className="flex items-center gap-3 mt-6">
                     <div className="flex-1 border-t border-[#262626]" />
-                    <span className="text-[10px] text-[#F5A623] uppercase tracking-widest">Τέλος Αγώνα</span>
+                    <span className="text-[10px] text-[#F5A623] uppercase tracking-widest">Τελος Αγωνα</span>
                     <div className="flex-1 border-t border-[#262626]" />
                   </div>
                 )}
@@ -301,7 +301,7 @@ const MatchReportPage = () => {
 
           {/* RIGHT: Match Statistics */}
           <div>
-            <h2 className="font-['Bebas_Neue'] text-xl text-white mb-4">Στατιστικά Αγώνα</h2>
+            <h2 className="font-['Bebas_Neue'] text-xl text-white mb-4">Στατιστικα Αγωνα</h2>
 
             {stats ? (
               <div className="card p-6" data-testid="match-statistics">
@@ -329,7 +329,7 @@ const MatchReportPage = () => {
 
             {/* Quick summary card */}
             <div className="card p-5 mt-4" data-testid="match-summary">
-              <h3 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Σύνοψη</h3>
+              <h3 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Συνοψη</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Γκολ</span>

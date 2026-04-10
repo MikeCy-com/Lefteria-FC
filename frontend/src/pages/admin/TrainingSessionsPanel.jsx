@@ -269,7 +269,7 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], player
           <VenueFields values={bulkForm} onChange={vals => setBulkForm(prev => ({ ...prev, ...vals }))} />
           <div className="flex gap-2 pt-2">
             <button onClick={handleBulkCreate} disabled={saving} className="admin-btn-primary flex-1" data-testid="bulk-create-btn">
-              {saving ? <><RefreshCw size={14} className="animate-spin" /> Δημιουργία...</> : <><Calendar size={14} /> Δημιουργία Προγράμματος</>}
+              {saving ? <><RefreshCw size={14} className="animate-spin" /> Δημιουργία...</> : <><Calendar size={14} /> Δημιουργία Προγραμματος</>}
             </button>
             <button onClick={() => setShowBulkForm(false)} className="admin-btn-ghost">Ακύρωση</button>
           </div>
@@ -330,13 +330,13 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], player
                     )}
                     {s.notes && (
                       <div>
-                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Σημειώσεις</span>
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Σημειωσεις</span>
                         <p className="text-sm text-zinc-300 mt-1">{s.notes}</p>
                       </div>
                     )}
                     {s.exercises?.length > 0 && (
                       <div>
-                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2 block">Ασκήσεις ({s.exercises.length})</span>
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2 block">Ασκησεις ({s.exercises.length})</span>
                         <div className="space-y-2">
                           {s.exercises.map((ex, i) => (
                             <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[#121212] border border-[#1e1e1e]">
@@ -376,33 +376,33 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], player
         <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center pt-8 overflow-y-auto" data-testid="training-form-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-2xl mx-4 mb-8">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editSession ? "Επεξεργασία Προπόνησης" : "Νέα Προπόνηση"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editSession ? "Επεξεργασια Προπονησης" : "Νεα Προπονηση"}</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-5">
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Τίτλος *</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Τιτλος *</label>
                   <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}
                     className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                     placeholder="Π.χ. Τεχνική Προπόνηση" data-testid="training-title-input" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Ημερομηνία</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Ημερομηνια</label>
                   <input type="datetime-local" value={form.date} onChange={e => setForm({...form, date: e.target.value})}
                     className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                     data-testid="training-date-input" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Διάρκεια (λεπτά)</label>
+                    <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Διαρκεια (λεπτα)</label>
                     <input type="number" min="15" max="240" value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: parseInt(e.target.value) || 90})}
                       className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                       data-testid="training-duration-input" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Ένταση</label>
+                    <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Ενταση</label>
                     <select value={form.intensity} onChange={e => setForm({...form, intensity: e.target.value})}
                       className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                       data-testid="training-intensity-select">
@@ -419,7 +419,7 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], player
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Θεματολογία</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Θεματολογια</label>
                 <div className="flex flex-wrap gap-1.5" data-testid="training-tags">
                   {TAGS.map(tag => (
                     <button key={tag.value} type="button" onClick={() => toggleTag(tag.value)}
@@ -443,7 +443,7 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], player
               {/* Exercises */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-zinc-300 uppercase tracking-wider">Ασκήσεις</label>
+                  <label className="text-sm font-medium text-zinc-300 uppercase tracking-wider">Ασκησεις</label>
                   <button type="button" onClick={addExercise} className="text-[10px] text-[#F5A623] hover:underline" data-testid="add-exercise-btn">+ Προσθήκη</button>
                 </div>
                 <div className="space-y-2">
@@ -473,7 +473,7 @@ const TrainingSessionsPanel = ({ teamId, academyGroupId, facilities = [], player
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Σημειώσεις</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Σημειωσεις</label>
                 <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={2}
                   data-testid="training-notes-input" />

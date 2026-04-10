@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
+import InlineAttendance from "./admin/InlineAttendance";
 import AdminCalendarTab from "./admin/CalendarTab";
 import AdminAttendanceTab from "./admin/AttendanceTab";
 import AdminWallTab from "./admin/WallTab";
@@ -36,7 +37,7 @@ const FormModal = ({ title, onClose, onSave, children, saving }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" data-testid="form-modal" onClick={onClose}>
     <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
       <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#161616] z-10 rounded-t-lg">
-        <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">{title}</h2>
+        <h2 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide">{stripGreekAccents(title)}</h2>
         <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10" data-testid="modal-close"><X size={18} /></button>
       </div>
       <div className="p-6 space-y-5">{children}</div>
@@ -69,10 +70,16 @@ const AdminTextarea = ({ className = "", ...props }) => (
   <textarea className={`admin-input ${className}`} {...props} />
 );
 
+const stripGreekAccents = (text) => {
+  if (typeof text !== 'string') return text;
+  const map = {'ά':'α','έ':'ε','ή':'η','ί':'ι','ό':'ο','ύ':'υ','ώ':'ω','Ά':'Α','Έ':'Ε','Ή':'Η','Ί':'Ι','Ό':'Ο','Ύ':'Υ','Ώ':'Ω','ΐ':'ι','ΰ':'υ'};
+  return text.replace(/[άέήίόύώΆΈΉΊΌΎΏΐΰ]/g, c => map[c] || c);
+};
+
 const TabHeader = ({ title, count, children }) => (
   <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
     <div>
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">{title}</h2>
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">{stripGreekAccents(title)}</h2>
       {count !== undefined && <span className="text-sm text-zinc-400">{count} εγγραφές</span>}
     </div>
     <div className="flex gap-2 items-center">{children}</div>
@@ -101,7 +108,7 @@ const PlayerAttendanceStats = ({ playerId }) => {
 
   return (
     <div className="mt-6 bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-attendance-stats">
-      <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Παρουσίες</h3>
+      <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Παρουσιες</h3>
       <div className="grid grid-cols-4 gap-3">
         <div className="text-center">
           <p className="text-2xl font-['Bebas_Neue'] text-emerald-400">{ps.going || 0}</p>
@@ -233,7 +240,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
         <>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-personal-info">
-            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Προσωπικά Στοιχεία</h3>
+            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Προσωπικα Στοιχεια</h3>
             <InfoRow label="Ονοματεπώνυμο" value={player.name} />
             <InfoRow label="Αριθμός" value={String(player.number)} />
             <InfoRow label="Θέση" value={positionGr[player.position] || player.position} />
@@ -247,7 +254,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
 
           {isAcademy && (player.parent_name || player.parent_phone || player.parent_email) && (
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-parent-info">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Γονέας / Κηδεμόνας</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Γονεας / Κηδεμονας</h3>
               <InfoRow label="Ονοματεπώνυμο" value={player.parent_name} />
               <InfoRow label="Τηλέφωνο" value={player.parent_phone} />
               <InfoRow label="Email" value={player.parent_email} />
@@ -256,7 +263,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
 
           {player.bio && (
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:col-span-2 xl:col-span-3" data-testid="player-bio-section">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Βιογραφικό</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Βιογραφικο</h3>
               <p className="text-zinc-400 text-sm leading-relaxed">{player.bio}</p>
             </div>
           )}
@@ -277,7 +284,7 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
         </>
       ) : (
         <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:p-8" data-testid="player-edit-form">
-          <h3 className="font-['Bebas_Neue'] text-xl text-white mb-6">Επεξεργασία Στοιχείων</h3>
+          <h3 className="font-['Bebas_Neue'] text-xl text-white mb-6">Επεξεργασια Στοιχειων</h3>
           <div className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <Field label="Ονοματεπώνυμο *"><AdminInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="profile-name-input" /></Field>
@@ -416,7 +423,7 @@ const MatchStatsModal = ({ fixture, players = [], onClose, onSaved }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#262626]">
           <div>
-            <h2 className="font-['Bebas_Neue'] text-2xl text-white">Στατιστικά Αγώνα</h2>
+            <h2 className="font-['Bebas_Neue'] text-2xl text-white">Στατιστικα Αγωνα</h2>
             <span className="text-xs text-zinc-500">{new Date(fixture.match_date).toLocaleDateString('el-GR')} - {fixture.venue}</span>
           </div>
           <button onClick={onClose} className="admin-icon-btn" data-testid="close-match-stats"><X size={18} /></button>
@@ -461,8 +468,8 @@ const MatchStatsModal = ({ fixture, players = [], onClose, onSaved }) => {
             <div className="max-h-[45vh] overflow-y-auto space-y-1">
               {/* Header row */}
               <div className="grid grid-cols-[32px_1fr_60px_60px_60px_36px_36px] gap-2 px-3 py-2 text-[10px] text-zinc-600 uppercase tracking-wider sticky top-0 bg-[#121212]">
-                <span></span><span>Παίκτης</span><span className="text-center">Λεπτά</span>
-                <span className="text-center">Γκολ</span><span className="text-center">Ασίστ</span>
+                <span></span><span>Παικτης</span><span className="text-center">Λεπτα</span>
+                <span className="text-center">Γκολ</span><span className="text-center">Ασιστ</span>
                 <span className="text-center">Κ</span><span className="text-center">Α</span>
               </div>
               {performances.map((p, i) => (
@@ -528,7 +535,7 @@ const DashboardTab = ({ stats, onTabChange }) => {
 
   return (
     <div data-testid="admin-dashboard">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide mb-6">Πίνακας Ελέγχου</h2>
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide mb-6">Πινακας Ελεγχου</h2>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((c, i) => (
           <button key={i} onClick={() => onTabChange(c.tab)} className="admin-stat-card group text-left" data-testid={`stat-${c.label}`}>
@@ -682,7 +689,7 @@ const MatchControlCenter = ({ fixture, players, onRefresh, onBack }) => {
         <div className="lg:col-span-2 space-y-4">
           {/* Add Event Button */}
           <div className="flex justify-between items-center">
-            <h3 className="text-xs text-zinc-500 uppercase tracking-wider">Συμβάντα Αγώνα ({events.length})</h3>
+            <h3 className="text-xs text-zinc-500 uppercase tracking-wider">Συμβαντα Αγωνα ({events.length})</h3>
             <button onClick={() => setShowEventForm(true)} className="admin-btn-primary text-xs" data-testid="add-event-btn"><Plus size={13} /> Νέο Συμβάν</button>
           </div>
 
@@ -715,7 +722,7 @@ const MatchControlCenter = ({ fixture, players, onRefresh, onBack }) => {
           {/* Scorer Summary */}
           {events.filter(e => ['goal', 'penalty_scored', 'own_goal'].includes(e.event_type)).length > 0 && (
             <div className="admin-card p-4">
-              <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Σκόρερ</h4>
+              <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Σκορερ</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-xs text-zinc-600 mb-2 block">{fixture.home_team}</span>
@@ -742,7 +749,7 @@ const MatchControlCenter = ({ fixture, players, onRefresh, onBack }) => {
 
         {/* Right: Match Stats */}
         <div className="space-y-4">
-          <h3 className="text-xs text-zinc-500 uppercase tracking-wider">Στατιστικά Αγώνα</h3>
+          <h3 className="text-xs text-zinc-500 uppercase tracking-wider">Στατιστικα Αγωνα</h3>
           {stats && (
             <div className="admin-card p-4 space-y-3">
               <StatRow label="Λεπτό" home={stats.match_minute} isMinute onUpdate={(v) => updateStat('match_minute', v)} />
@@ -760,7 +767,7 @@ const MatchControlCenter = ({ fixture, players, onRefresh, onBack }) => {
 
           {/* Quick Event Buttons */}
           <div className="admin-card p-4">
-            <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Γρήγορες Ενέργειες</h4>
+            <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Γρηγορες Ενεργειες</h4>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { type: "goal", label: "Γκολ", icon: "⚽" },
@@ -908,7 +915,7 @@ const LiveScoreTab = ({ fixtures, players, onRefresh }) => {
 
       {completed.length > 0 && (
         <>
-          <h3 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Ολοκληρωμένοι</h3>
+          <h3 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Ολοκληρωμενοι</h3>
           <div className="space-y-2">
             {completed.slice(0, 5).map(f => (
               <button key={f.id} onClick={() => setSelectedFixture(f)} className="admin-card px-4 py-3 flex items-center justify-between w-full text-left hover:border-zinc-700 transition-colors">
@@ -1144,7 +1151,7 @@ const AcademyGroupsTab = ({ groups, onRefresh }) => {
         {groups.map(g => (
           <div key={g.id} className="admin-card p-5" data-testid={`academy-group-${g.id}`}>
             <div className="flex justify-between items-start mb-2">
-              <span className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{g.name}</span>
+              <span className="font-['Bebas_Neue'] text-2xl text-[#F5A623]">{stripGreekAccents(g.name)}</span>
               <div className="flex gap-1">
                 <button onClick={() => openEdit(g)} className="admin-icon-btn"><Edit2 size={13} /></button>
                 <button onClick={() => handleDelete(g.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button>
@@ -1159,7 +1166,7 @@ const AcademyGroupsTab = ({ groups, onRefresh }) => {
       {showForm && (
         <FormModal title={editGroup ? "Επεξεργασία" : "Νέα Ομάδα"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Όνομα *"><AdminInput placeholder="U18" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
+            <Field label="Όνομα *"><AdminInput placeholder="U12" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
             <Field label="Ηλικίες *"><AdminInput placeholder="16-18 ετών" value={form.age_range} onChange={e => setForm({...form, age_range: e.target.value})} /></Field>
           </div>
           <Field label="Προπονητής"><AdminInput value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
@@ -1238,13 +1245,14 @@ const StaffTab = ({ staff, onRefresh }) => {
 };
 
 // ==================== FIXTURES TAB ====================
-const FixturesTab = ({ fixtures, opponents = [], facilities = [], onRefresh }) => {
+const FixturesTab = ({ fixtures, opponents = [], facilities = [], players = [], onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editFixture, setEditFixture] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showOpponentModal, setShowOpponentModal] = useState(false);
   const [oppForm, setOppForm] = useState({ name: "", logo_url: "", venue: "", location: "", location_url: "" });
   const [oppSaving, setOppSaving] = useState(false);
+  const [expandedFixtureId, setExpandedFixtureId] = useState(null);
   const emptyFixture = { home_team: "LEFTERIA FC", away_team: "", away_team_logo: "", home_score: "", away_score: "", match_date: "", match_time: "", arrival_time: "", venue: "", venue_id: "", location: "", location_url: "", competition: "ΠΑΑΟΚ Α' Όμιλος", season: "2025/26", status: "Scheduled", attendance: "", referee: "", opponent_id: "" };
   const [form, setForm] = useState(emptyFixture);
 
@@ -1309,28 +1317,56 @@ const FixturesTab = ({ fixtures, opponents = [], facilities = [], onRefresh }) =
         <button onClick={() => setShowOpponentModal(true)} className="admin-btn-ghost text-xs" data-testid="manage-opponents-btn"><Plus size={12} /> Αντίπαλος</button>
         <button onClick={openCreate} className="admin-btn-primary" data-testid="add-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
       </TabHeader>
-      <div className="admin-table-wrap">
-        <table className="admin-table" data-testid="admin-fixtures-table">
-          <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Γήπεδο</th><th>Κατάσταση</th><th></th></tr></thead>
-          <tbody>
-            {fixtures.map(f => (
-              <tr key={f.id}>
-                <td className="text-xs text-zinc-500">{new Date(f.match_date).toLocaleDateString('el-GR')}{f.arrival_time && <span className="block text-[10px] text-zinc-600">Άφιξη: {f.arrival_time}</span>}</td>
-                <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-300'}>{f.home_team}</td>
-                <td className="font-['Bebas_Neue'] text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
-                <td className="text-zinc-300">
-                  <div className="flex items-center gap-1.5">
-                    {f.away_team_logo && <img src={f.away_team_logo.startsWith("http") ? f.away_team_logo : `${process.env.REACT_APP_BACKEND_URL}${f.away_team_logo}`} alt="" className="w-5 h-5 rounded-full object-cover" />}
-                    <span className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : ''}>{f.away_team}</span>
+      <div className="space-y-2" data-testid="admin-fixtures-list">
+        {fixtures.map(f => {
+          const isExpanded = expandedFixtureId === f.id;
+          return (
+            <div key={f.id} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden" data-testid={`fixture-card-${f.id}`}>
+              <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-white/[0.02]" onClick={() => setExpandedFixtureId(isExpanded ? null : f.id)}>
+                <div className={`w-1 h-10 rounded-full ${f.status === 'Completed' ? 'bg-emerald-500' : f.status === 'Live' ? 'bg-red-500' : 'bg-[#F5A623]'}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-sm font-medium ${f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{f.home_team}</span>
+                    <span className="font-['Bebas_Neue'] text-zinc-400 text-sm">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : 'vs'}</span>
+                    <div className="flex items-center gap-1.5">
+                      {f.away_team_logo && <img src={f.away_team_logo.startsWith("http") ? f.away_team_logo : `${process.env.REACT_APP_BACKEND_URL}${f.away_team_logo}`} alt="" className="w-4 h-4 rounded-full object-cover" />}
+                      <span className={`text-sm font-medium ${f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{f.away_team}</span>
+                    </div>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border ml-1 ${f.status === 'Completed' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : f.status === 'Live' ? 'border-red-500/30 text-red-400 bg-red-500/10 animate-pulse' : 'border-[#F5A623]/30 text-[#F5A623] bg-[#F5A623]/10'}`}>
+                      {f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}
+                    </span>
                   </div>
-                </td>
-                <td className="text-xs text-zinc-500">{f.venue}{f.location_url && <a href={f.location_url} target="_blank" rel="noreferrer" className="text-blue-400 ml-1"><MapPin size={10} className="inline" /></a>}</td>
-                <td><span className={f.status === 'Completed' ? 'badge-completed' : f.status === 'Live' ? 'badge-live' : 'admin-badge admin-badge-default'}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span></td>
-                <td><div className="flex gap-1"><button onClick={() => openEdit(f)} className="admin-icon-btn"><Edit2 size={13} /></button><button onClick={() => handleDelete(f.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+                    {f.match_date && <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(f.match_date).toLocaleDateString('el-GR')}</span>}
+                    {f.match_time && <span>{f.match_time}</span>}
+                    {f.venue && <span className="flex items-center gap-1"><MapPin size={10} /> {f.venue}</span>}
+                    {f.arrival_time && <span className="flex items-center gap-1"><Clock size={10} /> Άφιξη: {f.arrival_time}</span>}
+                    {f.competition && <span className="flex items-center gap-1"><Trophy size={10} /> {f.competition}</span>}
+                  </div>
+                </div>
+                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => openEdit(f)} className="admin-icon-btn" data-testid={`edit-fixture-${f.id}`}><Edit2 size={12} /></button>
+                  <button onClick={() => handleDelete(f.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400" data-testid={`delete-fixture-${f.id}`}><Trash2 size={12} /></button>
+                </div>
+                {isExpanded ? <ChevronDown size={14} className="text-zinc-500" /> : <ChevronRight size={14} className="text-zinc-500" />}
+              </div>
+              {isExpanded && (
+                <div className="border-t border-[#1e1e1e] p-4 space-y-4">
+                  {(f.venue || f.location_url || f.referee) && (
+                    <div className="flex flex-wrap gap-4 text-xs text-zinc-400">
+                      {f.venue && <span className="flex items-center gap-1"><MapPin size={12} className="text-[#F5A623]" /> {f.venue}</span>}
+                      {f.location_url && <a href={f.location_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1"><MapPin size={10} /> Χάρτης</a>}
+                      {f.referee && <span className="flex items-center gap-1"><Shield size={12} /> Διαιτητής: {f.referee}</span>}
+                    </div>
+                  )}
+                  <div className="border-t border-[#1e1e1e] pt-3 mt-2">
+                    <InlineAttendance eventId={f.id} players={players} />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       {showForm && (
         <FormModal title={editFixture ? "Επεξεργασία Αγώνα" : "Νέος Αγώνας"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
@@ -1932,6 +1968,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
   const [savingGallery, setSavingGallery] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [expandedTeamFixtureId, setExpandedTeamFixtureId] = useState(null);
 
   const openCreateTeam = () => { setForm(emptyForm); setEditTeam(null); setShowForm(true); };
   const openEditTeam = (t) => { setForm({ name: t.name, level: t.level, description: t.description || "", banner_url: t.banner_url || "" }); setEditTeam(t); setShowForm(true); };
@@ -2058,7 +2095,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
         )}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-['Bebas_Neue'] text-4xl text-[#F5A623] tracking-wide">{selectedTeam.name}</h2>
+            <h2 className="font-['Bebas_Neue'] text-4xl text-[#F5A623] tracking-wide">{stripGreekAccents(selectedTeam.name)}</h2>
             <div className="flex items-center gap-3 mt-1">
               <span className="admin-badge admin-badge-gold">{selectedTeam.level}</span>
               {selectedTeam.description && <span className="text-zinc-300 text-sm">{selectedTeam.description}</span>}
@@ -2143,24 +2180,44 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
         )}
 
         {detailTab === "schedule" && (
-          <div>
-            <div className="admin-table-wrap">
-              <table className="admin-table" data-testid="team-fixtures-table">
-                <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Κατάσταση</th></tr></thead>
-                <tbody>
-                  {teamFixtures.map(f => (
-                    <tr key={f.id}>
-                      <td className="text-sm text-zinc-400">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
-                      <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-200'}>{f.home_team}</td>
-                      <td className="font-['Bebas_Neue'] text-lg text-white">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}</td>
-                      <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623] font-medium' : 'text-zinc-200'}>{f.away_team}</td>
-                      <td><span className={f.status === 'Completed' ? 'badge-completed' : f.status === 'Live' ? 'badge-live' : 'admin-badge admin-badge-default'}>{f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}</span></td>
-                    </tr>
-                  ))}
-                  {teamFixtures.length === 0 && <tr><td colSpan={5}><EmptyState icon={Calendar} text="Δεν υπάρχουν αγώνες" /></td></tr>}
-                </tbody>
-              </table>
-            </div>
+          <div className="space-y-2" data-testid="team-fixtures-list">
+            {teamFixtures.map(f => {
+              const isExp = expandedTeamFixtureId === f.id;
+              return (
+                <div key={f.id} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden" data-testid={`team-fixture-card-${f.id}`}>
+                  <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-white/[0.02]" onClick={() => setExpandedTeamFixtureId(isExp ? null : f.id)}>
+                    <div className={`w-1 h-10 rounded-full ${f.status === 'Completed' ? 'bg-emerald-500' : f.status === 'Live' ? 'bg-red-500' : 'bg-[#F5A623]'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-sm font-medium ${f.home_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{f.home_team}</span>
+                        <span className="font-['Bebas_Neue'] text-zinc-400 text-sm">{f.status === 'Completed' || f.status === 'Live' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : 'vs'}</span>
+                        <span className={`text-sm font-medium ${f.away_team === 'LEFTERIA FC' ? 'text-[#F5A623]' : 'text-white'}`}>{f.away_team}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded border ml-1 ${f.status === 'Completed' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : f.status === 'Live' ? 'border-red-500/30 text-red-400 bg-red-500/10' : 'border-[#F5A623]/30 text-[#F5A623] bg-[#F5A623]/10'}`}>
+                          {f.status === 'Completed' ? 'Ολοκλ.' : f.status === 'Live' ? 'LIVE' : 'Προγρ.'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+                        {f.match_date && <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(f.match_date).toLocaleDateString('el-GR')}</span>}
+                        {f.match_time && <span>{f.match_time}</span>}
+                        {f.venue && <span className="flex items-center gap-1"><MapPin size={10} /> {f.venue}</span>}
+                      </div>
+                    </div>
+                    {isExp ? <ChevronDown size={14} className="text-zinc-500" /> : <ChevronRight size={14} className="text-zinc-500" />}
+                  </div>
+                  {isExp && (
+                    <div className="border-t border-[#1e1e1e] p-4">
+                      <InlineAttendance eventId={f.id} players={teamPlayers} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {teamFixtures.length === 0 && (
+              <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl p-12 text-center">
+                <Calendar size={36} className="text-zinc-700 mx-auto mb-2" />
+                <p className="text-zinc-500 text-sm">Δεν υπάρχουν αγώνες</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -2260,7 +2317,7 @@ const TeamsTab = ({ teams, players, fixtures, staff, standings, opponents = [], 
             <div className="p-6">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-['Bebas_Neue'] text-2xl text-white group-hover:text-[#F5A623] transition-colors">{team.name}</h3>
+                  <h3 className="font-['Bebas_Neue'] text-2xl text-white group-hover:text-[#F5A623] transition-colors">{stripGreekAccents(team.name)}</h3>
                   <span className="admin-badge admin-badge-gold mt-1">{team.level}</span>
                 </div>
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -2341,6 +2398,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   const [savingFixture, setSavingFixture] = useState(false);
   const [editFixture, setEditFixture] = useState(null);
   const [matchStatsFixture, setMatchStatsFixture] = useState(null);
+  const [expandedAcadFixtureId, setExpandedAcadFixtureId] = useState(null);
 
   // Gallery state
   const [galleryItems, setGalleryItems] = useState([]);
@@ -2507,7 +2565,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
           </div>
         )}
         <div className="mb-6">
-          <h2 className="font-['Bebas_Neue'] text-4xl text-[#10B981] tracking-wide">{selectedGroup.name}</h2>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-[#10B981] tracking-wide">{stripGreekAccents(selectedGroup.name)}</h2>
           <div className="flex items-center gap-3 mt-2 text-sm text-zinc-300 flex-wrap">
             <span className="admin-badge admin-badge-green">{selectedGroup.age_range}</span>
             {selectedGroup.coach_name && <span>Προπονητής: {selectedGroup.coach_name}</span>}
@@ -2608,7 +2666,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowTransfer(false)}>
                 <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()} data-testid="transfer-modal">
                   <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a]">
-                    <h2 className="font-['Bebas_Neue'] text-2xl text-white">Μεταφορά: {transferPlayer.name}</h2>
+                    <h2 className="font-['Bebas_Neue'] text-2xl text-white">Μεταφορα: {transferPlayer.name}</h2>
                     <button onClick={() => setShowTransfer(false)} className="text-zinc-400 hover:text-white"><X size={18} /></button>
                   </div>
                   <div className="p-6 space-y-3">
@@ -2644,41 +2702,54 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
             <div className="flex justify-end mb-4">
               <button onClick={openCreateFixture} className="admin-btn-primary" data-testid="add-academy-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
             </div>
-            <div className="admin-table-wrap">
-              <table className="admin-table" data-testid="academy-fixtures-table">
-                <thead><tr><th>Ημ/νία</th><th>Γηπεδούχος</th><th>Σκορ</th><th>Φιλοξ.</th><th>Κατάσταση</th><th></th></tr></thead>
-                <tbody>
-                  {groupFixtures.map(f => (
-                    <tr key={f.id}>
-                      <td className="text-sm text-zinc-400">{new Date(f.match_date).toLocaleDateString('el-GR')}</td>
-                      <td className={f.home_team === 'LEFTERIA FC' ? 'text-[#10B981] font-medium' : 'text-zinc-200'}>{f.home_team}</td>
-                      <td className="font-['Bebas_Neue'] text-lg text-white">
-                        {f.status === 'Completed' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : '-'}
-                      </td>
-                      <td className={f.away_team === 'LEFTERIA FC' ? 'text-[#10B981] font-medium' : 'text-zinc-200'}>{f.away_team}</td>
-                      <td>
-                        <span className={f.status === 'Completed' ? 'badge-completed' : 'admin-badge admin-badge-default'}>
-                          {f.status === 'Completed' ? 'Ολοκλ.' : 'Προγρ.'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="flex gap-1">
-                          {f.status === 'Scheduled' && (
-                            <button onClick={() => setMatchStatsFixture(f)}
-                              className="admin-icon-btn text-green-400/70 hover:text-green-300" title="Ολοκλήρωση & Στατιστικά" data-testid={`complete-fixture-${f.id}`}><Check size={14} /></button>
-                          )}
-                          {f.status === 'Completed' && (
-                            <button onClick={() => setMatchStatsFixture(f)}
-                              className="admin-icon-btn text-[#F5A623]/70 hover:text-[#F5A623]" title="Στατιστικά Αγώνα" data-testid={`edit-stats-${f.id}`}><BarChart3 size={14} /></button>
-                          )}
-                          <button onClick={() => handleDeleteFixture(f.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-fixture-${f.id}`}><Trash2 size={14} /></button>
+            <div className="space-y-2" data-testid="academy-fixtures-list">
+              {groupFixtures.map(f => {
+                const isExpanded = expandedAcadFixtureId === f.id;
+                return (
+                  <div key={f.id} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden" data-testid={`academy-fixture-card-${f.id}`}>
+                    <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-white/[0.02]" onClick={() => setExpandedAcadFixtureId(isExpanded ? null : f.id)}>
+                      <div className={`w-1 h-10 rounded-full ${f.status === 'Completed' ? 'bg-emerald-500' : 'bg-[#10B981]'}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-sm font-medium ${f.home_team === 'LEFTERIA FC' ? 'text-[#10B981]' : 'text-white'}`}>{f.home_team}</span>
+                          <span className="font-['Bebas_Neue'] text-zinc-400 text-sm">{f.status === 'Completed' ? `${f.home_score ?? 0} - ${f.away_score ?? 0}` : 'vs'}</span>
+                          <span className={`text-sm font-medium ${f.away_team === 'LEFTERIA FC' ? 'text-[#10B981]' : 'text-white'}`}>{f.away_team}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded border ${f.status === 'Completed' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-[#10B981]/30 text-[#10B981] bg-[#10B981]/10'}`}>
+                            {f.status === 'Completed' ? 'Ολοκλ.' : 'Προγρ.'}
+                          </span>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {groupFixtures.length === 0 && <tr><td colSpan={6}><EmptyState icon={Calendar} text="Δεν υπάρχουν αγώνες" /></td></tr>}
-                </tbody>
-              </table>
+                        <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+                          {f.match_date && <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(f.match_date).toLocaleDateString('el-GR')}</span>}
+                          {f.match_time && <span>{f.match_time}</span>}
+                          {f.venue && <span className="flex items-center gap-1"><MapPin size={10} /> {f.venue}</span>}
+                          {f.arrival_time && <span className="flex items-center gap-1"><Clock size={10} /> Άφιξη: {f.arrival_time}</span>}
+                        </div>
+                      </div>
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                        {f.status === 'Scheduled' && (
+                          <button onClick={() => setMatchStatsFixture(f)} className="admin-icon-btn text-green-400/70 hover:text-green-300" title="Ολοκλήρωση & Στατιστικά" data-testid={`complete-fixture-${f.id}`}><Check size={14} /></button>
+                        )}
+                        {f.status === 'Completed' && (
+                          <button onClick={() => setMatchStatsFixture(f)} className="admin-icon-btn text-[#F5A623]/70 hover:text-[#F5A623]" title="Στατιστικά Αγώνα" data-testid={`edit-stats-${f.id}`}><BarChart3 size={14} /></button>
+                        )}
+                        <button onClick={() => handleDeleteFixture(f.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-fixture-${f.id}`}><Trash2 size={14} /></button>
+                      </div>
+                      {isExpanded ? <ChevronDown size={14} className="text-zinc-500" /> : <ChevronRight size={14} className="text-zinc-500" />}
+                    </div>
+                    {isExpanded && (
+                      <div className="border-t border-[#1e1e1e] p-4">
+                        <InlineAttendance eventId={f.id} players={groupPlayers} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {groupFixtures.length === 0 && (
+                <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl p-12 text-center">
+                  <Calendar size={36} className="text-zinc-700 mx-auto mb-2" />
+                  <p className="text-zinc-500 text-sm">Δεν υπάρχουν αγώνες</p>
+                </div>
+              )}
             </div>
             {showFixtureForm && (
               <FormModal title="Νέος Αγώνας" onClose={() => setShowFixtureForm(false)} onSave={handleSaveFixture} saving={savingFixture}>
@@ -2806,7 +2877,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
       {showForm && (
         <FormModal title={editGroup ? "Επεξεργασία" : "Νέα Ομάδα"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Όνομα *"><AdminInput placeholder="U18" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
+            <Field label="Όνομα *"><AdminInput placeholder="U12" value={form.name} onChange={e => setForm({...form, name: e.target.value})} data-testid="group-name-input" /></Field>
             <Field label="Ηλικίες *"><AdminInput placeholder="16-18 ετών" value={form.age_range} onChange={e => setForm({...form, age_range: e.target.value})} /></Field>
           </div>
           <Field label="Προπονητής"><AdminInput value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
@@ -2896,7 +2967,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
         <div className="grid md:grid-cols-2 gap-4">
           {/* Player Info */}
           <div className="admin-card p-5">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Στοιχεία Παίκτη</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Στοιχεια Παικτη</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-400">Ημ. Γέννησης</span><span className="text-white">{r.player_dob}</span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Φύλο</span><span className="text-white">{r.player_gender === "male" ? "Αγόρι" : "Κορίτσι"}</span></div>
@@ -2905,7 +2976,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
           </div>
           {/* Parent Info */}
           <div className="admin-card p-5">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Γονέας / Κηδεμόνας</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Γονεας / Κηδεμονας</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-400">Όνομα</span><span className="text-white">{r.parent_name}</span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Σχέση</span><span className="text-white">{r.parent_relationship}</span></div>
@@ -2915,7 +2986,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
           </div>
           {/* Emergency */}
           <div className="admin-card p-5">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Έκτακτη Ανάγκη</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Εκτακτη Αναγκη</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-400">Όνομα</span><span className="text-white">{r.emergency_name}</span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Τηλ.</span><span className="text-white">{r.emergency_phone}</span></div>
@@ -2924,7 +2995,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
           </div>
           {/* Medical */}
           <div className="admin-card p-5">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Ιατρικά</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Ιατρικα</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-400">Αλλεργίες</span><span className="text-white">{r.has_allergies ? r.allergies_details || "Ναι" : "Όχι"}</span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Παθήσεις</span><span className="text-white">{r.has_conditions ? r.conditions_details || "Ναι" : "Όχι"}</span></div>
@@ -2933,7 +3004,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
           </div>
           {/* Consents */}
           <div className="admin-card p-5">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Συγκαταθέσεις</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Συγκαταθεσεις</h3>
             <div className="space-y-1.5 text-sm">
               {[
                 ["Συμμετοχή", r.consent_participation],
@@ -2949,7 +3020,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
           </div>
           {/* Payment & Signature */}
           <div className="admin-card p-5">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Πληρωμή & Υπογραφή</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Πληρωμη & Υπογραφη</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-400">Πληρωμή</span><span className="text-white">{r.payment_method === "cash" ? "Μετρητά" : r.payment_method === "card" ? "Κάρτα" : "Μεταφορά"}</span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Ημ/νία</span><span className="text-white">{r.signature_date}</span></div>
@@ -2965,7 +3036,7 @@ const RegistrationsTab = ({ academyGroups, onRefresh }) => {
         {/* Admin Actions */}
         {r.status === "pending" && (
           <div className="admin-card p-5 mt-4" data-testid="admin-actions">
-            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Ενέργειες</h3>
+            <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Ενεργειες</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-zinc-300 mb-1.5">Ανάθεση σε Ομάδα Ακαδημίας</label>
@@ -3457,7 +3528,7 @@ const AdminPanel = ({ user, onLogout }) => {
       // Legacy tabs (accessible from dashboard stats)
       case "players": return <PlayersTab players={data.players} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
       case "staff": return <StaffTab staff={data.staff} onRefresh={fetchAll} />;
-      case "fixtures": return <FixturesTab fixtures={data.fixtures} opponents={data.opponents} facilities={data.facilities} onRefresh={fetchAll} />;
+      case "fixtures": return <FixturesTab fixtures={data.fixtures} opponents={data.opponents} facilities={data.facilities} players={data.players} onRefresh={fetchAll} />;
       case "club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
       case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
       case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;

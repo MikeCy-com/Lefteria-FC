@@ -39,7 +39,7 @@ const NewsPage = () => {
           {posts.map(post => (
             <div key={post.id} className="bg-[#121212] border border-[#1e1e1e] rounded-2xl p-4">
               {post.is_pinned && (
-                <span className="text-[10px] text-[#F5A623] font-semibold uppercase tracking-wider mb-1 block">Σημαντικό</span>
+                <span className="text-[10px] text-[#F5A623] font-semibold uppercase tracking-wider mb-1 block">Σημαντικο</span>
               )}
               <h3 className="text-white font-medium">{post.title || "Ανακοίνωση"}</h3>
               <p className="text-sm text-zinc-400 mt-2 whitespace-pre-wrap">{post.content}</p>

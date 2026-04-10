@@ -193,7 +193,7 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
       {/* Header */}
       <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Οικονομικά</h2>
+          <h2 className="font-['Bebas_Neue'] text-3xl text-white tracking-wide">Οικονομικα</h2>
           <span className="text-sm text-zinc-400">{records.length} εγγραφές</span>
         </div>
         <div className="flex gap-2 items-center">
@@ -223,7 +223,7 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
 
           {/* Revenue Chart */}
           <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="revenue-chart">
-            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Μηνιαία Έσοδα {new Date().getFullYear()}</h3>
+            <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Μηνιαια Εσοδα {new Date().getFullYear()}</h3>
             <div className="flex items-end gap-1 h-40">
               {stats.monthly_revenue.map((m, i) => (
                 <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
@@ -240,7 +240,7 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
           {/* Category Breakdown + Overdue */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="category-breakdown">
-              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Ανά Κατηγορία</h3>
+              <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Ανα Κατηγορια</h3>
               {Object.entries(stats.by_category).length > 0 ? (
                 <div className="space-y-3">
                   {Object.entries(stats.by_category).map(([cat, amount]) => (
@@ -257,7 +257,7 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
 
             <div className="bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="overdue-list">
               <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4 flex items-center gap-2">
-                <AlertCircle size={18} className="text-red-400" /> Ληξιπρόθεσμα
+                <AlertCircle size={18} className="text-red-400" /> Ληξιπροθεσμα
               </h3>
               {stats.overdue_records.length > 0 ? (
                 <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -365,18 +365,18 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
       {/* Generate Dues */}
       {view === "generate" && (
         <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 max-w-xl" data-testid="generate-dues-form">
-          <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Μαζική Χρέωση Παικτών</h3>
+          <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Μαζικη Χρεωση Παικτων</h3>
           <p className="text-sm text-zinc-400 mb-6">Δημιουργήστε χρεώσεις για όλους τους παίκτες μιας ομάδας/ακαδημίας.</p>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ακαδημία</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ακαδημια</label>
               <select value={generateForm.academy_group_id} onChange={e => setGenerateForm({ ...generateForm, academy_group_id: e.target.value, team_id: "" })} className="admin-input w-full" data-testid="gen-group">
                 <option value="">— Επιλέξτε ομάδα ακαδημίας —</option>
                 {academyGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ή Α' Ομάδα</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Η Α' Ομαδα</label>
               <select value={generateForm.team_id} onChange={e => setGenerateForm({ ...generateForm, team_id: e.target.value, academy_group_id: "" })} className="admin-input w-full" data-testid="gen-team">
                 <option value="">— Επιλέξτε ομάδα —</option>
                 {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -384,20 +384,20 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ποσό (€)</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ποσο (€)</label>
                 <input type="number" value={generateForm.amount} onChange={e => setGenerateForm({ ...generateForm, amount: e.target.value })} className="admin-input w-full" placeholder="0.00" data-testid="gen-amount" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ημ. Οφειλής</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Ημ. Οφειλης</label>
                 <input type="date" value={generateForm.due_date} onChange={e => setGenerateForm({ ...generateForm, due_date: e.target.value })} className="admin-input w-full" data-testid="gen-due-date" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Περιγραφή</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2 uppercase tracking-wider">Περιγραφη</label>
               <input value={generateForm.description} onChange={e => setGenerateForm({ ...generateForm, description: e.target.value })} className="admin-input w-full" data-testid="gen-desc" />
             </div>
             <button onClick={handleGenerateDues} disabled={saving} className="admin-btn-primary w-full" data-testid="gen-submit">
-              {saving ? <><RefreshCw size={14} className="animate-spin" /> Δημιουργία...</> : <><Users size={14} /> Δημιουργία Χρεώσεων</>}
+              {saving ? <><RefreshCw size={14} className="animate-spin" /> Δημιουργία...</> : <><Users size={14} /> Δημιουργία Χρεωσεων</>}
             </button>
           </div>
         </div>
@@ -408,7 +408,7 @@ const FinancialDashboard = ({ teams = [], academyGroups = [], players = [] }) =>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowModal(false)}>
           <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center px-6 py-4 border-b border-[#2a2a2a] sticky top-0 bg-[#161616] z-10 rounded-t-lg">
-              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editingRecord ? "Επεξεργασία" : "Νέα Εγγραφή"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-2xl text-white">{editingRecord ? "Επεξεργασια" : "Νεα Εγγραφη"}</h2>
               <button onClick={() => setShowModal(false)} className="text-zinc-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-4">

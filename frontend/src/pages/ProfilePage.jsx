@@ -83,7 +83,7 @@ const ProfilePage = () => {
 
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="font-['Bebas_Neue'] text-3xl text-white" data-testid="profile-title">Ο Λογαριασμός μου</h1>
+              <h1 className="font-['Bebas_Neue'] text-3xl text-white" data-testid="profile-title">Ο Λογαριασμος μου</h1>
               <p className="text-zinc-500 text-sm">{profile?.email}</p>
             </div>
             <button onClick={handleLogout} className="flex items-center gap-2 text-zinc-400 hover:text-red-400 text-sm transition-colors" data-testid="logout-btn"><LogOut size={14} /> Αποσύνδεση</button>

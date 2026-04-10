@@ -33,7 +33,7 @@ const LoginPage = () => {
         <Link to="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5A623] text-sm mb-8 transition-colors">
           <ArrowLeft size={14} /> Αρχική
         </Link>
-        <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-1" data-testid="login-title">Σύνδεση</h1>
+        <h1 className="font-['Bebas_Neue'] text-3xl text-white mb-1" data-testid="login-title">Συνδεση</h1>
         <p className="text-zinc-500 text-sm mb-6">Συνδεθείτε στον λογαριασμό σας</p>
 
         {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm" data-testid="login-error">{error}</div>}

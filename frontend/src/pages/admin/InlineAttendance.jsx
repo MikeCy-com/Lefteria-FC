@@ -57,7 +57,7 @@ const InlineAttendance = ({ eventId, players = [] }) => {
     <div data-testid={`attendance-${eventId}`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-          <Users size={11} /> Παρουσίες ({players.length})
+          <Users size={11} /> Παρουσιες ({players.length})
         </span>
         <div className="flex gap-3 text-[10px]">
           <span className="flex items-center gap-1 text-emerald-400"><UserCheck size={10} /> {goingCount}</span>

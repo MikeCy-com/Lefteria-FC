@@ -92,7 +92,7 @@ const PlayerDevelopmentPanel = ({ playerId }) => {
   return (
     <div data-testid="player-development-panel">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-['Bebas_Neue'] text-xl text-white">Πλάνο Ανάπτυξης</h3>
+        <h3 className="font-['Bebas_Neue'] text-xl text-white">Πλανο Αναπτυξης</h3>
         <button onClick={openCreate} className="admin-btn-primary text-xs" data-testid="add-goal-btn">
           <Plus size={12} /> Νέος Στόχος
         </button>
@@ -163,7 +163,7 @@ const PlayerDevelopmentPanel = ({ playerId }) => {
       {/* Completed Goals */}
       {completedGoals.length > 0 && (
         <div className="mt-4">
-          <h4 className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Ολοκληρωμένοι ({completedGoals.length})</h4>
+          <h4 className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Ολοκληρωμενοι ({completedGoals.length})</h4>
           <div className="space-y-1.5">
             {completedGoals.map(g => {
               const cat = getCat(g.category);
@@ -191,19 +191,19 @@ const PlayerDevelopmentPanel = ({ playerId }) => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" data-testid="goal-form-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-lg mx-4">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-xl text-white">{editGoal ? "Επεξεργασία Στόχου" : "Νέος Στόχος"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-xl text-white">{editGoal ? "Επεξεργασια Στοχου" : "Νεος Στοχος"}</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Τίτλος *</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Τιτλος *</label>
                 <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none"
                   placeholder="Π.χ. Βελτίωση αριστερού ποδιού" data-testid="goal-title-input" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Κατηγορία</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Κατηγορια</label>
                   <div className="flex gap-1.5">
                     {CATEGORIES.map(cat => (
                       <button key={cat.value} type="button" onClick={() => setForm({...form, category: cat.value})}
@@ -218,13 +218,13 @@ const PlayerDevelopmentPanel = ({ playerId }) => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Στόχος Ημ.</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Στοχος Ημ.</label>
                   <input type="date" value={form.target_date} onChange={e => setForm({...form, target_date: e.target.value})}
                     className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Περιγραφή</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5 uppercase tracking-wider">Περιγραφη</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-[#F5A623] outline-none resize-none" rows={2}
                   data-testid="goal-description-input" />

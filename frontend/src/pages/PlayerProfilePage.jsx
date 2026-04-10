@@ -47,7 +47,7 @@ const PlayerTabBar = ({ activeTab, setActiveTab }) => {
               }`}
               data-testid={`player-tab-${tab.id}`}
             >
-              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Παίκτης</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Παικτης</span>
               <span className="font-['Bebas_Neue'] text-base sm:text-lg tracking-wide">{tab.label}</span>
               {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />}
             </button>
@@ -92,7 +92,7 @@ const PlayerProfilePage = () => {
 
   if (!player) return (
     <div className="pt-28 text-center min-h-screen bg-[#050505]">
-      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ο παίκτης δεν βρέθηκε</h2>
+      <h2 className="font-['Bebas_Neue'] text-3xl text-white">Ο παικτης δεν βρεθηκε</h2>
       <Link to="/team" className="text-[#F5A623] hover:underline text-sm mt-2 inline-block">Επιστροφή στην ομάδα</Link>
     </div>
   );
@@ -182,24 +182,24 @@ const PlayerProfilePage = () => {
               {/* Info Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 text-sm mb-6">
                 {player.date_of_birth && (
-                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ημ. Γέννησης</span><div className="text-white font-medium">{new Date(player.date_of_birth).toLocaleDateString('el-GR')}</div></div>
+                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ημ. Γεννησης</span><div className="text-white font-medium">{new Date(player.date_of_birth).toLocaleDateString('el-GR')}</div></div>
                 )}
                 {player.age && (
-                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ηλικία</span><div className="text-white font-medium">{player.age}</div></div>
+                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ηλικια</span><div className="text-white font-medium">{player.age}</div></div>
                 )}
                 <div>
-                  <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ομάδα</span>
+                  <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Ομαδα</span>
                   <div className="text-white font-medium">{player.team_type === 'First Team' ? "Α' Ομάδα" : player.academy_group_name || "Ακαδημία"}</div>
                 </div>
                 {player.nationality && (
-                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Εθνικότητα</span><div className="text-white font-medium">{player.nationality}</div></div>
+                  <div><span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Εθνικοτητα</span><div className="text-white font-medium">{player.nationality}</div></div>
                 )}
                 <div>
-                  <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Σεζόν</span>
+                  <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Σεζον</span>
                   <div className="text-white font-medium">2025/2026</div>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Θέση</span>
+                  <span className="text-[10px] text-[#F5A623] uppercase tracking-wider">Θεση</span>
                   <div className="text-white font-medium">{positionGr[player.position] || player.position || 'n/a'}</div>
                 </div>
               </div>
@@ -298,7 +298,7 @@ const PlayerProfilePage = () => {
 
             {/* Mobile stat bars (visible on smaller screens) */}
             <div className="lg:hidden mb-8 card p-5" data-testid="player-stat-bars-mobile">
-              <h3 className="font-['Bebas_Neue'] text-lg text-white mb-4">Στατιστικά</h3>
+              <h3 className="font-['Bebas_Neue'] text-lg text-white mb-4">Στατιστικα</h3>
               <StatBar label="Συμμετοχές" value={appearances} max={Math.max(appearances, 30)} />
               <StatBar label="Απόδοση" value={performance} max={100} />
               <StatBar label="Γκολ" value={stats.goals || 0} max={Math.max(stats.goals || 0, 15)} />
@@ -309,7 +309,7 @@ const PlayerProfilePage = () => {
             {/* Previous Clubs */}
             {player.previous_clubs && player.previous_clubs.length > 0 && (
               <div>
-                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Προηγούμενοι Σύλλογοι</h3>
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Προηγουμενοι Συλλογοι</h3>
                 <div className="space-y-2">
                   {player.previous_clubs.map((club, i) => (
                     <div key={i} className="card p-4 flex justify-between items-center">
@@ -324,7 +324,7 @@ const PlayerProfilePage = () => {
             {/* Player Gallery */}
             {gallery.length > 0 && (
               <div data-testid="player-gallery-section">
-                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Φωτογραφίες</h3>
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Φωτογραφιες</h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {gallery.map(item => (
                     <div key={item.id} className="aspect-square overflow-hidden bg-[#1a1a1a] rounded">
@@ -339,7 +339,7 @@ const PlayerProfilePage = () => {
 
         {activeTab === "statistics" && (
           <div data-testid="player-statistics-tab">
-            <h2 className="font-['Bebas_Neue'] text-xl text-white mb-6">Πλήρη Στατιστικά — Σεζόν 2025/26</h2>
+            <h2 className="font-['Bebas_Neue'] text-xl text-white mb-6">Πληρη Στατιστικα — Σεζον 2025/26</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
               {[
                 { label: "Συμμετοχές", value: stats.appearances || 0 },
@@ -360,7 +360,7 @@ const PlayerProfilePage = () => {
 
             {/* Full stat bars */}
             <div className="card p-6">
-              <h3 className="font-['Bebas_Neue'] text-lg text-white mb-4">Δείκτες Απόδοσης</h3>
+              <h3 className="font-['Bebas_Neue'] text-lg text-white mb-4">Δεικτες Αποδοσης</h3>
               <StatBar label="Συμμετοχές" value={appearances} max={Math.max(appearances, 30)} />
               <StatBar label="Γκολ" value={stats.goals || 0} max={Math.max(stats.goals || 0, 15)} />
               <StatBar label="Ασίστ" value={stats.assists || 0} max={Math.max(stats.assists || 0, 10)} />
@@ -372,7 +372,7 @@ const PlayerProfilePage = () => {
 
         {activeTab === "biography" && (
           <div data-testid="player-biography-tab">
-            <h2 className="font-['Bebas_Neue'] text-xl text-white mb-6">Βιογραφικό</h2>
+            <h2 className="font-['Bebas_Neue'] text-xl text-white mb-6">Βιογραφικο</h2>
 
             {/* Info details */}
             <div className="card p-6 mb-6">
@@ -398,7 +398,7 @@ const PlayerProfilePage = () => {
             {/* Previous Clubs */}
             {player.previous_clubs && player.previous_clubs.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Προηγούμενοι Σύλλογοι</h3>
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Προηγουμενοι Συλλογοι</h3>
                 <div className="space-y-2">
                   {player.previous_clubs.map((club, i) => (
                     <div key={i} className="card p-4 flex justify-between items-center">
@@ -413,7 +413,7 @@ const PlayerProfilePage = () => {
             {/* Transfer History */}
             {transfers.length > 0 && (
               <div data-testid="player-transfers">
-                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Ιστορικό Μεταγραφών</h3>
+                <h3 className="font-['Bebas_Neue'] text-lg text-white mb-3">Ιστορικο Μεταγραφων</h3>
                 <div className="space-y-2">
                   {transfers.map(t => {
                     const typeLabels = { "In": "Απόκτηση", "Out": "Αποχώρηση", "Loan In": "Δανεισμός (Εισ.)", "Loan Out": "Δανεισμός (Εξ.)" };

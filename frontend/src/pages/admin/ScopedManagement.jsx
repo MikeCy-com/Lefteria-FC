@@ -88,12 +88,12 @@ export const OpponentsTab = ({ opponents = [], teamType, onRefresh }) => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" data-testid="opponent-form-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-xl text-white">{editOpp ? "Επεξεργασία Αντίπαλου" : "Νέος Αντίπαλος"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-xl text-white">{editOpp ? "Επεξεργασια Αντιπαλου" : "Νεος Αντιπαλος"}</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Όνομα *</label>
+                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Ονομα *</label>
                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:outline-none" style={{ borderColor: form.name ? accentColor : undefined }}
                   data-testid="opponent-name-input" placeholder="Π.χ. ΑΠΟΕΛ" />
@@ -189,18 +189,18 @@ export const VenuesTab = ({ facilities = [], teamType, onRefresh }) => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" data-testid="venue-form-modal">
           <div className="bg-[#121212] border border-[#262626] rounded-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-5 border-b border-[#262626]">
-              <h2 className="font-['Bebas_Neue'] text-xl text-white">{editVenue ? "Επεξεργασία Γηπέδου" : "Νέο Γήπεδο"}</h2>
+              <h2 className="font-['Bebas_Neue'] text-xl text-white">{editVenue ? "Επεξεργασια Γηπεδου" : "Νεο Γηπεδο"}</h2>
               <button onClick={() => setShowForm(false)} className="admin-icon-btn"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Όνομα *</label>
+                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Ονομα *</label>
                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:outline-none" style={{ borderColor: form.name ? accentColor : undefined }}
                   data-testid="venue-name-input" placeholder="Π.χ. Γήπεδο Λευτεριά" />
               </div>
               <div>
-                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Διεύθυνση</label>
+                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Διευθυνση</label>
                 <input value={form.address} onChange={e => setForm({...form, address: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:outline-none"
                   placeholder="Οδός, Πόλη" data-testid="venue-address-input" />
@@ -212,7 +212,7 @@ export const VenuesTab = ({ facilities = [], teamType, onRefresh }) => {
                   placeholder="https://maps.google.com/..." data-testid="venue-maps-input" />
               </div>
               <div>
-                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Επιφάνεια</label>
+                <label className="text-xs text-zinc-400 mb-1.5 block uppercase tracking-wider">Επιφανεια</label>
                 <input value={form.surface} onChange={e => setForm({...form, surface: e.target.value})}
                   className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:outline-none"
                   placeholder="Φυσικός χλοοτάπητας, τεχνητός..." data-testid="venue-surface-input" />
