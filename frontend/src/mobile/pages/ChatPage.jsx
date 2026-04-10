@@ -20,6 +20,7 @@ const ChatPage = () => {
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [groups, setGroups] = useState([]);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -49,6 +50,18 @@ const ChatPage = () => {
       return () => clearInterval(pollRef.current);
     }
   }, [view, selectedConvo, fetchMessages]);
+
+  // Load user's groups for team chats
+  useEffect(() => {
+    (async () => {
+      try {
+        const role = user?.role || "parent";
+        const endpoint = role === "coach" ? "coach" : role === "player" ? "player" : role === "management" ? "management" : "parent";
+        const res = await axios.get(`${API}/mobile/${endpoint}/dashboard`, { headers: getHeaders() });
+        setGroups(res.data?.groups || []);
+      } catch (e) {}
+    })();
+  }, [getHeaders, user?.role]);
 
   const openConvo = (convo) => {
     setSelectedConvo(convo);
@@ -221,17 +234,6 @@ const ChatPage = () => {
   }
 
   // ==================== CONVERSATION LIST ====================
-  // Get user's groups for team chats
-  const [groups, setGroups] = useState([]);
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await axios.get(`${API}/mobile/parent/dashboard`, { headers: getHeaders() });
-        setGroups(res.data?.groups || []);
-      } catch (e) {}
-    })();
-  }, [getHeaders]);
-
   return (
     <div className="pb-6" data-testid="chat-list">
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
