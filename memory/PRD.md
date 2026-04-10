@@ -1,85 +1,64 @@
 # Lefteria FC - Football Club CMS & Public Website
 
 ## Original Problem Statement
-Complete football club CMS and public website for "Lefteria FC", including a centralized Team Hub, Player Profiles, Match Reports, Academy Management, Season Statistics, and comprehensive club management tools. Fully functioning CMS + Public facing club hub, entirely in Greek for the frontend. Includes Mobile PWA with Role-based OTP login (Parent, Coach, Player, Management), advanced Fixture/Training scheduling, scoped venues/opponents, and interactive mobile attendance tracking.
+Complete football club CMS and public website for "Lefteria FC". Fully functioning CMS + Public facing club hub, entirely in Greek. Mobile PWA with Role-based OTP login, advanced scheduling, scoped venues/opponents, and interactive mobile attendance tracking.
 
 ## Architecture
-- **Frontend**: React, Tailwind CSS, PWA (service worker)
+- **Frontend**: React, Tailwind CSS, PWA
 - **Backend**: FastAPI, MongoDB (Motor), PyJWT
-- **Auth**: JWT Admin/Customer + Role-based OTP for Mobile PWA (Twilio mocked)
+- **Auth**: JWT Admin/Customer + Role-based OTP Mobile (Twilio mocked)
 
 ## Key Constraints
-- All frontend UI text in **Greek**
-- **Greek ALL CAPS text must NOT have accent marks** (applied via `stripGreekAccents` utility)
+- All UI text in **Greek**, ALL CAPS text without accent marks
 - Academy age groups: **U6 to U12** only
-- OTP via Twilio is **mocked** (returns OTP in API response)
-- Currency: **€** (Euro) everywhere
+- Currency: **€** (Euro)
+- OTP via Twilio is **mocked**
 
 ## What's Been Implemented
 
 ### Core CMS (Admin Panel)
-- Full-width admin UI with sidebar navigation
-- Club & Academy section dashboards
-- Team management (CRUD, roster, staff, standings, gallery)
-- Academy group management (CRUD, roster, transfers, fixtures, gallery)
-- Player profiles with image uploads
-- Fixture/Match management with inline attendance (expandable cards)
-- Training session management with bulk creation + inline attendance
-- News, announcements, wall posts
-- Financial dashboard (€ currency)
-- Resource/facility management with booking
-- Shop: products, tickets, orders
-- Season management
-- Settings: club info, venues
+- Full admin UI with sidebar (Club/Academy/Management/Shop sections)
+- Teams, Academy Groups, Players (CRUD + image uploads)
+- Fixtures with inline attendance (expandable cards)
+- Training sessions with bulk creation + inline attendance
+- News, announcements, wall posts, financial dashboard (€)
+- Resources, shop, seasons, settings
 
 ### Public Website
-- Homepage with hero, standings, latest fixtures, POTM voting
-- Team hub with tabs (roster, results, schedule, venues, stats, gallery)
-- Academy group pages
-- Match report pages with live events
-- News, Contact form, Customer auth, Shop
+- Homepage, Team hub, Academy pages, Match reports
+- News, Contact, Customer auth, Shop, POTM voting
 
-### Mobile PWA
-- OTP role-based login (Parent, Coach, Player, Management)
-- **Parent Dashboard (Team-First Navigation)**:
-  - Home: Team cards (groups kids are in), children cards, quick stats, upcoming events with Going/Not Going
-  - Team View: Click team → roster (with parent's kids highlighted), fixtures with Going/Not Going, training sessions
-  - Child View: Click kid → personal stats (appearances, goals, assists, minutes), attendance rate, upcoming events, financial obligations
-- **Parent Profile**: Avatar upload, editable name/email, locked phone number
-- Schedule page with attendance (Going/Not Going)
-- News feed, Push notifications
+### Mobile PWA — PlayerDex-Inspired Redesign
+- **Home View**: Team cards with banners + kid avatar stack, children quick-access, quick stats (€), upcoming events
+- **Team View**: Tabs (Schedule/Roster/Feed). Schedule shows events with date badges, type tags (Αγώνας/Προπόνηση), time, location
+- **Event Detail**: Full detail page with Going/Not Going prompt, date/time/location rows, external maps link, attendance player list
+- **Player Profile**: Large avatar, training attendance %, match attendance %, ranking. Full stats (goals/assists/minutes) for own kids, restricted for others. Parent info card.
+- **Profile Page**: Avatar upload (camera button), editable name/email, locked phone
+- **Schedule, News, Push notifications** (existing)
 
-### Recent Changes (Feb 2026)
-- **P0**: Stripped Greek accents from ALL CAPS text across 30+ files. Created `stripGreekAccents()` utility at `/utils/greekText.js`.
-- **P0**: Changed academy ages U8-U18 → U6-U12. Updated backend seed data.
-- **P1**: Added inline attendance to Match/Fixture cards (FixturesTab, TeamsTab, AcademyTab).
-- **Mobile Header**: Bigger logo (w-10), smaller text (text-xs).
-- **Currency**: DollarSign → Euro icon globally.
-- **Parent Dashboard Redesign**: Team-first navigation with home/team/child views, Going/Not Going on all events.
-- **Parent Profile Enhancement**: Avatar upload (camera button), edit mode (name/email), locked phone.
-- **Backend**: Added `PUT /api/mobile/profile`, `POST /api/mobile/profile/avatar`, expanded parent dashboard with `group_players` and `training_sessions`.
+### Key Changes (Feb 2026)
+- Greek accent stripping (stripGreekAccents utility)
+- U6-U12 academy ages
+- DollarSign → Euro globally
+- PlayerDex-inspired mobile dashboard with 4 views (home/team/event/player)
+- Profile avatar upload + edit endpoints
+- Expandable fixture attendance in admin panel
 
 ## Prioritized Backlog
-
 ### P1
-- Refactor `server.py` (>3600 lines) into modular route files
-- Refactor `AdminPanel.jsx` (>3700 lines) into modular tab components
+- Refactor server.py + AdminPanel.jsx into modular files
 - Team chat/messaging in mobile app
-
 ### P2
-- Verify Match-day Push Notifications & POTM Social Share
+- Push notifications & POTM share verification
 - Video uploads in gallery
-
 ### P3
-- AI-generated match report narratives
-- Multi-language support (English toggle)
+- AI match report narratives
+- Multi-language support
 
 ## Key Files
+- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` — PlayerDex-inspired mobile dashboard
+- `/app/frontend/src/mobile/pages/ProfilePage.jsx` — Profile with avatar
 - `/app/frontend/src/pages/AdminPanel.jsx` — Main admin CMS
-- `/app/frontend/src/pages/admin/InlineAttendance.jsx` — Reusable attendance
-- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` — Parent mobile dashboard
-- `/app/frontend/src/mobile/pages/ProfilePage.jsx` — Parent profile with avatar
-- `/app/frontend/src/mobile/components/MobileHeader.jsx` — Mobile header
-- `/app/frontend/src/utils/greekText.js` — Greek accent stripping utility
-- `/app/backend/routes/mobile_auth.py` — Mobile auth + profile + dashboard APIs
+- `/app/frontend/src/utils/greekText.js` — Greek accent utility
+- `/app/backend/routes/mobile_auth.py` — Mobile auth + profile APIs
 - `/app/backend/server.py` — All backend endpoints
