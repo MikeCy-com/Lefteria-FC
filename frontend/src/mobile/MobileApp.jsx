@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { useMobileAuth } from "./MobileAuthContext";
-import MobileHeader from "./components/MobileHeader";
 import BottomNav from "./components/BottomNav";
 import MobileLoginPage from "./pages/MobileLoginPage";
 import ParentDashboard from "./pages/ParentDashboard";
 import SchedulePage from "./pages/SchedulePage";
+import MatchesPage from "./pages/MatchesPage";
 import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import CoachDashboard from "./pages/CoachDashboard";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import ManagementDashboard from "./pages/ManagementDashboard";
-import NewsPage from "./pages/NewsPage";
 
 const MobileApp = () => {
   const { user } = useMobileAuth();
@@ -26,12 +25,12 @@ const MobileApp = () => {
         if (role === "player") return <PlayerDashboard onTabChange={setActiveTab} />;
         if (role === "management") return <ManagementDashboard onTabChange={setActiveTab} />;
         return <ParentDashboard onTabChange={setActiveTab} />;
-      case "schedule":
+      case "calendar":
         return <SchedulePage />;
+      case "matches":
+        return <MatchesPage />;
       case "chat":
         return <ChatPage />;
-      case "news":
-        return <NewsPage />;
       case "profile":
         return <ProfilePage />;
       default:
@@ -41,8 +40,7 @@ const MobileApp = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white max-w-md mx-auto relative" data-testid="mobile-app">
-      <MobileHeader />
-      <div className="pb-16">
+      <div className="pb-20">
         {renderContent()}
       </div>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />

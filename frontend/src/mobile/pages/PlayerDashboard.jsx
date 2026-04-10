@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
-import { LoadingSpinner, ErrorState, SectionHeader, EventCard, AnnouncementCard, EmptyCard } from "./ParentDashboard";
+import { LoadingSpinner, ErrorState, SectionHeader, EventCard, AnnouncementCard, EmptyCard } from "../components/SharedComponents";
 import {
   Target, Trophy, Clock, Star, TrendingUp, Calendar, BarChart3, RefreshCw
 } from "lucide-react";
