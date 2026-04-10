@@ -591,6 +591,165 @@ def setup_mobile_routes(db):
         )
         return {"avatar_url": avatar_url}
 
+    # ==================== CHAT SYSTEM ====================
+    @router.get("/mobile/conversations")
+    async def get_conversations(user: dict = Depends(get_mobile_user)):
+        """Get all conversations for the current user."""
+        convos = await db.conversations.find(
+            {"participants": user["id"]},
+            {"_id": 0}
+        ).sort("updated_at", -1).to_list(50)
+
+        # Enrich with last message and unread count
+        for c in convos:
+            last_msg = await db.chat_messages.find_one(
+                {"conversation_id": c["id"]},
+                {"_id": 0},
+                sort=[("created_at", -1)]
+            )
+            c["last_message"] = last_msg
+            # Get other participant info for private chats
+            if c.get("type") == "private":
+                other_id = next((p for p in c["participants"] if p != user["id"]), None)
+                if other_id:
+                    other_user = await db.mobile_users.find_one({"id": other_id}, {"_id": 0, "id": 1, "name": 1, "avatar_url": 1, "role": 1})
+                    c["other_user"] = other_user
+
+        return convos
+
+    @router.get("/mobile/conversations/{conversation_id}/messages")
+    async def get_messages(conversation_id: str, limit: int = 50, before: str = None, user: dict = Depends(get_mobile_user)):
+        """Get messages for a conversation."""
+        convo = await db.conversations.find_one({"id": conversation_id, "participants": user["id"]})
+        if not convo:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        query = {"conversation_id": conversation_id}
+        if before:
+            query["created_at"] = {"$lt": before}
+
+        messages = await db.chat_messages.find(
+            query, {"_id": 0}
+        ).sort("created_at", -1).limit(limit).to_list(limit)
+
+        return list(reversed(messages))
+
+    @router.post("/mobile/conversations/{conversation_id}/messages")
+    async def send_message(conversation_id: str, body: dict, user: dict = Depends(get_mobile_user)):
+        """Send a message in a conversation."""
+        convo = await db.conversations.find_one({"id": conversation_id, "participants": user["id"]})
+        if not convo:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        content = body.get("content", "").strip()
+        if not content:
+            raise HTTPException(status_code=400, detail="Message content required")
+
+        msg = {
+            "id": str(uuid.uuid4()),
+            "conversation_id": conversation_id,
+            "sender_id": user["id"],
+            "sender_name": user.get("name", ""),
+            "sender_avatar": user.get("avatar_url", ""),
+            "content": content,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.chat_messages.insert_one(msg)
+        await db.conversations.update_one(
+            {"id": conversation_id},
+            {"$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        msg.pop("_id", None)
+        return msg
+
+    @router.post("/mobile/conversations")
+    async def create_conversation(body: dict, user: dict = Depends(get_mobile_user)):
+        """Create a new private conversation or get existing one."""
+        other_user_id = body.get("other_user_id")
+        conv_type = body.get("type", "private")
+
+        if conv_type == "private" and other_user_id:
+            # Check if conversation already exists
+            existing = await db.conversations.find_one({
+                "type": "private",
+                "participants": {"$all": [user["id"], other_user_id]}
+            }, {"_id": 0})
+            if existing:
+                return existing
+
+            convo = {
+                "id": str(uuid.uuid4()),
+                "type": "private",
+                "participants": [user["id"], other_user_id],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            await db.conversations.insert_one(convo)
+            convo.pop("_id", None)
+            return convo
+
+        raise HTTPException(status_code=400, detail="Invalid conversation request")
+
+    @router.post("/mobile/team-chat/{group_id}")
+    async def get_or_create_team_chat(group_id: str, user: dict = Depends(get_mobile_user)):
+        """Get or create team chat for an academy group."""
+        existing = await db.conversations.find_one(
+            {"type": "team", "group_id": group_id},
+            {"_id": 0}
+        )
+        if existing:
+            # Add user to participants if not already
+            if user["id"] not in existing.get("participants", []):
+                await db.conversations.update_one(
+                    {"id": existing["id"]},
+                    {"$addToSet": {"participants": user["id"]}}
+                )
+            return existing
+
+        # Get group info
+        group = await db.academy_groups.find_one({"id": group_id}, {"_id": 0})
+        convo = {
+            "id": str(uuid.uuid4()),
+            "type": "team",
+            "group_id": group_id,
+            "group_name": group.get("name", "") if group else "",
+            "participants": [user["id"]],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.conversations.insert_one(convo)
+        convo.pop("_id", None)
+        return convo
+
+    @router.get("/mobile/team-members/{group_id}")
+    async def get_team_members(group_id: str, user: dict = Depends(get_mobile_user)):
+        """Get all parents/coaches linked to a group for private messaging."""
+        # Get all players in group
+        players = await db.players.find(
+            {"$or": [{"academy_group_ids": group_id}, {"academy_group_id": group_id}]},
+            {"_id": 0}
+        ).to_list(100)
+
+        # Get all mobile users who are parents of these players or coaches
+        player_ids = [p["id"] for p in players]
+        mobile_users = await db.mobile_users.find(
+            {"$or": [
+                {"linked_player_ids": {"$in": player_ids}},
+                {"linked_player_id": {"$in": player_ids}},
+                {"role": {"$in": ["coach", "management"]}}
+            ]},
+            {"_id": 0, "id": 1, "name": 1, "role": 1, "avatar_url": 1, "phone": 1}
+        ).to_list(100)
+
+        # Also get staff for the group
+        staff = await db.staff.find(
+            {"$or": [{"academy_group_id": group_id}, {"team_type": "academy"}]},
+            {"_id": 0}
+        ).to_list(20)
+
+        return {"members": mobile_users, "staff": staff, "players": players}
+
+
 
     # ==================== ROLE DETECTION HELPER ====================
     async def _detect_role(db, phone: str):
