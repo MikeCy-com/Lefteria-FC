@@ -97,6 +97,9 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Fixed € symbol rendering in Management financial overview
 - Fixed name overflow/truncation in Coach and Player hero cards
 - Fixed empty Player dashboard — always shows schedule and announcements with empty states
+- Reduced all mobile font sizes: section headers text-xs uppercase, names text-sm, detail titles text-sm
+- Removed Greek accent marks (τονοι) from all mobile UI text (ChatPage, ProfilePage, LoginPage, SchedulePage, NewsPage)
+- Added per-player attendance stats (present/absent/percentage) to Admin CMS player profile with gradient progress bar
 
 ### Attendance Tracker (COMPLETED Apr 2026)
 - All roles (Coach, Player, Parent, Management) can mark attendance

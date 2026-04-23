@@ -116,7 +116,7 @@ const ParentDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Προπονηση"}
             </span>
-            <h2 className="text-lg font-bold text-white mt-1">{ev.title}</h2>
+            <h2 className="text-sm font-bold text-white mt-1">{ev.title}</h2>
 
             <div className="mt-4 space-y-2.5">
               {ev.date && (
