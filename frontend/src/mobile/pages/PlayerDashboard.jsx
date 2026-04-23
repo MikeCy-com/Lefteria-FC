@@ -8,6 +8,7 @@ import {
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const imgUrl = (url) => url ? (url.startsWith("http") ? url : `${process.env.REACT_APP_BACKEND_URL}${url}`) : null;
+const parseDate = (d) => { if (!d) return null; const s = d.includes("T") ? d : d + "T00:00:00"; const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt; };
 
 const PlayerDashboard = ({ onTabChange }) => {
   const { user, getHeaders } = useMobileAuth();
@@ -63,7 +64,7 @@ const PlayerDashboard = ({ onTabChange }) => {
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar size={15} className="text-zinc-500" />
-                  <span className="text-zinc-300">{new Date(ev.date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+                  <span className="text-zinc-300">{parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
                 </div>
               )}
               {(ev.start_time || ev.match_time) && (
@@ -162,7 +163,7 @@ const PlayerDashboard = ({ onTabChange }) => {
                 <div className="text-center">
                   <p className="text-zinc-500 text-xs font-semibold tracking-widest">VS</p>
                   <p className="text-[10px] text-zinc-600 mt-1">
-                    {next.match_date && new Date(next.match_date + "T00:00:00").toLocaleDateString("el-GR", { day: "numeric", month: "short" })}
+                    {next.match_date && parseDate(next.match_date)?.toLocaleDateString("el-GR", { day: "numeric", month: "short" })}
                     {next.match_time && ` · ${next.match_time}`}
                   </p>
                 </div>
@@ -245,9 +246,9 @@ const PlayerDashboard = ({ onTabChange }) => {
       )}
 
       {/* Upcoming Events */}
-      {(data.events || []).length > 0 && (
-        <div className="mb-5">
-          <SectionHeader title="Προγραμμα" action="Ολα" onAction={() => onTabChange("calendar")} />
+      <div className="mb-5">
+        <SectionHeader title="Προγραμμα" action={(data.events || []).length > 0 ? "Ολα" : undefined} onAction={() => onTabChange("calendar")} />
+        {(data.events || []).length > 0 ? (
           <div className="space-y-2">
             {data.events.slice(0, 3).map(ev => (
               <button
@@ -260,7 +261,7 @@ const PlayerDashboard = ({ onTabChange }) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-white truncate">{ev.title || "Γεγονος"}</p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">
-                    {ev.date && new Date(ev.date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                    {ev.date && parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
                     {(ev.start_time || ev.match_time) && ` · ${ev.start_time || ev.match_time}`}
                   </p>
                 </div>
@@ -268,8 +269,13 @@ const PlayerDashboard = ({ onTabChange }) => {
               </button>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-[#111] border border-white/[0.06] rounded-2xl p-6 text-center" data-testid="player-no-events">
+            <Calendar size={24} className="text-zinc-700 mx-auto mb-2" />
+            <p className="text-xs text-zinc-500">Δεν υπαρχουν επομενα γεγονοτα</p>
+          </div>
+        )}
+      </div>
 
       {/* Recent Results */}
       {completedFixtures.length > 0 && (
@@ -291,7 +297,7 @@ const PlayerDashboard = ({ onTabChange }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white truncate">{f.home_team} vs {f.away_team}</p>
-                    <p className="text-[10px] text-zinc-500">{f.match_date && new Date(f.match_date + "T00:00:00").toLocaleDateString("el-GR", { day: "numeric", month: "short" })}</p>
+                    <p className="text-[10px] text-zinc-500">{f.match_date && parseDate(f.match_date)?.toLocaleDateString("el-GR", { day: "numeric", month: "short" })}</p>
                   </div>
                   <span className="text-sm font-bold text-white tabular-nums">{f.home_score} - {f.away_score}</span>
                 </div>
@@ -302,9 +308,9 @@ const PlayerDashboard = ({ onTabChange }) => {
       )}
 
       {/* Announcements */}
-      {(data.announcements || []).length > 0 && (
-        <div className="mb-5">
-          <SectionHeader title="Ανακοινωσεις" />
+      <div className="mb-5">
+        <SectionHeader title="Ανακοινωσεις" />
+        {(data.announcements || []).length > 0 ? (
           <div className="space-y-2">
             {data.announcements.slice(0, 3).map((a, i) => (
               <div key={a.id || i} className="bg-[#111] border border-white/[0.06] rounded-2xl p-3" data-testid={`player-announcement-${i}`}>
@@ -314,8 +320,13 @@ const PlayerDashboard = ({ onTabChange }) => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-[#111] border border-white/[0.06] rounded-2xl p-6 text-center" data-testid="player-no-announcements">
+            <Bell size={24} className="text-zinc-700 mx-auto mb-2" />
+            <p className="text-xs text-zinc-500">Δεν υπαρχουν ανακοινωσεις</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

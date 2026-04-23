@@ -3,6 +3,8 @@ import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
 import { Calendar, Clock, MapPin, ExternalLink, Trophy, Shield, Check, X as XIcon } from "lucide-react";
 
+const parseDate = (d) => { if (!d) return null; const s = d.includes("T") ? d : d + "T00:00:00"; const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt; };
+
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const MatchesPage = () => {
@@ -174,7 +176,7 @@ const MatchesPage = () => {
                   {f.match_date && (
                     <span className="flex items-center gap-1">
                       <Calendar size={10} />
-                      {new Date(f.match_date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                      {parseDate(f.match_date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
                     </span>
                   )}
                   {f.match_time && <span className="flex items-center gap-1"><Clock size={10} /> {f.match_time}</span>}

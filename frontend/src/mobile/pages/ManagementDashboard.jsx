@@ -10,6 +10,7 @@ import {
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const imgUrl = (url) => url ? (url.startsWith("http") ? url : `${process.env.REACT_APP_BACKEND_URL}${url}`) : null;
+const parseDate = (d) => { if (!d) return null; const s = d.includes("T") ? d : d + "T00:00:00"; const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt; };
 
 const ManagementDashboard = ({ onTabChange }) => {
   const { user, getHeaders } = useMobileAuth();
@@ -270,7 +271,7 @@ const ManagementDashboard = ({ onTabChange }) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-white truncate">{ev.title || "Γεγονος"}</p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">
-                    {ev.date && new Date(ev.date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                    {ev.date && parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
                     {(ev.start_time || ev.match_time) && ` · ${ev.start_time || ev.match_time}`}
                   </p>
                 </div>

@@ -38,7 +38,7 @@ export const EventCard = ({ event, onClick }) => {
           {event.title || (event.home_team && event.away_team ? `${event.home_team} vs ${event.away_team}` : "Γεγονος")}
         </p>
         <p className="text-[10px] text-zinc-500 mt-0.5">
-          {event.date && new Date(event.date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+          {event.date && (() => { const d = event.date.includes("T") ? event.date : event.date + "T00:00:00"; const dt = new Date(d); return isNaN(dt.getTime()) ? "" : dt.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" }); })()}
           {(event.start_time || event.match_time) && ` · ${event.start_time || event.match_time}`}
           {(event.location || event.venue) && ` · ${event.location || event.venue}`}
         </p>

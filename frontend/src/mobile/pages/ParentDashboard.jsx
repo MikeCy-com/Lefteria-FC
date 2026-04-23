@@ -10,6 +10,7 @@ import {
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const imgUrl = (url) => url ? (url.startsWith("http") ? url : `${process.env.REACT_APP_BACKEND_URL}${url}`) : null;
+const parseDate = (d) => { if (!d) return null; const s = d.includes("T") ? d : d + "T00:00:00"; const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt; };
 
 const ParentDashboard = ({ onTabChange }) => {
   const { user, getHeaders } = useMobileAuth();
@@ -106,7 +107,7 @@ const ParentDashboard = ({ onTabChange }) => {
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar size={15} className="text-zinc-500" />
-                  <span className="text-zinc-300">{new Date(ev.date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+                  <span className="text-zinc-300">{parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
                 </div>
               )}
               {(ev.start_time || ev.match_time) && (
@@ -284,7 +285,7 @@ const ParentDashboard = ({ onTabChange }) => {
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-white truncate">{ev.title}</p>
                             <p className="text-[10px] text-zinc-500 mt-0.5">
-                              {ev.date && new Date(ev.date + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                              {ev.date && parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
                               {ev.start_time && ` · ${ev.start_time}`}
                             </p>
                           </div>
@@ -437,7 +438,7 @@ const ParentDashboard = ({ onTabChange }) => {
                 <div className="text-center">
                   <p className="text-zinc-500 text-xs font-semibold tracking-widest">VS</p>
                   <p className="text-[10px] text-zinc-600 mt-1">
-                    {next.match_date && new Date(next.match_date + "T00:00:00").toLocaleDateString("el-GR", { day: "numeric", month: "short" })}
+                    {next.match_date && parseDate(next.match_date)?.toLocaleDateString("el-GR", { day: "numeric", month: "short" })}
                     {next.match_time && ` · ${next.match_time}`}
                   </p>
                 </div>
@@ -552,7 +553,7 @@ const ParentDashboard = ({ onTabChange }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white truncate">{f.home_team} vs {f.away_team}</p>
-                    <p className="text-[10px] text-zinc-500">{f.match_date && new Date(f.match_date + "T00:00:00").toLocaleDateString("el-GR", { day: "numeric", month: "short" })}</p>
+                    <p className="text-[10px] text-zinc-500">{f.match_date && parseDate(f.match_date)?.toLocaleDateString("el-GR", { day: "numeric", month: "short" })}</p>
                   </div>
                   <span className="text-sm font-bold text-white tabular-nums">{f.home_score} - {f.away_score}</span>
                 </div>

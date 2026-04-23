@@ -14,6 +14,7 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Currency: **Euro** symbol
 - OTP via Twilio is **mocked**
 - Mobile PWA uses ONLY bottom navigation (5 tabs, no top tabs)
+- Global `pb-36` padding on mobile container prevents badge overlap
 
 ## What's Been Implemented
 
@@ -29,32 +30,59 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Homepage, Team hub, Academy pages, Match reports
 - News, Contact, Customer auth, Shop, POTM voting
 
-### Mobile PWA - Premium Redesign (COMPLETED Feb 2026)
+### Mobile PWA - Premium Redesign (ALL ROLES COMPLETED Apr 2026)
 **5-Tab Bottom Navigation:**
-- Αρχικη (Home) → Dashboard
+- Αρχικη (Home) → Role-specific Dashboard
 - Ημερολογιο (Calendar) → Schedule
 - Αγωνες (Matches) → Central elevated tab, upcoming/completed matches
 - Μηνυματα (Chat) → Team + private messaging
 - Προφιλ (Profile) → User profile with avatar
 
-**Home Dashboard (Card-based):**
+**Parent Dashboard (Card-based):**
 - Welcome header with avatar + greeting ("Καλως ηρθες, [name]")
 - 3 Quick Stat cards (Teams, Upcoming Matches, Attendance %)
 - Next Match card with VS layout
 - My Kids horizontal scrollable cards
-- Teams list with age range badges
+- Teams list with age range badges and drill-down
+- Recent Results with W/D/L indicators
+- Team detail with expandable sections (Events, Roster, Staff, Announcements)
+- Player profile view with stats
+
+**Coach Dashboard (COMPLETED Apr 2026):**
+- Blue-themed welcome header with avatar + "Γεια σου, Προπονητη"
+- 3 Quick Stats (Players, Teams, Training Sessions)
+- Next Match card with VS layout
+- My Teams list with drill-down to team detail (expandable events + roster)
+- Player profile view from roster with stats
+- Training schedule cards with dates/times
+- Recent Results with W/D/L indicators
+- Announcements section
+
+**Player Dashboard (COMPLETED Apr 2026):**
+- Player hero card with photo, number badge, position, team name
+- 4-column season stats grid (Goals, Assists, Appearances, Minutes)
+- Next Match card with VS layout
+- Development Plans with progress bars
+- Evaluations with star ratings
+- Schedule section (always visible, shows empty state)
+- Announcements section (always visible, shows empty state)
 - Recent Results with W/D/L indicators
 
-**Matches Page (NEW):**
+**Management Dashboard (COMPLETED Apr 2026):**
+- Amber-themed welcome header with avatar + "Διοικηση"
+- 2x2 KPI grid (Players, Teams, Registrations, Revenue)
+- Financial overview (Revenue/Pending/Overdue in €)
+- Teams list with drill-down
+- Recent Registrations list with status badges
+- Full Registrations detail view
+- Upcoming Events section
+- Announcements section
+
+**Matches Page:**
 - Upcoming/Completed filter pills
 - Match score cards with team shields, VS/score, competition badge
 - Date/venue/map info
 - Availability buttons (Παω/Δεν παω)
-
-**Team Drill-Down:**
-- Expandable accordion sections: Events, Roster, Staff, Announcements
-- Player profile view with stats (Goals, Assists, Minutes)
-- Event detail with availability prompt
 
 **Chat System:**
 - Team chats per academy group
@@ -63,6 +91,12 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 ### Codebase Refactoring (COMPLETED)
 - Backend: server.py 3638→2782 lines; extracted models.py, auth.py, database.py
 - Frontend: AdminPanel.jsx 3669→2223 lines; extracted TeamsTab, AcademyTab, RegistrationsTab, ShopTabs
+
+### Bug Fixes (Apr 2026)
+- Fixed "Invalid Date" on match result cards — `parseDate()` helper handles both ISO datetime and plain date formats
+- Fixed € symbol rendering in Management financial overview
+- Fixed name overflow/truncation in Coach and Player hero cards
+- Fixed empty Player dashboard — always shows schedule and announcements with empty states
 
 ## Prioritized Backlog
 ### P2
@@ -75,9 +109,12 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 
 ## Key Files
 ### Mobile PWA
-- `/app/frontend/src/mobile/MobileApp.jsx` - 5-tab routing
+- `/app/frontend/src/mobile/MobileApp.jsx` - 5-tab routing with role-based dashboard selection
 - `/app/frontend/src/mobile/components/BottomNav.jsx` - 5-tab nav with center elevated
-- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` - Dashboard-style home
+- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` - Parent dashboard with team drill-down
+- `/app/frontend/src/mobile/pages/CoachDashboard.jsx` - Coach dashboard with team/player management
+- `/app/frontend/src/mobile/pages/PlayerDashboard.jsx` - Player dashboard with stats and hero card
+- `/app/frontend/src/mobile/pages/ManagementDashboard.jsx` - Management dashboard with KPIs/financials
 - `/app/frontend/src/mobile/pages/MatchesPage.jsx` - Matches page
 - `/app/frontend/src/mobile/pages/ChatPage.jsx` - Chat system
 - `/app/frontend/src/mobile/pages/SchedulePage.jsx` - Calendar
@@ -88,4 +125,4 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - `/app/backend/server.py` - Main routes (2782 lines)
 - `/app/backend/models.py` - Pydantic models (785 lines)
 - `/app/backend/auth.py` - Auth helpers (106 lines)
-- `/app/backend/routes/mobile_auth.py` - Mobile auth + chat + availability
+- `/app/backend/routes/mobile_auth.py` - Mobile auth + dashboard endpoints + chat + availability
