@@ -323,7 +323,7 @@ def setup_mobile_routes(db):
             ).to_list(100)
             group_players[gid] = gp
 
-        # Get training sessions for groups (fallback to all if no groups)
+        # Get training sessions for groups (fallback to all if none found)
         training_sessions = []
         if group_ids:
             for gid in group_ids:
@@ -332,7 +332,8 @@ def setup_mobile_routes(db):
                     {"_id": 0}
                 ).sort("date", 1).to_list(20)
                 training_sessions.extend(ts)
-        else:
+        if not training_sessions:
+            # Fallback: return recent training sessions regardless of group
             training_sessions = await db.training_sessions.find(
                 {}, {"_id": 0}
             ).sort("date", -1).to_list(20)
@@ -668,7 +669,7 @@ def setup_mobile_routes(db):
                 ]},
                 {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1}
             ).to_list(100)
-            # Fallback: if no players in group and user is coach/management, load all players
+            # Fallback: if no players in group, load all for coach/management
             if not players and user["role"] in ("coach", "management"):
                 players = await db.players.find(
                     {},
@@ -682,7 +683,6 @@ def setup_mobile_routes(db):
                     "marked_by": att.get("marked_by_role") if att else None,
                 })
         elif user["role"] in ("coach", "management"):
-            # No group — load all players
             players = await db.players.find(
                 {},
                 {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1}
@@ -694,6 +694,25 @@ def setup_mobile_routes(db):
                     "attendance_status": att["status"] if att else None,
                     "marked_by": att.get("marked_by_role") if att else None,
                 })
+
+        # For player/parent: ensure their own player(s) are in the roster
+        if user["role"] == "player" and user.get("linked_player_id"):
+            pid = user["linked_player_id"]
+            if not any(r["id"] == pid for r in roster):
+                p = await db.players.find_one({"id": pid}, {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1})
+                if p:
+                    att = att_map.get(pid)
+                    roster.append({**p, "attendance_status": att["status"] if att else None, "marked_by": att.get("marked_by_role") if att else None})
+        elif user["role"] == "parent":
+            parent_player_ids = list(user.get("linked_player_ids", []))
+            if user.get("linked_player_id") and user["linked_player_id"] not in parent_player_ids:
+                parent_player_ids.append(user["linked_player_id"])
+            for pid in parent_player_ids:
+                if not any(r["id"] == pid for r in roster):
+                    p = await db.players.find_one({"id": pid}, {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1})
+                    if p:
+                        att = att_map.get(pid)
+                        roster.append({**p, "attendance_status": att["status"] if att else None, "marked_by": att.get("marked_by_role") if att else None})
 
         present_count = sum(1 for r in roster if r.get("attendance_status") == "present")
         absent_count = sum(1 for r in roster if r.get("attendance_status") == "absent")

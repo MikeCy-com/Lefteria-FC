@@ -98,6 +98,16 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Fixed name overflow/truncation in Coach and Player hero cards
 - Fixed empty Player dashboard — always shows schedule and announcements with empty states
 
+### Attendance Tracker (COMPLETED Apr 2026)
+- All roles (Coach, Player, Parent, Management) can mark attendance
+- Present/Absent toggle buttons for each player
+- Coach/Management see full roster; Player sees self; Parent sees children
+- Summary stats (Present/Absent/Unmarked counts + percentage bar)
+- Locked after event date passes (read-only badges + lock notice)
+- Works for Training Sessions, Matches, and Events
+- Accessible via clickable training session cards on all dashboards
+- Backend: POST /api/mobile/attendance/mark, GET /api/mobile/attendance/{event_id}, GET /api/mobile/my-attendance
+
 ## Prioritized Backlog
 ### P2
 - Push notifications & POTM share verification
