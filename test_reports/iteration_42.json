@@ -1,0 +1,60 @@
+{
+  "summary": "Iteration 42 - Attendance tracking feature. Backend: 11/11 pytest passed (100%) covering mark (coach/player/parent), lock-when-past, invalid status, no-auth, GET event attendance with roster/records/summary/is_locked, and GET /mobile/my-attendance. Frontend: AttendanceView component itself renders correctly, but the navigation path to reach it is BROKEN for all 4 roles because no events/training sessions surface in any role's UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Coach -> Teams -> Group -> Event -> Attendance",
+        "issue": "All 5 academy groups show '0 events' and '0 roster'. data.training_sessions has 20 items on coach dashboard but buildEvents() filters by groupId match and returns []. Training sessions' academy_group_id does not match any group.id currently shown, so the coach can never click through to an event detail to open 'Παρουσιες'. Alternatively, expose the training sessions list on the home section as clickable buttons that open event detail.",
+        "affected_selectors": ["[data-testid^=\"coach-event-\"]", "[data-testid=\"open-attendance-btn\"]"]
+      },
+      {
+        "flow": "Management -> Events -> Click event -> Attendance",
+        "issue": "On /app management-dashboard-home no event testids are rendered (only mgmt-group-*). Either data.events is empty after date>=today filter or the events section lacks testids/clickable buttons. Cannot reach attendance.",
+        "affected_selectors": ["[data-testid^=\"mgmt-event-\"]"]
+      },
+      {
+        "flow": "Player -> Events -> Event detail -> Παρουσιες",
+        "issue": "player-dashboard shows 'player-no-events' (Δεν υπαρχουν επομενα γεγονοτα). Player has linked_player_id cc9e1511-07d6-40e2-8260-a89ba8db823b but relevant_events is empty. No path to open attendance.",
+        "affected_selectors": ["[data-testid=\"player-no-events\"]"]
+      },
+      {
+        "flow": "Parent -> Team detail -> Event -> Attendance",
+        "issue": "Parent home shows 'Δεν εχεις ομαδες ακομα' - no clickable team/event entry points. Cannot reach AttendanceView.",
+        "affected_selectors": []
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_attendance_iter42.py",
+    "/app/test_reports/pytest/pytest_results_iter42.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Events/training sessions are not navigable to event-detail from any role dashboard. Fix the data linkage or UI wiring so that: (a) coach can click training_sessions list (home screen or inside each group) to open event-detail+attendance; (b) management home exposes an events/trainings list with clickable items; (c) player and parent dashboards list at least one upcoming event when relevant training sessions exist for their groups.",
+    "Root-cause tip: training_sessions in DB likely have academy_group_id values that do NOT equal the group.id used for the 5 academy_groups rendered in the UI (verified coach UI shows '0 παικτες' + '0 events' on each of 5 groups while 20 training sessions exist). Either (i) update seed so sessions reference the correct academy_group_id, or (ii) relax the UI filter and include training_sessions where academy_group_id is null/unknown, or (iii) render a dedicated 'Training' tab/list on each role dashboard with direct navigation to event-detail+attendance.",
+    "OPTIONAL: Add a shortcut from the coach home 'Προπονησεις' list (already displayed at line 419 of CoachDashboard.jsx) so each training-session card is a button navigating to view='event' with event_type='training'. That alone unblocks the coach flow for testing."
+  ],
+  "critical_code_review_comments": [
+    "mobile_auth.py mark_attendance: For role 'parent' children_ids comes from user.get('children_ids', []) but the login/_detect_role sets linked_player_ids (not children_ids). Currently parent path only succeeds if player_id matches user.get('linked_player_id') via the append-to-children_ids branch. Consider unifying on linked_player_ids everywhere (also used by my-attendance logic, which again references children_ids). Parent could be blocked from marking other linked children.",
+    "mobile_auth.py get_event_attendance_mobile roster fallback loads ALL players when no group or group has no players, which leaks non-group players to coach/management (already noted in agent-to-agent context). Fine for testing but should be scoped when seed is correct.",
+    "Frontend AttendanceView.jsx: alert() for error handling is fine for a PWA but consider a toast for consistency.",
+    "Frontend: no loading skeleton shown while attendance POST is in-flight for the specific button (only the button's own spinner). OK."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_attendance_iter42.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "25% (AttendanceView component works in isolation; all 4 role navigation paths to reach it are blocked)"
+  },
+  "test_credentials": "Mobile OTP mocked. Parent +357 99 555666, Coach +357 99 222222, Player +357 99 333333, Management +357 99 111111. OTP in otp_debug.",
+  "seed_data_creation": "Test creates/cleans a transient past training_session (id=TEST_past_training_iter42*) to validate the lock logic. No other persistent seed data.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend attendance endpoints (POST /api/mobile/attendance/mark, GET /api/mobile/attendance/{id}, GET /api/mobile/my-attendance) verified 100% via /app/backend/tests/test_attendance_iter42.py (11 tests). Frontend integration path to reach AttendanceView is the blocker - events/training sessions are not rendering in any role dashboard as clickable items. Once main agent fixes the seed / navigation wiring, retest by: (1) coach -> Teams -> Group -> Επομενα Γεγονοτα -> Event -> 'Παρουσιες' button (data-testid=open-attendance-btn) -> click att-present-{playerId} / att-absent-{playerId}; (2) repeat for player/parent/management; (3) verify locked view by creating a past-dated event and checking attendance-locked banner + read-only badges appear."
+}

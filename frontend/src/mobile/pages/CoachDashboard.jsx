@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
+import AttendanceView from "../components/AttendanceView";
 import {
   Users, Calendar, Clock, ChevronRight, ChevronDown, Bell,
   CheckCircle, Trophy, Star, Check, X as XIcon, MapPin,
@@ -67,6 +68,19 @@ const CoachDashboard = ({ onTabChange }) => {
     return [...fixtures, ...trainings].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   };
 
+  // ===================== ATTENDANCE VIEW =====================
+  if (view === "attendance" && selectedEvent) {
+    const ev = selectedEvent;
+    return (
+      <AttendanceView
+        eventId={ev.id}
+        eventType={ev.event_type || "event"}
+        eventTitle={ev.title}
+        onBack={() => { setView("event"); }}
+      />
+    );
+  }
+
   // ===================== EVENT DETAIL =====================
   if (view === "event" && selectedEvent) {
     const ev = selectedEvent;
@@ -104,6 +118,17 @@ const CoachDashboard = ({ onTabChange }) => {
                 </div>
               )}
             </div>
+          </div>
+          {/* Attendance Button */}
+          <div className="px-5 py-4 border-t border-white/[0.06]">
+            <button
+              onClick={() => setView("attendance")}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#F5A623] text-black text-sm font-semibold shadow-lg shadow-[#F5A623]/20 hover:bg-[#e6951a] transition-colors"
+              data-testid="open-attendance-btn"
+            >
+              <ClipboardCheck size={16} />
+              Παρουσιες
+            </button>
           </div>
         </div>
       </div>

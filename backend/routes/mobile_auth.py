@@ -529,6 +529,190 @@ def setup_mobile_routes(db):
 
         return {"message": "Availability submitted", "status": status}
 
+    # ==================== ATTENDANCE TRACKING ====================
+    @router.post("/mobile/attendance/mark")
+    async def mark_attendance(body: dict, user: dict = Depends(get_mobile_user)):
+        """Mark player attendance (present/absent) for an event/training/match.
+        All roles can mark. Locked after event date passes."""
+        event_id = body.get("event_id")
+        player_id = body.get("player_id")
+        status = body.get("status")  # "present" or "absent"
+        event_type = body.get("event_type", "event")  # "event", "training", "match"
+
+        if not event_id or not status:
+            raise HTTPException(status_code=400, detail="event_id and status required")
+        if status not in ("present", "absent"):
+            raise HTTPException(status_code=400, detail="status must be 'present' or 'absent'")
+
+        # Determine the event date for lock check
+        event_date = None
+        if event_type == "match":
+            fixture = await db.fixtures.find_one({"id": event_id}, {"_id": 0, "match_date": 1})
+            if fixture:
+                event_date = fixture.get("match_date", "")
+        elif event_type == "training":
+            session = await db.training_sessions.find_one({"id": event_id}, {"_id": 0, "date": 1})
+            if session:
+                event_date = session.get("date", "")
+        else:
+            event = await db.events.find_one({"id": event_id}, {"_id": 0, "date": 1})
+            if event:
+                event_date = event.get("date", "")
+
+        # Lock check: cannot change after event date
+        if event_date:
+            date_str = event_date[:10] if len(event_date) >= 10 else event_date
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            if date_str < today:
+                raise HTTPException(status_code=403, detail="Attendance locked - event has passed")
+
+        # Resolve player_id based on role
+        role = user["role"]
+        if role == "player":
+            player_id = user.get("linked_player_id")
+            if not player_id:
+                raise HTTPException(status_code=400, detail="No linked player")
+        elif role == "parent":
+            if not player_id:
+                player_id = user.get("linked_player_id")
+            # Verify parent owns this child
+            children_ids = user.get("children_ids", [])
+            if user.get("linked_player_id"):
+                children_ids.append(user["linked_player_id"])
+            if player_id not in children_ids:
+                raise HTTPException(status_code=403, detail="Not your child")
+        elif role in ("coach", "management"):
+            if not player_id:
+                raise HTTPException(status_code=400, detail="player_id required for coach/management")
+        else:
+            raise HTTPException(status_code=403, detail="Invalid role")
+
+        # Get player name
+        player_doc = await db.players.find_one({"id": player_id}, {"_id": 0, "name": 1})
+        player_name = player_doc.get("name", "") if player_doc else ""
+
+        # Upsert attendance record
+        await db.attendance.update_one(
+            {"event_id": event_id, "player_id": player_id},
+            {"$set": {
+                "event_id": event_id,
+                "player_id": player_id,
+                "player_name": player_name,
+                "status": status,
+                "event_type": event_type,
+                "marked_by_user_id": user["id"],
+                "marked_by_role": role,
+                "marked_by_name": user.get("name", ""),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }},
+            upsert=True
+        )
+
+        return {"message": "Attendance marked", "status": status, "player_id": player_id}
+
+    @router.get("/mobile/attendance/{event_id}")
+    async def get_event_attendance_mobile(event_id: str, event_type: str = "event", user: dict = Depends(get_mobile_user)):
+        """Get attendance records for an event + roster of eligible players."""
+        # Get attendance records
+        records = await db.attendance.find({"event_id": event_id}, {"_id": 0}).to_list(200)
+        att_map = {r["player_id"]: r for r in records}
+
+        # Determine the event's group to get roster
+        group_id = None
+        event_date = None
+        if event_type == "match":
+            fixture = await db.fixtures.find_one({"id": event_id}, {"_id": 0})
+            if fixture:
+                group_id = fixture.get("academy_group_id")
+                event_date = fixture.get("match_date", "")
+        elif event_type == "training":
+            session = await db.training_sessions.find_one({"id": event_id}, {"_id": 0})
+            if session:
+                group_id = session.get("academy_group_id")
+                event_date = session.get("date", "")
+        else:
+            event = await db.events.find_one({"id": event_id}, {"_id": 0})
+            if event:
+                group_id = event.get("academy_group_id")
+                event_date = event.get("date", "")
+
+        # Check if locked
+        is_locked = False
+        if event_date:
+            date_str = event_date[:10] if len(event_date) >= 10 else event_date
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            if date_str < today:
+                is_locked = True
+
+        # Get roster for group
+        roster = []
+        if group_id:
+            players = await db.players.find(
+                {"$or": [
+                    {"academy_group_id": group_id},
+                    {"academy_group_ids": group_id}
+                ]},
+                {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1}
+            ).to_list(100)
+            # Fallback: if no players in group and user is coach/management, load all players
+            if not players and user["role"] in ("coach", "management"):
+                players = await db.players.find(
+                    {},
+                    {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1}
+                ).to_list(200)
+            for p in players:
+                att = att_map.get(p["id"])
+                roster.append({
+                    **p,
+                    "attendance_status": att["status"] if att else None,
+                    "marked_by": att.get("marked_by_role") if att else None,
+                })
+        elif user["role"] in ("coach", "management"):
+            # No group — load all players
+            players = await db.players.find(
+                {},
+                {"_id": 0, "id": 1, "name": 1, "number": 1, "position": 1, "image_url": 1}
+            ).to_list(200)
+            for p in players:
+                att = att_map.get(p["id"])
+                roster.append({
+                    **p,
+                    "attendance_status": att["status"] if att else None,
+                    "marked_by": att.get("marked_by_role") if att else None,
+                })
+
+        present_count = sum(1 for r in roster if r.get("attendance_status") == "present")
+        absent_count = sum(1 for r in roster if r.get("attendance_status") == "absent")
+
+        return {
+            "event_id": event_id,
+            "roster": roster,
+            "records": records,
+            "is_locked": is_locked,
+            "summary": {
+                "total": len(roster),
+                "present": present_count,
+                "absent": absent_count,
+                "unmarked": len(roster) - present_count - absent_count,
+            }
+        }
+
+    @router.get("/mobile/my-attendance")
+    async def get_my_attendance(user: dict = Depends(get_mobile_user)):
+        """Get attendance history for current user's linked players."""
+        player_ids = []
+        if user.get("linked_player_id"):
+            player_ids.append(user["linked_player_id"])
+        if user["role"] == "parent" and user.get("children_ids"):
+            player_ids.extend(user["children_ids"])
+        if not player_ids:
+            return []
+        records = await db.attendance.find(
+            {"player_id": {"$in": player_ids}},
+            {"_id": 0}
+        ).sort("updated_at", -1).to_list(200)
+        return records
+
     # ==================== GET AVAILABILITY FOR EVENT ====================
     @router.get("/mobile/availability/{event_id}")
     async def get_availability(event_id: str, user: dict = Depends(get_mobile_user)):

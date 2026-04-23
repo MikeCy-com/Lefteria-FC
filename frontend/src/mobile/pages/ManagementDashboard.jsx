@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
+import AttendanceView from "../components/AttendanceView";
 import {
   Users, Calendar, Clock, ChevronRight, ChevronDown, Bell,
   Trophy, Shield, MapPin, ArrowLeft, Zap, User,
   Euro, TrendingUp, ClipboardList, FileText, CheckCircle, AlertCircle,
-  Briefcase, BarChart3, ExternalLink
+  Briefcase, BarChart3, ExternalLink, ClipboardCheck
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -18,6 +19,7 @@ const ManagementDashboard = ({ onTabChange }) => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("home");
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [expandedSections, setExpandedSections] = useState({ events: true, roster: false });
 
   const fetchData = useCallback(async () => {
@@ -53,6 +55,69 @@ const ManagementDashboard = ({ onTabChange }) => {
   const registrations = data.registrations || [];
   const pendingRegs = registrations.filter(r => r.status === "pending" || !r.status);
   const approvedRegs = registrations.filter(r => r.status === "approved");
+
+  // ===================== ATTENDANCE VIEW =====================
+  if (view === "attendance" && selectedEvent) {
+    return (
+      <AttendanceView
+        eventId={selectedEvent.id}
+        eventType={selectedEvent.event_type || "event"}
+        eventTitle={selectedEvent.title}
+        onBack={() => setView("event")}
+      />
+    );
+  }
+
+  // ===================== EVENT DETAIL =====================
+  if (view === "event" && selectedEvent) {
+    const ev = selectedEvent;
+    return (
+      <div className="px-4 pt-4 pb-4" data-testid="mgmt-event-detail">
+        <button onClick={() => { setView("home"); setSelectedEvent(null); }} className="flex items-center gap-1.5 text-zinc-400 text-sm mb-4" data-testid="back-from-event">
+          <ArrowLeft size={16} /> Πισω
+        </button>
+        <div className={`rounded-2xl overflow-hidden border ${ev.event_type === "match" ? "border-emerald-500/20 bg-emerald-500/[0.04]" : "border-blue-500/20 bg-blue-500/[0.04]"}`}>
+          <div className="px-5 py-4">
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
+              {ev.event_type === "match" ? "Αγωνας" : "Γεγονος"}
+            </span>
+            <h2 className="text-lg font-bold text-white mt-1">{ev.title || "Γεγονος"}</h2>
+            <div className="mt-4 space-y-2.5">
+              {ev.date && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Calendar size={15} className="text-zinc-500" />
+                  <span className="text-zinc-300">{parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+                </div>
+              )}
+              {(ev.start_time || ev.match_time) && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock size={15} className="text-zinc-500" />
+                  <span className="text-zinc-300">Εναρξη: {ev.start_time || ev.match_time}</span>
+                </div>
+              )}
+              {(ev.location || ev.venue) && (
+                <div className="flex items-center gap-3 text-sm">
+                  <MapPin size={15} className="text-zinc-500" />
+                  <span className="text-zinc-300">{ev.location || ev.venue}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Attendance Button */}
+          <div className="px-5 py-4 border-t border-white/[0.06]">
+            <button
+              onClick={() => setView("attendance")}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#F5A623] text-black text-sm font-semibold shadow-lg shadow-[#F5A623]/20 hover:bg-[#e6951a] transition-colors"
+              data-testid="open-attendance-btn"
+            >
+              <ClipboardCheck size={16} />
+              Παρουσιες
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ===================== TEAM DETAIL =====================
   if (view === "team" && selectedGroup) {
@@ -266,7 +331,12 @@ const ManagementDashboard = ({ onTabChange }) => {
           <SectionHeader title="Προγραμμα" action="Ολα" onAction={() => onTabChange("calendar")} />
           <div className="space-y-2">
             {data.events.slice(0, 3).map(ev => (
-              <div key={ev.id} className="bg-[#111] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3" data-testid={`mgmt-event-${ev.id}`}>
+              <button
+                key={ev.id}
+                onClick={() => { setSelectedEvent(ev); setView("event"); }}
+                className="w-full text-left bg-[#111] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3 hover:border-[#F5A623]/20 transition-colors"
+                data-testid={`mgmt-event-${ev.id}`}
+              >
                 <div className={`w-1 h-10 rounded-full ${ev.event_type === "match" ? "bg-emerald-500" : "bg-blue-500"}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-white truncate">{ev.title || "Γεγονος"}</p>
@@ -275,7 +345,8 @@ const ManagementDashboard = ({ onTabChange }) => {
                     {(ev.start_time || ev.match_time) && ` · ${ev.start_time || ev.match_time}`}
                   </p>
                 </div>
-              </div>
+                <ChevronRight size={14} className="text-zinc-600 flex-shrink-0" />
+              </button>
             ))}
           </div>
         </div>

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
+import AttendanceView from "../components/AttendanceView";
 import {
   Target, Trophy, Clock, Star, Calendar, Bell, User, Shield,
-  MapPin, ChevronRight, ArrowLeft, Zap, TrendingUp, Award, Activity
+  MapPin, ChevronRight, ArrowLeft, Zap, TrendingUp, Award, Activity, ClipboardCheck
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -46,6 +47,21 @@ const PlayerDashboard = ({ onTabChange }) => {
   const upcomingFixtures = allFixtures.filter(f => (f.match_date || "") >= new Date().toISOString().split("T")[0] && f.status !== "Completed");
   const completedFixtures = allFixtures.filter(f => f.status === "Completed").slice(0, 3);
 
+  const playerId = data?.player?.id || user?.linked_player_id;
+
+  // ===================== ATTENDANCE VIEW =====================
+  if (view === "attendance" && selectedEvent) {
+    return (
+      <AttendanceView
+        eventId={selectedEvent.id}
+        eventType={selectedEvent.event_type || "event"}
+        eventTitle={selectedEvent.title}
+        onBack={() => setView("event")}
+        playerIds={playerId ? [playerId] : []}
+      />
+    );
+  }
+
   // ===================== EVENT DETAIL =====================
   if (view === "event" && selectedEvent) {
     const ev = selectedEvent;
@@ -80,6 +96,17 @@ const PlayerDashboard = ({ onTabChange }) => {
                 </div>
               )}
             </div>
+          </div>
+          {/* Attendance Button */}
+          <div className="px-5 py-4 border-t border-white/[0.06]">
+            <button
+              onClick={() => setView("attendance")}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-colors"
+              data-testid="open-attendance-btn"
+            >
+              <ClipboardCheck size={16} />
+              Παρουσιες
+            </button>
           </div>
         </div>
       </div>
