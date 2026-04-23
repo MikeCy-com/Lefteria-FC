@@ -400,7 +400,7 @@ const ParentDashboard = ({ onTabChange }) => {
           { label: "Αγωνες", value: upcomingFixtures.length, icon: Trophy, color: "#10B981", bg: "rgba(16,185,129,0.12)" },
           { label: "Παρουσιες", value: totalAttendance > 0 ? `${Math.round(goingCount / totalAttendance * 100)}%` : "—", icon: Activity, color: "#8B5CF6", bg: "rgba(139,92,246,0.12)" },
         ].map(stat => (
-          <div key={stat.label} className="bg-[#111] border border-white/[0.06] rounded-2xl p-3">
+          <div key={stat.label} className="bg-[#111] border border-white/[0.06] rounded-2xl p-3" data-testid={`parent-stat-${stat.label}`}>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: stat.bg }}>
               <stat.icon size={15} style={{ color: stat.color }} />
             </div>

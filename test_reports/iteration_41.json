@@ -1,0 +1,78 @@
+{
+  "summary": "Iteration 41 - Tested all 4 redesigned mobile dashboards (Parent, Coach, Player, Management). Backend: 10/10 tests passed (100%). Frontend: All 4 role dashboards load with correct content, stats, lists, bottom nav and logout flow works across all roles.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Coach & Player dashboard hero",
+        "issues": [
+          "Long uppercase Greek names wrap / overflow / truncate in hero card (e.g. 'ΝΊΚΟΣ ΠΑΠΑΔΌΠΟΥΛΟΣ' runs past card edge, player card shows 'ΑΝΔΡΈ…' truncation). Consider text-clamp / smaller font-size on small screens."
+        ]
+      },
+      {
+        "screen": "Recent Results (Parent & Coach dashboards)",
+        "issues": [
+          "Match date renders as 'Invalid Date' on result cards - likely date parsing on fixture.match_date (pre-existing from iter 40, not a redesign regression, but still user-visible)."
+        ]
+      },
+      {
+        "screen": "Player dashboard body",
+        "issues": [
+          "Below the stats grid the screen is mostly empty - no upcoming events / fixtures / announcements surfaced even though the /api/mobile/player/dashboard endpoint returns events & announcements. Consider rendering at least a 'Next match' and 'Ανακοινωσεις' section to fill the page."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mobile_dashboards_iter41.py",
+    "/app/test_reports/pytest/pytest_results_iter41.xml"
+  ],
+  "action_items": [
+    "(Minor/Optional) Fix 'Invalid Date' render on match-result cards in home dashboard (affects parent + coach).",
+    "(Minor/Optional) Prevent hero name overflow/truncation in coach and player hero cards.",
+    "(Minor/Optional) Populate player dashboard below stats grid with events / announcements (data is already returned by backend)."
+  ],
+  "critical_code_review_comments": [
+    "mobile_auth.py coach/player/management dashboards all properly exclude MongoDB _id (good).",
+    "Role check uses 403 correctly for wrong-role access (validated in tests).",
+    "Player stats aggregation iterates all fixtures client-side in endpoint - OK for current scale, may need index/aggregation pipeline later."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mobile_dashboards_iter41.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "Mobile OTP (mocked, code in otp_debug). Parent: +357 99 555666, Coach: +357 99 222222, Player: +357 99 333333, Management: +357 99 111111.",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "iter41 verified 4 new role-based dashboard endpoints (/api/mobile/{coach|player|management}/dashboard) + regression on /api/mobile/parent/dashboard. Pytest file at /app/backend/tests/test_mobile_dashboards_iter41.py covers role detection, dashboard shape, wrong-role 403, no-auth 401, and /auth/me for all 4 roles. Frontend dashboards verified visually on 390x844 mobile viewport - all 4 roles load unique UIs, bottom nav (5 tabs) present, logout flow returns to /app/login for each role. Euro € symbol renders correctly in Management financial overview (fix from main agent confirmed).",
+  "passed_tests": [
+    "Backend: POST /api/mobile/auth/request-otp + verify-otp work for all 4 phones; role_detected is correct for each",
+    "Backend: GET /api/mobile/coach/dashboard returns teams, groups, players, fixtures, events, announcements, training_sessions",
+    "Backend: GET /api/mobile/coach/dashboard returns 401/403 without auth / 403 with player token",
+    "Backend: GET /api/mobile/player/dashboard returns player, stats{goals,assists,appearances,minutes}, fixtures, events, announcements",
+    "Backend: GET /api/mobile/player/dashboard returns 403 with coach token",
+    "Backend: GET /api/mobile/management/dashboard returns teams, groups, player_count, financial{revenue,pending,overdue}, registrations, announcements, events",
+    "Backend: GET /api/mobile/management/dashboard returns 403 with parent token",
+    "Backend: GET /api/mobile/parent/dashboard (regression) returns 200 with data",
+    "Backend: GET /api/mobile/auth/me returns correct role for all 4 accounts",
+    "Frontend: Parent login -> dashboard shows Καλως ηρθες / APPROVAL PARENT / stats (Ομαδες, Αγωνες, Παρουσιες 50%) / ΤΑ ΠΑΙΔΙΑ ΜΟΥ with 3 kid cards / ΟΜΑΔΕΣ / ΤΕΛΕΥΤΑΙΑ ΑΠΟΤΕΛΕΣΜΑΤΑ / bottom nav / logout works",
+    "Frontend: Coach login -> Γεια σου Προπονητη / ΝΙΚΟΣ ΠΑΠΑΔΟΠΟΥΛΟΣ / stats (26 Παικτες, 5 Ομαδες, 20 Προπονησεις) / ΟΜΑΔΕΣ ΜΟΥ list / ΠΡΟΠΟΝΗΣΕΙΣ list with dates / results / bottom nav / logout works",
+    "Frontend: Player login -> hero card ΑΝΔΡΕΑΣ ΠΡΑΣΤΙΤΗΣ #1 Goalkeeper / stats grid (Γκολ, Ασιστ, Αγωνες, Λεπτα = 0 as expected) / bottom nav / logout works",
+    "Frontend: Management login -> Διοικηση LEFTERIA FC / KPIs (26 Παικτες, 5 Ομαδες, 0 Εγγραφες, €0 Εσοδα) / ΟΙΚΟΝΟΜΙΚΗ ΕΠΙΣΚΟΠΗΣΗ with € symbol / ΟΜΑΔΕΣ list / ΠΡΟΣΦΑΤΕΣ ΕΓΓΡΑΦΕΣ / bottom nav / logout works",
+    "Frontend: Bottom nav (Αρχικη, Ημερολογιο, Αγωνες, Μηνυματα, Προφιλ) visible on all 4 role dashboards",
+    "Frontend: Profile -> Αποσύνδεση flow returns all 4 roles to /app/login"
+  ],
+  "failed_tests": [],
+  "mocked_apis": {
+    "Twilio SMS": "MOCKED - OTP returned in otp_debug field and rendered on screen"
+  }
+}
