@@ -8,10 +8,10 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
 const ROLE_LABELS = {
-  parent: "Γονέας / Κηδεμόνας",
-  coach: "Προπονητής",
-  player: "Παίκτης",
-  management: "Διοίκηση",
+  parent: "Γονεας / Κηδεμονας",
+  coach: "Προπονητης",
+  player: "Παικτης",
+  management: "Διοικηση",
 };
 
 const MobileLoginPage = () => {
@@ -36,7 +36,7 @@ const MobileLoginPage = () => {
 
   const handleRequestOtp = async () => {
     if (!phone.trim()) {
-      setError("Εισάγετε τον αριθμό τηλεφώνου");
+      setError("Εισαγετε τον αριθμο τηλεφωνου");
       return;
     }
     setLoading(true);
@@ -50,7 +50,7 @@ const MobileLoginPage = () => {
         setDebugOtp(res.data.otp_debug);
       }
     } catch (e) {
-      setError(e.response?.data?.detail || "Σφάλμα αποστολής OTP");
+      setError(e.response?.data?.detail || "Σφαλμα αποστολης OTP");
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ const MobileLoginPage = () => {
       login(res.data.token, res.data.user);
       navigate("/app", { replace: true });
     } catch (e) {
-      setError(e.response?.data?.detail || "Λάθος κωδικός");
+      setError(e.response?.data?.detail || "Λαθος κωδικος");
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
@@ -129,7 +129,7 @@ const MobileLoginPage = () => {
         {step === "phone" ? (
           <div className="w-full max-w-sm space-y-5" data-testid="phone-step">
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Αριθμός Τηλεφώνου</label>
+              <label className="block text-sm text-zinc-400 mb-2">Αριθμος Τηλεφωνου</label>
               <div className="relative">
                 <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
                 <input
@@ -144,7 +144,7 @@ const MobileLoginPage = () => {
                 />
               </div>
               <p className="text-xs text-zinc-600 mt-2">
-                Εισάγετε τον αριθμό που είναι καταχωρημένος στην ακαδημία
+                Εισαγετε τον αριθμο που ειναι καταχωρημενος στην ακαδημια
               </p>
             </div>
 
@@ -163,7 +163,7 @@ const MobileLoginPage = () => {
               {loading ? (
                 <RefreshCw size={18} className="animate-spin" />
               ) : (
-                <>Αποστολή Κωδικού <ArrowRight size={18} /></>
+                <>Αποστολη Κωδικου <ArrowRight size={18} /></>
               )}
             </button>
           </div>
@@ -173,9 +173,9 @@ const MobileLoginPage = () => {
               <div className="w-14 h-14 bg-[#F5A623]/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield size={24} className="text-[#F5A623]" />
               </div>
-              <h2 className="text-white text-lg font-medium">Εισάγετε τον κωδικό</h2>
+              <h2 className="text-white text-lg font-medium">Εισαγετε τον κωδικο</h2>
               <p className="text-zinc-500 text-sm mt-1">
-                Στάλθηκε στο <span className="text-white">{phone}</span>
+                Σταλθηκε στο <span className="text-white">{phone}</span>
               </p>
               {roleDetected && (
                 <span className="inline-block mt-2 text-xs bg-[#F5A623]/10 text-[#F5A623] px-3 py-1 rounded-full">
@@ -220,7 +220,7 @@ const MobileLoginPage = () => {
             {/* Debug OTP display (only in simulated mode) */}
             {debugOtp && (
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-center" data-testid="debug-otp">
-                <p className="text-xs text-blue-400 mb-1">Κωδικός δοκιμής</p>
+                <p className="text-xs text-blue-400 mb-1">Κωδικος δοκιμης</p>
                 <p className="text-2xl font-mono text-blue-300 tracking-[0.3em]">{debugOtp}</p>
               </div>
             )}
@@ -231,17 +231,17 @@ const MobileLoginPage = () => {
                 className="text-zinc-400 hover:text-white transition-colors"
                 data-testid="back-to-phone"
               >
-                Αλλαγή αριθμού
+                Αλλαγη αριθμου
               </button>
               {resendTimer > 0 ? (
-                <span className="text-zinc-600">Νέος κωδικός σε {resendTimer}s</span>
+                <span className="text-zinc-600">Νεος κωδικος σε {resendTimer}s</span>
               ) : (
                 <button
                   onClick={handleRequestOtp}
                   className="text-[#F5A623] hover:text-[#e09620] transition-colors"
                   data-testid="resend-otp"
                 >
-                  Αποστολή ξανά
+                  Αποστολη ξανα
                 </button>
               )}
             </div>

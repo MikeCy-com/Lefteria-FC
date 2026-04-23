@@ -2273,8 +2273,9 @@ async def get_attendance_stats(team_id: str = None, academy_group_id: str = None
     event_ids.extend([t["id"] for t in trainings])
 
     if not event_ids:
-        return {"total_events": 0, "player_stats": [], "overall": {"going": 0, "not_going": 0, "no_response": 0}}
+        return {"total_events": 0, "player_stats": [], "overall": {"going": 0, "not_going": 0, "no_response": 0}, "attendance_stats": []}
 
+    # Old availability-based attendance (event_attendance collection)
     att_query = {"event_id": {"$in": event_ids}}
     if player_id:
         att_query["player_id"] = player_id
@@ -2300,10 +2301,34 @@ async def get_attendance_stats(team_id: str = None, academy_group_id: str = None
     overall_not = sum(r.get("status") == "not_going" for r in all_records)
     overall_nr = sum(r.get("status") == "no_response" for r in all_records)
 
+    # NEW: Mobile attendance tracking (attendance collection - present/absent)
+    mob_att_query = {}
+    if player_id:
+        mob_att_query["player_id"] = player_id
+    mob_records = await db.attendance.find(mob_att_query, {"_id": 0}).to_list(5000)
+
+    mob_player_map = {}
+    for r in mob_records:
+        pid = r["player_id"]
+        if pid not in mob_player_map:
+            mob_player_map[pid] = {"player_id": pid, "player_name": r.get("player_name", ""), "present": 0, "absent": 0}
+        if r.get("status") == "present":
+            mob_player_map[pid]["present"] += 1
+        elif r.get("status") == "absent":
+            mob_player_map[pid]["absent"] += 1
+
+    attendance_stats = []
+    for pid, ps in mob_player_map.items():
+        total = ps["present"] + ps["absent"]
+        ps["total"] = total
+        ps["attendance_pct"] = round((ps["present"] / total * 100) if total > 0 else 0)
+        attendance_stats.append(ps)
+
     return {
         "total_events": len(event_ids),
         "player_stats": sorted(player_stats, key=lambda x: x["attendance_rate"], reverse=True),
         "overall": {"going": overall_going, "not_going": overall_not, "no_response": overall_nr},
+        "attendance_stats": sorted(attendance_stats, key=lambda x: x["attendance_pct"], reverse=True),
     }
 
 # ==================== WALL POSTS ====================

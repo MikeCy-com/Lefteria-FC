@@ -81,7 +81,7 @@ const ManagementDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Γεγονος"}
             </span>
-            <h2 className="text-lg font-bold text-white mt-1">{ev.title || "Γεγονος"}</h2>
+            <h2 className="text-sm font-bold text-white mt-1">{ev.title || "Γεγονος"}</h2>
             <div className="mt-4 space-y-2.5">
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
@@ -132,7 +132,7 @@ const ManagementDashboard = ({ onTabChange }) => {
           </div>
         )}
         <div className="mb-5">
-          <h1 className="text-xl font-bold text-white">{selectedGroup.name}</h1>
+          <h1 className="text-base font-bold text-white">{selectedGroup.name}</h1>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {selectedGroup.age_range && <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full font-semibold">{selectedGroup.age_range}</span>}
             {selectedGroup.type && <span className="text-[10px] text-zinc-400">{selectedGroup.type}</span>}
@@ -152,7 +152,7 @@ const ManagementDashboard = ({ onTabChange }) => {
         <button onClick={() => setView("home")} className="flex items-center gap-1.5 text-zinc-400 text-sm mb-4" data-testid="back-from-registrations">
           <ArrowLeft size={16} /> Πισω
         </button>
-        <h1 className="text-xl font-bold text-white mb-4">Εγγραφες</h1>
+        <h1 className="text-base font-bold text-white mb-4">Εγγραφες</h1>
         <div className="grid grid-cols-2 gap-2 mb-5">
           <div className="bg-[#111] border border-white/[0.06] rounded-2xl p-3 text-center">
             <p className="text-lg font-bold text-[#F5A623]">{pendingRegs.length}</p>
@@ -204,7 +204,7 @@ const ManagementDashboard = ({ onTabChange }) => {
           </div>
           <div>
             <p className="text-xs text-zinc-500">Διοικηση</p>
-            <h1 className="text-base font-bold text-white leading-tight">{user?.name || "Manager"}</h1>
+            <h1 className="text-sm font-bold text-white leading-tight">{user?.name || "Manager"}</h1>
           </div>
         </div>
         <button className="w-9 h-9 rounded-xl bg-[#141414] border border-white/[0.06] flex items-center justify-center" data-testid="mgmt-notifications-btn">
@@ -402,7 +402,7 @@ const ManagementDashboard = ({ onTabChange }) => {
 
 const SectionHeader = ({ title, action, onAction }) => (
   <div className="flex items-center justify-between mb-2.5">
-    <h2 className="text-sm font-semibold text-white">{title}</h2>
+    <h2 className="text-xs font-semibold text-white uppercase tracking-wide">{title}</h2>
     {action && (
       <button onClick={onAction} className="text-[10px] text-[#F5A623] font-medium">{action}</button>
     )}

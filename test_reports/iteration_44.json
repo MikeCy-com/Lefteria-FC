@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 44 verification of (a) mobile font size reductions, (b) Greek accent removal on 5 mobile pages, (c) Admin CMS per-player 'Παρουσιες' section. Backend: 10/10 pytest PASSED (100%) in test_attendance_stats_iter44.py covering /admin/attendance/stats shape, player_id filter, the seeded player record (1 present), auth guard, 4 mobile dashboards regression, and coach roster fetch. Frontend: Admin Player Profile -> Παρουσιες renders correctly (1 Παρων, 0 Απων, 100%, full gradient bar, 'Συνολο: 1'). Mobile login/OTP pages 0 accent chars. Coach mobile dashboard confirmed section headers compile to class 'text-xs font-semibold uppercase tracking-wide' and welcome name uses 'text-sm font-bold'. Static grep confirms 0 accented chars in ChatPage, ProfilePage, MobileLoginPage, SchedulePage, NewsPage.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ParentDashboard.jsx L119", "issue": "Event detail title still uses 'text-lg' (other dashboards use text-sm per spec). Inconsistent with the font-reduction change ('Event detail titles from text-lg to text-sm').", "selector": "h2.text-lg", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_attendance_stats_iter44.py",
+    "/app/test_reports/pytest/pytest_iter44.xml"
+  ],
+  "action_items": [
+    "(Optional polish) Change ParentDashboard.jsx line 119 h2 from 'text-lg' to 'text-sm' to match the font-reduction spec applied to other dashboards."
+  ],
+  "critical_code_review_comments": [
+    "server.py L2247 get_attendance_stats: the 'attendance_stats' branch (mobile attendance collection) does NOT apply team_id/academy_group_id filters when only player_id is provided - which is fine, but if a team_id is passed without player_id, the mobile attendance list is returned across ALL players regardless of team. Consider joining attendance records with event_ids to scope by team/group.",
+    "AdminPanel.jsx PlayerAttendanceStats (L101-180): good enhancement; correctly shows both RSVP (old) and present/absent (new) stats and gracefully hides if neither exists. Has data-testid 'player-attendance-stats'. Gradient progress bar works.",
+    "ParentDashboard.jsx L119 retains text-lg for event titles while other dashboards moved to text-sm. Minor visual inconsistency.",
+    "5 accented chars seen in coach mobile dashboard come from DB content (user name 'Νίκος Παπαδόπουλος', team 'Α' Ομάδα') - not in the scope of UI-text accent removal. Acceptable."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_attendance_stats_iter44.py"
+  ],
+  "success_rate": {"backend": "100% (10/10 pytest)", "frontend": "100% on scoped checks (admin Παρουσιες renders, mobile section headers text-xs, mobile login/OTP/ChatPage/ProfilePage/SchedulePage/NewsPage 0 accents). One optional polish item on ParentDashboard event title text-lg."},
+  "test_credentials": "Admin 'Lefteria FC' / 'L3ft3r1@FC#2024$Secure!'. Mobile OTP mocked - debug code in response.otp_debug and shown on-screen. Phones: coach +357 99 222222, player +357 99 333333, mgmt +357 99 111111, parent +357 99 555666.",
+  "seed_data_creation": "None. Used existing seeded attendance record for player cc9e1511-07d6-40e2-8260-a89ba8db823b (1 present).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run backend regression: cd /app && python -m pytest backend/tests/test_attendance_stats_iter44.py -v. Admin player profile path: login -> click 'Α' Ομάδα' card on dashboard (NOT direct URL /admin/players/<id> - no such route) -> click player name -> scroll to [data-testid='player-attendance-stats']. Mobile OTP: debug code appears in on-screen box after request-otp AND in API response field 'otp_debug'; 6 separate inputs with maxlength=1 on the verify step.",
+  "rca of the issue": "No issues found requiring root cause. Only minor polish action: ParentDashboard.jsx line 119 event title kept text-lg whereas Coach/Player/Mgmt dashboards moved to text-sm per the font-reduction spec."
+}

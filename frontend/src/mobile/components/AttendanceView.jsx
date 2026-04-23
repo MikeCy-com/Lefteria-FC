@@ -89,7 +89,7 @@ const AttendanceView = ({ eventId, eventType, eventTitle, onBack, playerIds }) =
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
           <Users size={18} className="text-[#F5A623]" />
-          <h1 className="text-lg font-bold text-white">Παρουσιες</h1>
+          <h1 className="text-base font-bold text-white">Παρουσιες</h1>
         </div>
         {eventTitle && <p className="text-xs text-zinc-400">{eventTitle}</p>}
       </div>

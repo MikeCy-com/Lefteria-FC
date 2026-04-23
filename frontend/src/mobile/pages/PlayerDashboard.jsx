@@ -75,7 +75,7 @@ const PlayerDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Γεγονος"}
             </span>
-            <h2 className="text-lg font-bold text-white mt-1">{ev.title}</h2>
+            <h2 className="text-sm font-bold text-white mt-1">{ev.title}</h2>
             <div className="mt-4 space-y-2.5">
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
@@ -130,7 +130,7 @@ const PlayerDashboard = ({ onTabChange }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-white leading-tight truncate">{player?.name || user?.name}</h1>
+            <h1 className="text-sm font-bold text-white leading-tight truncate">{player?.name || user?.name}</h1>
             <div className="flex items-center gap-2 mt-1">
               {player?.number && <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold">#{player.number}</span>}
               {player?.position && <span className="text-xs text-zinc-400">{player.position}</span>}
@@ -389,7 +389,7 @@ const PlayerDashboard = ({ onTabChange }) => {
 
 const SectionHeader = ({ title, action, onAction }) => (
   <div className="flex items-center justify-between mb-2.5">
-    <h2 className="text-sm font-semibold text-white">{title}</h2>
+    <h2 className="text-xs font-semibold text-white uppercase tracking-wide">{title}</h2>
     {action && (
       <button onClick={onAction} className="text-[10px] text-emerald-400 font-medium">{action}</button>
     )}

@@ -9,10 +9,10 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
 const ROLE_LABELS = {
-  parent: "Γονέας / Κηδεμόνας",
-  coach: "Προπονητής",
-  player: "Παίκτης",
-  management: "Διοίκηση",
+  parent: "Γονεας / Κηδεμονας",
+  coach: "Προπονητης",
+  player: "Παικτης",
+  management: "Διοικηση",
 };
 
 const ProfilePage = () => {
@@ -106,7 +106,7 @@ const ProfilePage = () => {
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} data-testid="avatar-file-input" />
         </div>
-        <h2 className="text-white text-lg font-semibold">{user?.name}</h2>
+        <h2 className="text-white text-sm font-semibold">{user?.name}</h2>
         <span className="text-sm text-[#F5A623]">{ROLE_LABELS[user?.role] || user?.role}</span>
       </div>
 
@@ -115,7 +115,7 @@ const ProfilePage = () => {
         {editing ? (
           <div className="p-4 space-y-4">
             <div>
-              <label className="text-xs text-zinc-500 mb-1 block">Όνομα</label>
+              <label className="text-xs text-zinc-500 mb-1 block">Ονομα</label>
               <input
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -134,7 +134,7 @@ const ProfilePage = () => {
               />
             </div>
             <div>
-              <label className="text-xs text-zinc-500 mb-1 flex items-center gap-1"><Lock size={10} /> Τηλέφωνο (κλειδωμένο)</label>
+              <label className="text-xs text-zinc-500 mb-1 flex items-center gap-1"><Lock size={10} /> Τηλεφωνο (κλειδωμενο)</label>
               <input
                 value={user?.phone || ""}
                 disabled
@@ -146,24 +146,24 @@ const ProfilePage = () => {
               <button onClick={handleSave} disabled={saving}
                 className="flex-1 bg-[#F5A623] text-black font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-1.5"
                 data-testid="profile-save-btn">
-                {saving ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <><Save size={14} /> Αποθήκευση</>}
+                {saving ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <><Save size={14} /> Αποθηκευση</>}
               </button>
               <button onClick={() => { setEditing(false); setForm({ name: user?.name || "", email: user?.email || "" }); }}
                 className="flex-1 bg-[#1a1a1a] text-zinc-400 border border-[#333] font-medium py-2.5 rounded-lg text-sm"
                 data-testid="profile-cancel-btn">
-                Ακύρωση
+                Ακυρωση
               </button>
             </div>
           </div>
         ) : (
           <>
-            <ProfileRow icon={User} label="Όνομα" value={user?.name} />
+            <ProfileRow icon={User} label="Ονομα" value={user?.name} />
             <ProfileRow icon={Mail} label="Email" value={user?.email || "—"} />
-            <ProfileRow icon={Phone} label="Τηλέφωνο" value={user?.phone} locked />
+            <ProfileRow icon={Phone} label="Τηλεφωνο" value={user?.phone} locked />
             <button onClick={() => setEditing(true)}
               className="w-full text-center py-3 text-[#F5A623] text-sm font-medium border-t border-[#1e1e1e] hover:bg-white/[0.02]"
               data-testid="profile-edit-btn">
-              Επεξεργασία Προφίλ
+              Επεξεργασια Προφιλ
             </button>
           </>
         )}
@@ -171,8 +171,8 @@ const ProfilePage = () => {
 
       {/* Settings */}
       <div className="bg-[#121212] border border-[#1e1e1e] rounded-2xl overflow-hidden mt-4">
-        <MenuItem icon={Bell} label="Ειδοποιήσεις" />
-        <MenuItem icon={Info} label="Σχετικά" />
+        <MenuItem icon={Bell} label="Ειδοποιησεις" />
+        <MenuItem icon={Info} label="Σχετικα" />
       </div>
 
       {/* Club Info */}
@@ -191,7 +191,7 @@ const ProfilePage = () => {
         data-testid="logout-btn"
       >
         <LogOut size={18} />
-        Αποσύνδεση
+        Αποσυνδεση
       </button>
     </div>
   );

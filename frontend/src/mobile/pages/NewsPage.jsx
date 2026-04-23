@@ -27,12 +27,12 @@ const NewsPage = () => {
 
   return (
     <div className="px-4 pb-20" data-testid="news-page">
-      <h2 className="text-white font-medium text-lg pt-3 pb-4">Ανακοινώσεις</h2>
+      <h2 className="text-white font-medium text-sm pt-3 pb-4">Ανακοινωσεις</h2>
 
       {posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-zinc-600">
           <Bell size={36} strokeWidth={1} />
-          <p className="mt-3 text-sm">Δεν υπάρχουν ανακοινώσεις</p>
+          <p className="mt-3 text-sm">Δεν υπαρχουν ανακοινωσεις</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -41,7 +41,7 @@ const NewsPage = () => {
               {post.is_pinned && (
                 <span className="text-[10px] text-[#F5A623] font-semibold uppercase tracking-wider mb-1 block">Σημαντικο</span>
               )}
-              <h3 className="text-white font-medium">{post.title || "Ανακοίνωση"}</h3>
+              <h3 className="text-white font-medium">{post.title || "Ανακοινωση"}</h3>
               <p className="text-sm text-zinc-400 mt-2 whitespace-pre-wrap">{post.content}</p>
               {post.image_url && (
                 <img

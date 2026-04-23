@@ -107,35 +107,70 @@ const PlayerAttendanceStats = ({ playerId }) => {
       .catch(() => {});
   }, [playerId]);
 
-  if (!stats || !stats.player_stats?.length) return null;
-  const ps = stats.player_stats[0];
+  const hasOld = stats?.player_stats?.length > 0;
+  const hasNew = stats?.attendance_stats?.length > 0;
+  if (!hasOld && !hasNew) return null;
+
+  const ps = hasOld ? stats.player_stats[0] : null;
+  const as_ = hasNew ? stats.attendance_stats[0] : null;
 
   return (
     <div className="mt-6 bg-[#121212] border border-[#262626] rounded-xl p-6" data-testid="player-attendance-stats">
       <h3 className="font-['Bebas_Neue'] text-xl text-white mb-4">Παρουσιες</h3>
-      <div className="grid grid-cols-4 gap-3">
-        <div className="text-center">
-          <p className="text-2xl font-['Bebas_Neue'] text-emerald-400">{ps.going || 0}</p>
-          <p className="text-[10px] text-zinc-500">Παρών</p>
+
+      {/* Mobile Attendance (present/absent) */}
+      {as_ && (
+        <div className="mb-5">
+          <p className="text-xs text-zinc-400 mb-3 font-medium uppercase tracking-wider">Καταγραφη Παρουσιων</p>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg p-3 text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-emerald-400">{as_.present || 0}</p>
+              <p className="text-[10px] text-zinc-500">Παρων</p>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg p-3 text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-red-400">{as_.absent || 0}</p>
+              <p className="text-[10px] text-zinc-500">Απων</p>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg p-3 text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-[#F5A623]">{as_.attendance_pct || 0}%</p>
+              <p className="text-[10px] text-zinc-500">Ποσοστο</p>
+            </div>
+          </div>
+          <div className="h-3 rounded-full bg-[#1a1a1a] overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all" style={{ width: `${as_.attendance_pct || 0}%` }} />
+          </div>
+          <p className="text-[10px] text-zinc-600 mt-1.5">Συνολο: {as_.total || 0} (προπονησεις + αγωνες + εκδηλωσεις)</p>
         </div>
-        <div className="text-center">
-          <p className="text-2xl font-['Bebas_Neue'] text-red-400">{ps.not_going || 0}</p>
-          <p className="text-[10px] text-zinc-500">Απών</p>
+      )}
+
+      {/* RSVP Availability (going/not_going) */}
+      {ps && (
+        <div>
+          {as_ && <p className="text-xs text-zinc-400 mb-3 font-medium uppercase tracking-wider">Διαθεσιμοτητα (RSVP)</p>}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-emerald-400">{ps.going || 0}</p>
+              <p className="text-[10px] text-zinc-500">Παω</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-red-400">{ps.not_going || 0}</p>
+              <p className="text-[10px] text-zinc-500">Δεν παω</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-zinc-400">{ps.no_response || 0}</p>
+              <p className="text-[10px] text-zinc-500">Χ. Απαντ.</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-['Bebas_Neue'] text-[#F5A623]">{ps.attendance_rate || 0}%</p>
+              <p className="text-[10px] text-zinc-500">Ποσοστο</p>
+            </div>
+          </div>
+          <div className="mt-3 h-2 rounded-full bg-[#1a1a1a] overflow-hidden">
+            <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${ps.attendance_rate || 0}%` }} />
+          </div>
+          <p className="text-[10px] text-zinc-500 mt-1">Συνολο: {ps.total || 0} εκδηλωσεις</p>
         </div>
-        <div className="text-center">
-          <p className="text-2xl font-['Bebas_Neue'] text-zinc-400">{ps.no_response || 0}</p>
-          <p className="text-[10px] text-zinc-500">Χ. Απάντ.</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-['Bebas_Neue'] text-[#F5A623]">{ps.attendance_rate || 0}%</p>
-          <p className="text-[10px] text-zinc-500">Ποσοστό</p>
-        </div>
-      </div>
-      {/* Progress bar */}
-      <div className="mt-3 h-2 rounded-full bg-[#1a1a1a] overflow-hidden">
-        <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${ps.attendance_rate || 0}%` }} />
-      </div>
-      <p className="text-[10px] text-zinc-500 mt-1">Σύνολο: {ps.total || 0} εκδηλώσεις (αγώνες + προπονήσεις)</p>
+      )}
     </div>
   );
 };

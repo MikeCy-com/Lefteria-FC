@@ -5,8 +5,8 @@ import { Calendar, Clock, MapPin, ChevronLeft, ChevronRight, Check, X as XIcon, 
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const DAYS_GR = ["Κυρ", "Δευ", "Τρι", "Τετ", "Πεμ", "Παρ", "Σαβ"];
-const MONTHS_GR = ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος",
-  "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"];
+const MONTHS_GR = ["Ιανουαριος", "Φεβρουαριος", "Μαρτιος", "Απριλιος", "Μαιος", "Ιουνιος",
+  "Ιουλιος", "Αυγουστος", "Σεπτεμβριος", "Οκτωβριος", "Νοεμβριος", "Δεκεμβριος"];
 
 const SchedulePage = () => {
   const { getHeaders, user } = useMobileAuth();
@@ -96,11 +96,11 @@ const SchedulePage = () => {
   };
 
   const statusColors = {
-    going: { bg: "bg-emerald-500", text: "Πάω" },
-    not_going: { bg: "bg-red-500", text: "Δεν πάω" },
+    going: { bg: "bg-emerald-500", text: "Παω" },
+    not_going: { bg: "bg-red-500", text: "Δεν παω" },
   };
 
-  if (loading) return <div className="px-4 py-12 text-center text-zinc-500">Φόρτωση...</div>;
+  if (loading) return <div className="px-4 py-12 text-center text-zinc-500">Φορτωση...</div>;
 
   return (
     <div className="px-4 pb-20" data-testid="schedule-page">
@@ -140,7 +140,7 @@ const SchedulePage = () => {
 
       {dayItems.length === 0 ? (
         <div className="bg-[#121212] border border-[#1e1e1e] rounded-xl px-4 py-8 text-center text-zinc-600 text-sm">
-          Δεν υπάρχουν γεγονότα
+          Δεν υπαρχουν γεγονοτα
         </div>
       ) : (
         <div className="space-y-2">
@@ -156,9 +156,9 @@ const SchedulePage = () => {
                     <p className="text-sm text-white font-medium">{item.title || `vs ${item.opponent || item.away_team}`}</p>
                     <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
                       {(item.start_time || item.match_time) && <span className="flex items-center gap-1"><Clock size={10} /> {item.start_time || item.match_time}</span>}
-                      {item.arrival_time && <span className="flex items-center gap-1"><Clock size={10} /> Άφιξη: {item.arrival_time}</span>}
+                      {item.arrival_time && <span className="flex items-center gap-1"><Clock size={10} /> Αφιξη: {item.arrival_time}</span>}
                       {(item.location || item.venue) && <span className="flex items-center gap-1"><MapPin size={10} /> {item.location || item.venue}</span>}
-                      {item.location_url && <a href={item.location_url} target="_blank" rel="noreferrer" className="text-blue-400 flex items-center gap-0.5"><ExternalLink size={9} /> Χάρτης</a>}
+                      {item.location_url && <a href={item.location_url} target="_blank" rel="noreferrer" className="text-blue-400 flex items-center gap-0.5"><ExternalLink size={9} /> Χαρτης</a>}
                     </div>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ const SchedulePage = () => {
                           : "bg-[#1a1a1a] text-zinc-400 border border-[#333] hover:border-emerald-500/50"
                       }`}
                       data-testid={`going-btn-${item.id}`}>
-                      <Check size={14} /> Πάω
+                      <Check size={14} /> Παω
                     </button>
                     <button
                       onClick={() => handleAvailability(item.id, playerId, "not_going")}
@@ -185,7 +185,7 @@ const SchedulePage = () => {
                           : "bg-[#1a1a1a] text-zinc-400 border border-[#333] hover:border-red-500/50"
                       }`}
                       data-testid={`not-going-btn-${item.id}`}>
-                      <XIcon size={14} /> Δεν πάω
+                      <XIcon size={14} /> Δεν παω
                     </button>
                     {avail && (
                       <span className={`flex items-center text-[10px] ml-1 ${avail === "going" ? "text-emerald-400" : "text-red-400"}`}>
@@ -202,7 +202,7 @@ const SchedulePage = () => {
       )}
 
       {/* Upcoming List */}
-      <h3 className="text-white font-medium text-sm mt-6 mb-2">Επερχόμενα</h3>
+      <h3 className="text-white font-medium text-sm mt-6 mb-2">Επερχομενα</h3>
       <div className="space-y-2">
         {allItems.filter(i => (i.date || i.match_date || "") >= new Date().toISOString().split("T")[0]).slice(0, 10).map(item => {
           const c = typeColors[item.event_type || item.type] || typeColors.other;

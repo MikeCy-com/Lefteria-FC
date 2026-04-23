@@ -118,13 +118,13 @@ const ChatPage = () => {
       <div className="pb-6" data-testid="new-chat-view">
         <div className="px-4 pt-3 pb-3 border-b border-[#1e1e1e]">
           <button onClick={() => setView("list")} className="flex items-center gap-1.5 text-zinc-400 text-sm mb-3">
-            <ArrowLeft size={16} /> Πίσω
+            <ArrowLeft size={16} /> Πισω
           </button>
-          <h2 className="text-white font-bold text-lg mb-3">Νέο Μήνυμα</h2>
+          <h2 className="text-white font-bold text-sm mb-3">Νεο Μηνυμα</h2>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Αναζήτηση..."
+              placeholder="Αναζητηση..."
               className="w-full bg-[#111] border border-[#1e1e1e] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-[#F5A623]/30 outline-none"
               data-testid="member-search" />
           </div>
@@ -140,11 +140,11 @@ const ChatPage = () => {
               </div>
               <div className="flex-1">
                 <p className="text-white text-sm font-medium">{m.name}</p>
-                <p className="text-[10px] text-zinc-500 capitalize">{m.role === "parent" ? "Γονέας" : m.role === "coach" ? "Προπονητής" : m.role}</p>
+                <p className="text-[10px] text-zinc-500 capitalize">{m.role === "parent" ? "Γονεας" : m.role === "coach" ? "Προπονητης" : m.role}</p>
               </div>
             </button>
           ))}
-          {filtered.length === 0 && <p className="text-zinc-600 text-sm text-center py-8">Δεν βρέθηκαν μέλη</p>}
+          {filtered.length === 0 && <p className="text-zinc-600 text-sm text-center py-8">Δεν βρεθηκαν μελη</p>}
         </div>
       </div>
     );
@@ -154,8 +154,8 @@ const ChatPage = () => {
   if (view === "conversation" && selectedConvo) {
     const isTeam = selectedConvo.type === "team";
     const convoTitle = isTeam
-      ? stripGreekAccents(selectedConvo.group_name || "Ομαδική Συζήτηση")
-      : selectedConvo.other_user?.name || "Συζήτηση";
+      ? stripGreekAccents(selectedConvo.group_name || "Ομαδικη Συζητηση")
+      : selectedConvo.other_user?.name || "Συζητηση";
 
     return (
       <div className="flex flex-col h-[calc(100vh-180px)]" data-testid="conversation-view">
@@ -172,7 +172,7 @@ const ChatPage = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-semibold truncate">{convoTitle}</p>
-            <p className="text-[10px] text-zinc-500">{isTeam ? "Ομαδική συζήτηση" : "Ιδιωτικό μήνυμα"}</p>
+            <p className="text-[10px] text-zinc-500">{isTeam ? "Ομαδικη συζητηση" : "Ιδιωτικο μηνυμα"}</p>
           </div>
         </div>
 
@@ -181,7 +181,7 @@ const ChatPage = () => {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-zinc-600">
               <MessageCircle size={32} className="mb-2" />
-              <p className="text-sm">Ξεκινήστε τη συζήτηση</p>
+              <p className="text-sm">Ξεκινηστε τη συζητηση</p>
             </div>
           )}
           {messages.map((msg, i) => {
@@ -219,7 +219,7 @@ const ChatPage = () => {
         <div className="flex items-center gap-2 px-4 py-3 pb-6 border-t border-[#1e1e1e] flex-shrink-0 bg-[#0a0a0a]">
           <input value={newMsg} onChange={e => setNewMsg(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            placeholder="Γράψτε μήνυμα..."
+            placeholder="Γραψτε μηνυμα..."
             className="flex-1 bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-[#F5A623]/30 outline-none"
             data-testid="message-input" />
           <button onClick={sendMessage} disabled={sending || !newMsg.trim()}
@@ -237,7 +237,7 @@ const ChatPage = () => {
   return (
     <div className="pb-6" data-testid="chat-list">
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-        <h2 className="text-white font-bold text-lg">Μηνύματα</h2>
+        <h2 className="text-white font-bold text-lg">Μηνυματα</h2>
         <button onClick={() => { setView("new"); loadMembers(); }}
           className="w-8 h-8 rounded-full bg-[#F5A623] flex items-center justify-center"
           data-testid="new-chat-btn">
@@ -262,7 +262,7 @@ const ChatPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium">{stripGreekAccents(g.name)}</p>
                     <p className="text-[10px] text-zinc-500 truncate">
-                      {teamConvo?.last_message ? teamConvo.last_message.content?.slice(0, 40) : "Ξεκινήστε τη συζήτηση"}
+                      {teamConvo?.last_message ? teamConvo.last_message.content?.slice(0, 40) : "Ξεκινηστε τη συζητηση"}
                     </p>
                   </div>
                   {teamConvo?.last_message && (
@@ -314,8 +314,8 @@ const ChatPage = () => {
       ) : conversations.length === 0 && groups.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-zinc-600">
           <MessageCircle size={40} className="mb-3" />
-          <p className="text-sm">Δεν υπάρχουν μηνύματα</p>
-          <p className="text-xs text-zinc-700 mt-1">Πατήστε + για νέο μήνυμα</p>
+          <p className="text-sm">Δεν υπαρχουν μηνυματα</p>
+          <p className="text-xs text-zinc-700 mt-1">Πατηστε + για νεο μηνυμα</p>
         </div>
       )}
     </div>
