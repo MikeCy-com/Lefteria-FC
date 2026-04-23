@@ -6,7 +6,7 @@ import {
   Users, Calendar, Clock, ChevronRight, ChevronDown,
   CheckCircle, RefreshCw, Trophy, Star, Check, X as XIcon,
   MapPin, ExternalLink, Shield, User, TrendingUp, Target,
-  ArrowLeft, Briefcase, Bell, Activity, Zap, Award, ClipboardCheck
+  ArrowLeft, Briefcase, Bell, Activity, Zap, Award, ClipboardCheck, Dumbbell
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -107,7 +107,7 @@ const ParentDashboard = ({ onTabChange }) => {
 
     return (
       <div className="px-4 pt-4 pb-4" data-testid="event-detail-view">
-        <button onClick={() => { setView("team"); setSelectedEvent(null); }} className="flex items-center gap-1.5 text-zinc-400 text-sm mb-4" data-testid="back-from-event">
+        <button onClick={() => { setView(selectedGroup ? "team" : "home"); setSelectedEvent(null); }} className="flex items-center gap-1.5 text-zinc-400 text-sm mb-4" data-testid="back-from-event">
           <ArrowLeft size={16} /> Πισω
         </button>
 
@@ -559,6 +559,38 @@ const ParentDashboard = ({ onTabChange }) => {
           )}
         </div>
       </div>
+
+      {/* Training Sessions */}
+      {(data.training_sessions || []).length > 0 && (
+        <div className="mb-5">
+          <SectionHeader title="Προπονησεις" />
+          <div className="space-y-2">
+            {data.training_sessions.slice(0, 3).map(session => (
+              <button
+                key={session.id}
+                onClick={() => {
+                  setSelectedEvent({ ...session, event_type: "training", title: session.title || "Προπονηση" });
+                  setView("event");
+                }}
+                className="w-full text-left bg-[#111] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3 hover:border-[#F5A623]/20 transition-colors"
+                data-testid={`parent-training-${session.id}`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <Dumbbell size={16} className="text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-white truncate">{session.title || "Προπονηση"}</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">
+                    {session.date && parseDate(session.date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                    {session.start_time && ` · ${session.start_time}`}
+                  </p>
+                </div>
+                <ChevronRight size={14} className="text-zinc-600 flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Results */}
       {recentResults.length > 0 && (

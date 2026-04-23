@@ -417,7 +417,12 @@ const CoachDashboard = ({ onTabChange }) => {
           <SectionHeader title="Προπονησεις" action="Ολες" onAction={() => onTabChange("calendar")} />
           <div className="space-y-2">
             {trainingSessions.slice(0, 3).map(session => (
-              <div key={session.id} className="bg-[#111] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3" data-testid={`coach-training-${session.id}`}>
+              <button
+                key={session.id}
+                onClick={() => { setSelectedEvent({ ...session, event_type: "training", title: session.title || "Προπονηση" }); setView("event"); }}
+                className="w-full text-left bg-[#111] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3 hover:border-emerald-500/20 transition-colors"
+                data-testid={`coach-training-${session.id}`}
+              >
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                   <Dumbbell size={16} className="text-emerald-400" />
                 </div>
@@ -429,7 +434,8 @@ const CoachDashboard = ({ onTabChange }) => {
                     {session.duration && ` · ${session.duration} λεπτα`}
                   </p>
                 </div>
-              </div>
+                <ChevronRight size={14} className="text-zinc-600 flex-shrink-0" />
+              </button>
             ))}
           </div>
         </div>

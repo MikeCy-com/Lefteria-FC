@@ -323,14 +323,19 @@ def setup_mobile_routes(db):
             ).to_list(100)
             group_players[gid] = gp
 
-        # Get training sessions for groups
+        # Get training sessions for groups (fallback to all if no groups)
         training_sessions = []
-        for gid in group_ids:
-            ts = await db.training_sessions.find(
-                {"academy_group_id": gid, "date": {"$gte": now}},
-                {"_id": 0}
-            ).sort("date", 1).to_list(20)
-            training_sessions.extend(ts)
+        if group_ids:
+            for gid in group_ids:
+                ts = await db.training_sessions.find(
+                    {"academy_group_id": gid, "date": {"$gte": now}},
+                    {"_id": 0}
+                ).sort("date", 1).to_list(20)
+                training_sessions.extend(ts)
+        else:
+            training_sessions = await db.training_sessions.find(
+                {}, {"_id": 0}
+            ).sort("date", -1).to_list(20)
 
         return {
             "children": children,
@@ -419,6 +424,10 @@ def setup_mobile_routes(db):
         events = await db.events.find({"date": {"$gte": now}}, {"_id": 0}).sort("date", 1).to_list(20)
         relevant_events = [e for e in events if not e.get("academy_group_id") or e.get("academy_group_id") in group_ids]
 
+        # Training sessions for the player's groups
+        training_query = {"academy_group_id": {"$in": list(group_ids)}} if group_ids else {}
+        training_sessions = await db.training_sessions.find(training_query, {"_id": 0}).sort("date", -1).to_list(20)
+
         # Announcements
         posts = await db.posts.find({}, {"_id": 0}).sort("created_at", -1).to_list(10)
 
@@ -440,6 +449,7 @@ def setup_mobile_routes(db):
             "announcements": posts[:10],
             "development_plans": dev_plans,
             "evaluations": evaluations,
+            "training_sessions": training_sessions,
         }
 
     # ==================== MANAGEMENT DASHBOARD DATA ====================
@@ -468,6 +478,9 @@ def setup_mobile_routes(db):
         now = datetime.now(timezone.utc).isoformat()[:10]
         events = await db.events.find({"date": {"$gte": now}}, {"_id": 0}).sort("date", 1).to_list(20)
 
+        # Training sessions
+        sessions = await db.training_sessions.find({}, {"_id": 0}).sort("date", -1).to_list(20)
+
         return {
             "teams": teams,
             "groups": groups,
@@ -480,6 +493,7 @@ def setup_mobile_routes(db):
             "registrations": registrations,
             "announcements": posts,
             "events": events[:10],
+            "training_sessions": sessions,
         }
 
     # ==================== SUBMIT AVAILABILITY ====================
@@ -576,8 +590,8 @@ def setup_mobile_routes(db):
             if not player_id:
                 player_id = user.get("linked_player_id")
             # Verify parent owns this child
-            children_ids = user.get("children_ids", [])
-            if user.get("linked_player_id"):
+            children_ids = list(user.get("linked_player_ids", []))
+            if user.get("linked_player_id") and user["linked_player_id"] not in children_ids:
                 children_ids.append(user["linked_player_id"])
             if player_id not in children_ids:
                 raise HTTPException(status_code=403, detail="Not your child")
@@ -703,8 +717,8 @@ def setup_mobile_routes(db):
         player_ids = []
         if user.get("linked_player_id"):
             player_ids.append(user["linked_player_id"])
-        if user["role"] == "parent" and user.get("children_ids"):
-            player_ids.extend(user["children_ids"])
+        if user["role"] == "parent" and user.get("linked_player_ids"):
+            player_ids.extend(user["linked_player_ids"])
         if not player_ids:
             return []
         records = await db.attendance.find(
@@ -725,8 +739,8 @@ def setup_mobile_routes(db):
         player_ids = []
         if user.get("linked_player_id"):
             player_ids.append(user["linked_player_id"])
-        if user["role"] == "parent" and user.get("children_ids"):
-            player_ids.extend(user["children_ids"])
+        if user["role"] == "parent" and user.get("linked_player_ids"):
+            player_ids.extend(user["linked_player_ids"])
         if not player_ids:
             return []
         avails = await db.availability.find({"player_id": {"$in": player_ids}}, {"_id": 0}).to_list(500)

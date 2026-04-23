@@ -1,0 +1,43 @@
+{
+  "summary": "Iter 43 - Attendance end-to-end testing after nav wiring fixes. Backend 11/11 pytest PASSED (100%) via existing test_attendance_iter42.py (mark by coach/player/parent, lock on past, 401/400 cases, GET with roster+summary+is_locked, my-attendance). Frontend 2/4 role flows are now fully functional (Coach, Management). Player reaches AttendanceView but roster is empty. Parent does not see any training-session cards. Regression: all 4 dashboards render stats/teams/kids correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/mobile/attendance/{event_id}?event_type=training", "issue": "When called by role=player and the training session has group_id mapping with 0 matching players, endpoint returns roster=[] instead of at least including the player themself. Player opening 'Παρουσιες' sees 'Δεν βρεθηκαν παικτες'. Fallback to all-players only exists for coach/management roles (lines 672-676, 684-696 in mobile_auth.py). Suggest: for role=player, include their linked_player_id in roster when group filter yields nothing."},
+      {"endpoint": "GET /api/mobile/parent/dashboard", "issue": "Parent +357 99 555666 has 3 kids (one with academy_group_ids=['7dda3b6a...']). Because group_ids set is non-empty, the 'fallback to all training sessions' branch (else at line 335) is skipped, and the matching group has no training sessions -> training_sessions=[]. Parent dashboard renders no training cards and the attendance flow is unreachable. Suggest: when group_ids yields 0 sessions, also return recent training sessions as fallback (or include all sessions for groups the kids belong to, even if none match)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Player -> Training -> Event detail -> Παρουσιες", "issue": "AttendanceView opens but shows 'Δεν βρεθηκαν παικτες' (empty roster). Root cause is backend (see minor backend issue above). No UI bug.", "affected_selectors": ["[data-testid^=\"att-present-\"]"]},
+      {"flow": "Parent -> Training -> Event detail", "issue": "Training cards never render on parent home because data.training_sessions is empty (backend returns 0). Entire attendance flow is blocked for parent. Root cause is backend (see minor backend issue above).", "affected_selectors": ["[data-testid^=\"parent-training-\"]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_attendance_iter42.py",
+    "/app/test_reports/pytest/pytest_results_iter43.xml"
+  ],
+  "action_items": [
+    "Fix GET /api/mobile/attendance/{event_id} for role=player: when group_id roster is empty, include the player's linked_player_id so they can see (and mark) themselves.",
+    "Fix GET /api/mobile/parent/dashboard training_sessions fallback: if group_ids produces zero sessions, fall back to returning recent training_sessions (same pattern as the 'no group_ids' branch). Alternative: seed training_sessions for group 7dda3b6a (ApproveTest parent's kids group).",
+    "Optional enhancement: for role=parent in GET /api/mobile/attendance, include linked_player_ids players in roster when group roster is empty (mirrors player fix).",
+    "After fixing, retest by re-running /app/backend/tests/test_attendance_iter42.py and the 4-role UI flow (coach, mgmt already pass; focus on player roster + parent training cards)."
+  ],
+  "critical_code_review_comments": [
+    "mobile_auth.py line 663-696: roster fallback logic is coach/management-only. Player and parent should also see themselves/their kids when group filter yields 0. This creates dead-end UX for the very users the attendance feature is for.",
+    "mobile_auth.py line 326-338 parent_dashboard: fallback is `if group_ids else all`. This binary gate misses the realistic case of 'parent has group_ids but those groups have no upcoming trainings'. Consider changing to a count-based fallback.",
+    "mobile_auth.py line 593-594 mark_attendance: children_ids = list(user.get('linked_player_ids', [])) + [linked_player_id]. Works but mutates a local variable that shadows the earlier `children_ids = user.get('children_ids', [])` reference mentioned in prior iter 42 comments - verify only the canonical linked_player_ids path is used.",
+    "AttendanceView.jsx: uses alert() for errors. A toast would be more consistent with the rest of the mobile PWA.",
+    "All 4 dashboard files duplicate similar 'Προπονησεις' section rendering + click handlers. Consider extracting a <TrainingSessionsList onSelect={...} testIdPrefix='coach-training'/> shared component to reduce ~40 lines of duplication per file."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (11/11 pytest)", "frontend": "50% (Coach + Management end-to-end works; Player hits empty roster; Parent cannot reach attendance)"},
+  "test_credentials": "Mobile OTP mocked. Parent +357 99 555666, Coach +357 99 222222, Player +357 99 333333, Management +357 99 111111. OTP returned in otp_debug field.",
+  "seed_data_creation": "pytest creates/cleans ephemeral training_sessions with id=TEST_past_training_iter42* to validate lock logic. No persistent changes.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend 11/11 tests in /app/backend/tests/test_attendance_iter42.py pass. Coach flow: login +357 99 222222 -> scroll home -> [data-testid^=\"coach-training-\"] click -> [data-testid=\"coach-event-detail\"] -> [data-testid=\"open-attendance-btn\"] -> [data-testid^=\"att-present-*\"] (26 players, working, green highlight verified). Management flow identical with mgmt-* prefix (working, 26 players). Player flow navigates correctly to AttendanceView but roster is empty (backend bug). Parent flow: 0 training cards on home (backend training_sessions=0). Run pytest with: cd /app && set -a && . backend/.env && set +a && export REACT_APP_BACKEND_URL=https://club-academy-portal.preview.emergentagent.com && python -m pytest backend/tests/test_attendance_iter42.py -v",
+  "rca of the issue": "(1) Player empty roster: get_event_attendance_mobile only does roster fallback for coach/management (mobile_auth.py L672,L684). (2) Parent 0 trainings: parent_dashboard fallback at L335 is 'if group_ids is empty' but parent's kids have a group_id that contains 0 training sessions, bypassing fallback. Fix: include player/parent in roster fallback; change parent fallback to also trigger when query returns 0."
+}
