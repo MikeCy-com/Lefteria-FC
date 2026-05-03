@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
 import AttendanceView from "../components/AttendanceView";
+import { noAccent } from "../components/SharedComponents";
 import {
   Users, Calendar, Clock, ChevronRight, ChevronDown,
   CheckCircle, RefreshCw, Trophy, Star, Check, X as XIcon,
@@ -12,6 +13,7 @@ import {
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const imgUrl = (url) => url ? (url.startsWith("http") ? url : `${process.env.REACT_APP_BACKEND_URL}${url}`) : null;
 const parseDate = (d) => { if (!d) return null; const s = d.includes("T") ? d : d + "T00:00:00"; const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt; };
+const fmtDate = (d, opts) => { const s = d?.toLocaleDateString("el-GR", opts); return s ? noAccent(s) : s; };
 
 const ParentDashboard = ({ onTabChange }) => {
   const { user, getHeaders } = useMobileAuth();
@@ -116,13 +118,13 @@ const ParentDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Προπονηση"}
             </span>
-            <h2 className="text-sm font-bold text-white mt-1">{ev.title}</h2>
+            <h2 className="text-xs font-bold text-white mt-1">{noAccent(ev.title)}</h2>
 
             <div className="mt-4 space-y-2.5">
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar size={15} className="text-zinc-500" />
-                  <span className="text-zinc-300">{parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+                  <span className="text-zinc-300">{fmtDate(parseDate(ev.date), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
                 </div>
               )}
               {(ev.start_time || ev.match_time) && (
@@ -209,7 +211,7 @@ const ParentDashboard = ({ onTabChange }) => {
               <User size={28} className="text-zinc-600" />
             </div>
           )}
-          <h2 className="text-sm font-bold text-white mt-3">{p.name}</h2>
+          <h2 className="text-xs font-bold text-white mt-3">{noAccent(p.name)}</h2>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full font-medium">#{p.number}</span>
             <span className="text-xs text-zinc-400">{p.position}</span>
@@ -227,7 +229,7 @@ const ParentDashboard = ({ onTabChange }) => {
                 <div className={`w-8 h-8 rounded-xl ${s.bg} flex items-center justify-center mx-auto mb-2`}>
                   <s.icon size={15} className={s.color} />
                 </div>
-                <p className="text-lg font-bold text-white">{s.value}</p>
+                <p className="text-base font-bold text-white">{s.value}</p>
                 <p className="text-[10px] text-zinc-500">{s.label}</p>
               </div>
             ))}
@@ -273,7 +275,7 @@ const ParentDashboard = ({ onTabChange }) => {
           </div>
         )}
         <div className="mb-5">
-          <h1 className="text-base font-bold text-white">{selectedGroup.name}</h1>
+          <h1 className="text-sm font-bold text-white">{noAccent(selectedGroup.name)}</h1>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full font-semibold">{selectedGroup.age_range}</span>
             {selectedGroup.coach_name && <span className="text-[10px] text-zinc-400">Προπ. {selectedGroup.coach_name}</span>}
@@ -310,9 +312,9 @@ const ParentDashboard = ({ onTabChange }) => {
                           className="w-full text-left bg-white/[0.02] rounded-xl p-3 flex items-center gap-3" data-testid={`event-${ev.id}`}>
                           <div className={`w-1 h-10 rounded-full ${ev.event_type === "match" ? "bg-emerald-500" : "bg-blue-500"}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-white truncate">{ev.title}</p>
+                            <p className="text-xs font-medium text-white truncate">{noAccent(ev.title)}</p>
                             <p className="text-[10px] text-zinc-500 mt-0.5">
-                              {ev.date && parseDate(ev.date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                              {ev.date && fmtDate(parseDate(ev.date), { weekday: "short", day: "numeric", month: "short" })}
                               {ev.start_time && ` · ${ev.start_time}`}
                             </p>
                           </div>
@@ -378,9 +380,9 @@ const ParentDashboard = ({ onTabChange }) => {
                         <p className="text-zinc-600 text-xs py-3 text-center">Δεν υπαρχουν ανακοινωσεις</p>
                       ) : announcements.slice(0, 5).map((a, i) => (
                         <div key={a.id || i} className="bg-white/[0.02] rounded-xl p-3">
-                          <p className="text-xs font-medium text-white">{a.title}</p>
+                          <p className="text-xs font-medium text-white">{noAccent(a.title)}</p>
                           {a.content && <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2">{a.content}</p>}
-                          {a.created_at && <p className="text-[9px] text-zinc-600 mt-1.5">{new Date(a.created_at).toLocaleDateString("el-GR")}</p>}
+                          {a.created_at && <p className="text-[9px] text-zinc-600 mt-1.5">{noAccent(new Date(a.created_at).toLocaleDateString("el-GR"))}</p>}
                         </div>
                       ))}
                     </div>
@@ -413,7 +415,7 @@ const ParentDashboard = ({ onTabChange }) => {
           </div>
           <div>
             <p className="text-xs text-zinc-500">Καλως ηρθες</p>
-            <h1 className="text-sm font-bold text-white leading-tight">{user?.name || "Γονεας"}</h1>
+            <h1 className="text-xs font-bold text-white leading-tight">{noAccent(user?.name) || "Γονεας"}</h1>
           </div>
         </div>
         <button className="w-9 h-9 rounded-xl bg-[#141414] border border-white/[0.06] flex items-center justify-center" data-testid="notifications-btn">
@@ -432,7 +434,7 @@ const ParentDashboard = ({ onTabChange }) => {
             <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: stat.bg }}>
               <stat.icon size={15} style={{ color: stat.color }} />
             </div>
-            <p className="text-lg font-bold text-white leading-none">{stat.value}</p>
+            <p className="text-base font-bold text-white leading-none">{stat.value}</p>
             <p className="text-[10px] text-zinc-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
@@ -459,13 +461,13 @@ const ParentDashboard = ({ onTabChange }) => {
                     <Shield size={16} className={isHome ? "text-[#F5A623]" : "text-zinc-500"} />
                   </div>
                   <span className={`text-[10px] font-medium text-center ${isHome ? "text-[#F5A623]" : "text-white"}`}>
-                    {next.home_team?.slice(0, 12)}
+                    {noAccent(next.home_team)?.slice(0, 12)}
                   </span>
                 </div>
                 <div className="text-center">
                   <p className="text-zinc-500 text-xs font-semibold tracking-widest">VS</p>
                   <p className="text-[10px] text-zinc-600 mt-1">
-                    {next.match_date && parseDate(next.match_date)?.toLocaleDateString("el-GR", { day: "numeric", month: "short" })}
+                    {next.match_date && fmtDate(parseDate(next.match_date), { day: "numeric", month: "short" })}
                     {next.match_time && ` · ${next.match_time}`}
                   </p>
                 </div>
@@ -474,7 +476,7 @@ const ParentDashboard = ({ onTabChange }) => {
                     <Shield size={16} className={!isHome ? "text-[#F5A623]" : "text-zinc-500"} />
                   </div>
                   <span className={`text-[10px] font-medium text-center ${!isHome ? "text-[#F5A623]" : "text-white"}`}>
-                    {next.away_team?.slice(0, 12)}
+                    {noAccent(next.away_team)?.slice(0, 12)}
                   </span>
                 </div>
               </div>
@@ -510,7 +512,7 @@ const ParentDashboard = ({ onTabChange }) => {
                     <User size={18} className="text-[#F5A623]" />
                   </div>
                 )}
-                <p className="text-xs font-medium text-white text-center truncate w-full">{kid.name?.split(" ")[0]}</p>
+                <p className="text-xs font-medium text-white text-center truncate w-full">{noAccent(kid.name?.split(" ")[0])}</p>
                 <p className="text-[9px] text-zinc-500">#{kid.number} · {kid.position?.slice(0, 3)}</p>
               </div>
             ))}
@@ -541,7 +543,7 @@ const ParentDashboard = ({ onTabChange }) => {
                   </div>
                 )}
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-semibold text-white group-hover:text-[#F5A623] transition-colors truncate">{g.name}</p>
+                  <p className="text-xs font-semibold text-white group-hover:text-[#F5A623] transition-colors truncate">{noAccent(g.name)}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-1.5 py-0.5 rounded font-medium">{g.age_range}</span>
                     <span className="text-[10px] text-zinc-500">{playerCount} παικτες</span>
@@ -579,9 +581,9 @@ const ParentDashboard = ({ onTabChange }) => {
                   <Dumbbell size={16} className="text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-white truncate">{session.title || "Προπονηση"}</p>
+                  <p className="text-xs font-medium text-white truncate">{noAccent(session.title) || "Προπονηση"}</p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">
-                    {session.date && parseDate(session.date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                    {session.date && fmtDate(parseDate(session.date), { weekday: "short", day: "numeric", month: "short" })}
                     {session.start_time && ` · ${session.start_time}`}
                   </p>
                 </div>
@@ -611,10 +613,10 @@ const ParentDashboard = ({ onTabChange }) => {
                     {won ? "W" : drew ? "D" : "L"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{f.home_team} vs {f.away_team}</p>
-                    <p className="text-[10px] text-zinc-500">{f.match_date && parseDate(f.match_date)?.toLocaleDateString("el-GR", { day: "numeric", month: "short" })}</p>
+                    <p className="text-xs font-medium text-white truncate">{noAccent(f.home_team)} vs {noAccent(f.away_team)}</p>
+                    <p className="text-[10px] text-zinc-500">{f.match_date && fmtDate(parseDate(f.match_date), { day: "numeric", month: "short" })}</p>
                   </div>
-                  <span className="text-sm font-bold text-white tabular-nums">{f.home_score} - {f.away_score}</span>
+                  <span className="text-xs font-bold text-white tabular-nums">{f.home_score} - {f.away_score}</span>
                 </div>
               );
             })}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
+import { noAccent } from "./SharedComponents";
 import {
   CheckCircle, XCircle, User, Users, ArrowLeft, Loader2, Lock
 } from "lucide-react";
@@ -91,7 +92,7 @@ const AttendanceView = ({ eventId, eventType, eventTitle, onBack, playerIds }) =
           <Users size={18} className="text-[#F5A623]" />
           <h1 className="text-base font-bold text-white">Παρουσιες</h1>
         </div>
-        {eventTitle && <p className="text-xs text-zinc-400">{eventTitle}</p>}
+        {eventTitle && <p className="text-xs text-zinc-400">{noAccent(eventTitle)}</p>}
       </div>
 
       {/* Lock Notice */}
@@ -160,7 +161,7 @@ const AttendanceView = ({ eventId, eventType, eventTitle, onBack, playerIds }) =
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white truncate">{player.name}</p>
+                <p className="text-xs font-medium text-white truncate">{noAccent(player.name)}</p>
                 <div className="flex items-center gap-1.5">
                   {player.number && <span className="text-[9px] text-zinc-500 font-mono">#{player.number}</span>}
                   {player.position && <span className="text-[9px] text-zinc-600">{player.position}</span>}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
+import { noAccent } from "../components/SharedComponents";
 import { Calendar, Clock, MapPin, ChevronLeft, ChevronRight, Check, X as XIcon, HelpCircle, ExternalLink } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -135,7 +136,7 @@ const SchedulePage = () => {
 
       {/* Day Details */}
       <h3 className="text-white font-medium text-sm mb-2">
-        {selectedDate.toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long" })}
+        {noAccent(selectedDate.toLocaleDateString("el-GR", { weekday: "long", day: "numeric", month: "long" }))}
       </h3>
 
       {dayItems.length === 0 ? (
@@ -214,7 +215,7 @@ const SchedulePage = () => {
                 <div className="flex-1">
                   <p className="text-sm text-white">{item.title || `vs ${item.opponent || item.away_team}`}</p>
                   <span className="text-xs text-zinc-500">
-                    {new Date((item.date || item.match_date) + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                    {noAccent(new Date((item.date || item.match_date) + "T00:00:00").toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" }))}
                     {(item.start_time || item.match_time) && ` - ${item.start_time || item.match_time}`}
                   </span>
                 </div>

@@ -2,6 +2,9 @@ import { Calendar, Clock, MapPin, ChevronRight, Shield, Zap, ExternalLink } from
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const ACCENT_MAP = { 'ά': 'α', 'έ': 'ε', 'ή': 'η', 'ί': 'ι', 'ό': 'ο', 'ύ': 'υ', 'ώ': 'ω', 'Ά': 'Α', 'Έ': 'Ε', 'Ή': 'Η', 'Ί': 'Ι', 'Ό': 'Ο', 'Ύ': 'Υ', 'Ώ': 'Ω', 'ΐ': 'ι', 'ΰ': 'υ' };
+export const noAccent = (s) => s ? s.replace(/[άέήίόύώΆΈΉΊΌΎΏΐΰ]/g, c => ACCENT_MAP[c] || c) : s;
+
 export const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-[60vh]">
     <div className="w-8 h-8 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
@@ -38,7 +41,7 @@ export const EventCard = ({ event, onClick }) => {
           {event.title || (event.home_team && event.away_team ? `${event.home_team} vs ${event.away_team}` : "Γεγονος")}
         </p>
         <p className="text-[10px] text-zinc-500 mt-0.5">
-          {event.date && (() => { const d = event.date.includes("T") ? event.date : event.date + "T00:00:00"; const dt = new Date(d); return isNaN(dt.getTime()) ? "" : dt.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" }); })()}
+          {event.date && (() => { const d = event.date.includes("T") ? event.date : event.date + "T00:00:00"; const dt = new Date(d); return isNaN(dt.getTime()) ? "" : noAccent(dt.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })); })()}
           {(event.start_time || event.match_time) && ` · ${event.start_time || event.match_time}`}
           {(event.location || event.venue) && ` · ${event.location || event.venue}`}
         </p>
@@ -52,7 +55,7 @@ export const AnnouncementCard = ({ announcement }) => (
   <div className="bg-[#111] border border-white/[0.06] rounded-2xl p-3">
     <p className="text-xs font-medium text-white">{announcement.title}</p>
     {announcement.content && <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2">{announcement.content}</p>}
-    {announcement.created_at && <p className="text-[9px] text-zinc-600 mt-1.5">{new Date(announcement.created_at).toLocaleDateString("el-GR")}</p>}
+    {announcement.created_at && <p className="text-[9px] text-zinc-600 mt-1.5">{noAccent(new Date(announcement.created_at).toLocaleDateString("el-GR"))}</p>}
   </div>
 );
 

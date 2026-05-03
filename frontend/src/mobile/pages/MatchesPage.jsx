@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useMobileAuth } from "../MobileAuthContext";
+import { noAccent } from "../components/SharedComponents";
 import { Calendar, Clock, MapPin, ExternalLink, Trophy, Shield, Check, X as XIcon } from "lucide-react";
 
 const parseDate = (d) => { if (!d) return null; const s = d.includes("T") ? d : d + "T00:00:00"; const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt; };
+const fmtDate = (d, opts) => { const s = d?.toLocaleDateString("el-GR", opts); return s ? noAccent(s) : s; };
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -176,7 +178,7 @@ const MatchesPage = () => {
                   {f.match_date && (
                     <span className="flex items-center gap-1">
                       <Calendar size={10} />
-                      {parseDate(f.match_date)?.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" })}
+                      {fmtDate(parseDate(f.match_date), { weekday: "short", day: "numeric", month: "short" })}
                     </span>
                   )}
                   {f.match_time && <span className="flex items-center gap-1"><Clock size={10} /> {f.match_time}</span>}
