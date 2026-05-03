@@ -47,15 +47,16 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.1;
 }
 
-/* Override for mobile PWA - use normal font */
+/* Override for mobile PWA - system font, keep uppercase, proper sizes */
 [data-testid="mobile-app"] h1,
 [data-testid="mobile-app"] h2,
 [data-testid="mobile-app"] h3,
-[data-testid="mobile-app"] h4 {
-  font-family: inherit;
-  text-transform: none;
-  letter-spacing: normal;
-  line-height: 1.4;
+[data-testid="mobile-app"] h4,
+[data-testid="mobile-app"] p {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
 }
 
 /* Custom Scrollbar */
@@ -498,11 +499,11 @@ body > div[style*="fixed"]:last-of-type {
     font-size: 2rem !important;
   }
 
-  [data-testid="mobile-app"] h1 {
+  [data-testid="mobile-app"] h1,
+  [data-testid="mobile-app"] h2,
+  [data-testid="mobile-app"] p {
     font-size: unset !important;
-  }
-  [data-testid="mobile-app"] h2 {
-    font-size: unset !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 
   .standings-table {

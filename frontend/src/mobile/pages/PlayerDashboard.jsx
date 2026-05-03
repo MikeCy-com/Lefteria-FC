@@ -77,7 +77,7 @@ const PlayerDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Γεγονος"}
             </span>
-            <p className="text-xs font-bold text-white mt-1">{noAccent(ev.title)}</p>
+            <p className="text-sm font-bold text-white mt-1">{noAccent(ev.title)}</p>
             <div className="mt-4 space-y-2.5">
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
@@ -132,7 +132,7 @@ const PlayerDashboard = ({ onTabChange }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-white leading-tight truncate">{noAccent(player?.name || user?.name)}</p>
+            <p className="text-xs font-semibold text-white leading-tight truncate">{noAccent(player?.name || user?.name)}</p>
             <div className="flex items-center gap-2 mt-1">
               {player?.number && <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold">#{player.number}</span>}
               {player?.position && <span className="text-xs text-zinc-400">{player.position}</span>}
@@ -159,7 +159,7 @@ const PlayerDashboard = ({ onTabChange }) => {
             <div className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-1.5" style={{ backgroundColor: stat.bg }}>
               <stat.icon size={13} style={{ color: stat.color }} />
             </div>
-            <p className="text-xs font-bold text-white leading-none">{stat.value}</p>
+            <p className="text-sm font-bold text-white leading-none">{stat.value}</p>
             <p className="text-[9px] text-zinc-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
@@ -391,7 +391,7 @@ const PlayerDashboard = ({ onTabChange }) => {
 
 const SectionHeader = ({ title, action, onAction }) => (
   <div className="flex items-center justify-between mb-2.5">
-    <p className="text-[9px] font-medium text-zinc-500 tracking-wide">{title}</p>
+    <p className="text-[11px] font-semibold text-white tracking-wide">{title}</p>
     {action && (
       <button onClick={onAction} className="text-[10px] text-emerald-400 font-medium">{action}</button>
     )}

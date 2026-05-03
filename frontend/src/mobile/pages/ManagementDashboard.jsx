@@ -83,7 +83,7 @@ const ManagementDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Γεγονος"}
             </span>
-            <p className="text-xs font-bold text-white mt-1">{noAccent(ev.title) || "Γεγονος"}</p>
+            <p className="text-sm font-bold text-white mt-1">{noAccent(ev.title) || "Γεγονος"}</p>
             <div className="mt-4 space-y-2.5">
               {ev.date && (
                 <div className="flex items-center gap-3 text-sm">
@@ -134,7 +134,7 @@ const ManagementDashboard = ({ onTabChange }) => {
           </div>
         )}
         <div className="mb-5">
-          <p className="text-[11px] font-semibold text-white">{noAccent(selectedGroup.name)}</p>
+          <p className="text-sm font-semibold text-white">{noAccent(selectedGroup.name)}</p>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {selectedGroup.age_range && <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full font-semibold">{selectedGroup.age_range}</span>}
             {selectedGroup.type && <span className="text-[10px] text-zinc-400">{selectedGroup.type}</span>}
@@ -154,14 +154,14 @@ const ManagementDashboard = ({ onTabChange }) => {
         <button onClick={() => setView("home")} className="flex items-center gap-1.5 text-zinc-400 text-sm mb-4" data-testid="back-from-registrations">
           <ArrowLeft size={16} /> Πισω
         </button>
-        <p className="text-[11px] font-semibold text-white mb-4">Εγγραφες</p>
+        <p className="text-sm font-semibold text-white mb-4">Εγγραφες</p>
         <div className="grid grid-cols-2 gap-2 mb-5">
           <div className="bg-[#111] border border-white/[0.06] rounded-2xl p-3 text-center">
-            <p className="text-xs font-bold text-[#F5A623]">{pendingRegs.length}</p>
+            <p className="text-sm font-bold text-[#F5A623]">{pendingRegs.length}</p>
             <p className="text-[10px] text-zinc-500">Εκκρεμεις</p>
           </div>
           <div className="bg-[#111] border border-white/[0.06] rounded-2xl p-3 text-center">
-            <p className="text-xs font-bold text-emerald-400">{approvedRegs.length}</p>
+            <p className="text-sm font-bold text-emerald-400">{approvedRegs.length}</p>
             <p className="text-[10px] text-zinc-500">Εγκεκριμενες</p>
           </div>
         </div>
@@ -206,7 +206,7 @@ const ManagementDashboard = ({ onTabChange }) => {
           </div>
           <div>
             <p className="text-xs text-zinc-500">Διοικηση</p>
-            <p className="text-[11px] font-medium text-white leading-tight">{noAccent(user?.name) || "Manager"}</p>
+            <p className="text-xs font-semibold text-white leading-tight">{noAccent(user?.name) || "Manager"}</p>
           </div>
         </div>
         <button className="w-9 h-9 rounded-xl bg-[#141414] border border-white/[0.06] flex items-center justify-center" data-testid="mgmt-notifications-btn">
@@ -226,7 +226,7 @@ const ManagementDashboard = ({ onTabChange }) => {
             <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: stat.bg }}>
               <stat.icon size={15} style={{ color: stat.color }} />
             </div>
-            <p className="text-xs font-bold text-white leading-none">{stat.value}</p>
+            <p className="text-sm font-bold text-white leading-none">{stat.value}</p>
             <p className="text-[10px] text-zinc-500 mt-0.5">{stat.label}{stat.sub && <span className="text-zinc-600"> · {stat.sub}</span>}</p>
           </div>
         ))}
@@ -404,7 +404,7 @@ const ManagementDashboard = ({ onTabChange }) => {
 
 const SectionHeader = ({ title, action, onAction }) => (
   <div className="flex items-center justify-between mb-2.5">
-    <p className="text-[9px] font-medium text-zinc-500 tracking-wide">{title}</p>
+    <p className="text-[11px] font-semibold text-white tracking-wide">{title}</p>
     {action && (
       <button onClick={onAction} className="text-[10px] text-[#F5A623] font-medium">{action}</button>
     )}
