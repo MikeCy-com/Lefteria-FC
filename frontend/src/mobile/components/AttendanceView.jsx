@@ -90,7 +90,7 @@ const AttendanceView = ({ eventId, eventType, eventTitle, onBack, playerIds }) =
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
           <Users size={18} className="text-[#F5A623]" />
-          <h1 className="text-base font-bold text-white">Παρουσιες</h1>
+          <p className="text-base font-bold text-white">Παρουσιες</p>
         </div>
         {eventTitle && <p className="text-xs text-zinc-400">{noAccent(eventTitle)}</p>}
       </div>

@@ -7,7 +7,7 @@ import {
   Users, Calendar, Clock, ChevronRight, ChevronDown,
   CheckCircle, RefreshCw, Trophy, Star, Check, X as XIcon,
   MapPin, ExternalLink, Shield, User, TrendingUp, Target,
-  ArrowLeft, Briefcase, Bell, Activity, Zap, Award, ClipboardCheck, Dumbbell
+  ArrowLeft, Briefcase, Bell, Activity, Zap, Award, ClipboardCheck, Cone
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -118,7 +118,7 @@ const ParentDashboard = ({ onTabChange }) => {
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${ev.event_type === "match" ? "text-emerald-400" : "text-blue-400"}`}>
               {ev.event_type === "match" ? "Αγωνας" : "Προπονηση"}
             </span>
-            <h2 className="text-xs font-bold text-white mt-1">{noAccent(ev.title)}</h2>
+            <p className="text-xs font-bold text-white mt-1">{noAccent(ev.title)}</p>
 
             <div className="mt-4 space-y-2.5">
               {ev.date && (
@@ -211,7 +211,7 @@ const ParentDashboard = ({ onTabChange }) => {
               <User size={28} className="text-zinc-600" />
             </div>
           )}
-          <h2 className="text-xs font-bold text-white mt-3">{noAccent(p.name)}</h2>
+          <p className="text-xs font-bold text-white mt-3">{noAccent(p.name)}</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full font-medium">#{p.number}</span>
             <span className="text-xs text-zinc-400">{p.position}</span>
@@ -229,7 +229,7 @@ const ParentDashboard = ({ onTabChange }) => {
                 <div className={`w-8 h-8 rounded-xl ${s.bg} flex items-center justify-center mx-auto mb-2`}>
                   <s.icon size={15} className={s.color} />
                 </div>
-                <p className="text-base font-bold text-white">{s.value}</p>
+                <p className="text-xs font-bold text-white">{s.value}</p>
                 <p className="text-[10px] text-zinc-500">{s.label}</p>
               </div>
             ))}
@@ -275,7 +275,7 @@ const ParentDashboard = ({ onTabChange }) => {
           </div>
         )}
         <div className="mb-5">
-          <h1 className="text-sm font-bold text-white">{noAccent(selectedGroup.name)}</h1>
+          <p className="text-[11px] font-semibold text-white">{noAccent(selectedGroup.name)}</p>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="text-[10px] text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full font-semibold">{selectedGroup.age_range}</span>
             {selectedGroup.coach_name && <span className="text-[10px] text-zinc-400">Προπ. {selectedGroup.coach_name}</span>}
@@ -415,7 +415,7 @@ const ParentDashboard = ({ onTabChange }) => {
           </div>
           <div>
             <p className="text-xs text-zinc-500">Καλως ηρθες</p>
-            <h1 className="text-xs font-bold text-white leading-tight">{noAccent(user?.name) || "Γονεας"}</h1>
+            <p className="text-[11px] font-medium text-white leading-tight">{noAccent(user?.name) || "Γονεας"}</p>
           </div>
         </div>
         <button className="w-9 h-9 rounded-xl bg-[#141414] border border-white/[0.06] flex items-center justify-center" data-testid="notifications-btn">
@@ -434,7 +434,7 @@ const ParentDashboard = ({ onTabChange }) => {
             <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: stat.bg }}>
               <stat.icon size={15} style={{ color: stat.color }} />
             </div>
-            <p className="text-base font-bold text-white leading-none">{stat.value}</p>
+            <p className="text-xs font-bold text-white leading-none">{stat.value}</p>
             <p className="text-[10px] text-zinc-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
@@ -578,7 +578,7 @@ const ParentDashboard = ({ onTabChange }) => {
                 data-testid={`parent-training-${session.id}`}
               >
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                  <Dumbbell size={16} className="text-emerald-400" />
+                  <Cone size={16} className="text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-white truncate">{noAccent(session.title) || "Προπονηση"}</p>
@@ -630,7 +630,7 @@ const ParentDashboard = ({ onTabChange }) => {
 // ============ Shared Sub-components ============
 const SectionHeader = ({ title, action, onAction }) => (
   <div className="flex items-center justify-between mb-2.5">
-    <h2 className="text-xs font-semibold text-white uppercase tracking-wide">{title}</h2>
+    <p className="text-[9px] font-medium text-zinc-500 tracking-wide">{title}</p>
     {action && (
       <button onClick={onAction} className="text-[10px] text-[#F5A623] font-medium">{action}</button>
     )}

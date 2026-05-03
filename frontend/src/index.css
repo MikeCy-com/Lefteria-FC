@@ -47,6 +47,17 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.1;
 }
 
+/* Override for mobile PWA - use normal font */
+[data-testid="mobile-app"] h1,
+[data-testid="mobile-app"] h2,
+[data-testid="mobile-app"] h3,
+[data-testid="mobile-app"] h4 {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.4;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -477,12 +488,21 @@ body > div[style*="fixed"]:last-of-type {
 
 /* Responsive utilities */
 @media (max-width: 768px) {
-  h1 {
+  :not([data-testid="mobile-app"]) > h1,
+  :not([data-testid="mobile-app"]) h1:not(.mobile-override) {
     font-size: 2.5rem !important;
   }
 
-  h2 {
+  :not([data-testid="mobile-app"]) > h2,
+  :not([data-testid="mobile-app"]) h2:not(.mobile-override) {
     font-size: 2rem !important;
+  }
+
+  [data-testid="mobile-app"] h1 {
+    font-size: unset !important;
+  }
+  [data-testid="mobile-app"] h2 {
+    font-size: unset !important;
   }
 
   .standings-table {
