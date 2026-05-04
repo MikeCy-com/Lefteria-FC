@@ -118,6 +118,20 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Group cards show #N order badge in admin list
 - Groups without order value appear last
 
+### Sponsors System (COMPLETED Apr 2026)
+- Full CRUD admin panel for sponsors with name, logo, banner, description, website, level, type
+- Sponsor levels: Mega, Gold, Silver, Supporter (each with distinct visual treatment)
+- Sponsor types: First Team / Academy
+- Public pages: /sponsors/first-team, /sponsors/academy (grouped by level)
+- Each sponsor gets dedicated detail page: /sponsors/{id}
+- Display order control per sponsor
+
+### Navigation Dropdowns (COMPLETED Apr 2026)
+- Academy dropdown: Landing page, Philosophy, Age Groups, Registration
+- Sponsors dropdown: First Team Sponsors, Academy Sponsors, Become a Sponsor
+- Desktop: hover-triggered dropdowns
+- Mobile: nested sub-items in hamburger menu
+
 ## Prioritized Backlog
 ### P2
 - Push notifications & POTM share verification
