@@ -111,6 +111,13 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Accessible via clickable training session cards on all dashboards
 - Backend: POST /api/mobile/attendance/mark, GET /api/mobile/attendance/{event_id}, GET /api/mobile/my-attendance
 
+### Academy Group Display Order (COMPLETED Apr 2026)
+- Admin can set display_order (1, 2, 3...) for each academy group
+- Groups render on public website sorted by display_order
+- Admin form includes "Σειρα Εμφανισης" number input
+- Group cards show #N order badge in admin list
+- Groups without order value appear last
+
 ## Prioritized Backlog
 ### P2
 - Push notifications & POTM share verification

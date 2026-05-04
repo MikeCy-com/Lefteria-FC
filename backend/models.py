@@ -78,6 +78,7 @@ class AcademyGroup(BaseModel):
     max_players: int = 25
     season: str = "2025/26"
     banner_url: Optional[str] = None
+    display_order: int = 0
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class AcademyGroupCreate(BaseModel):
@@ -90,6 +91,7 @@ class AcademyGroupCreate(BaseModel):
     max_players: int = 25
     season: str = "2025/26"
     banner_url: Optional[str] = None
+    display_order: int = 0
 
 
 # ==================== TEAM ====================

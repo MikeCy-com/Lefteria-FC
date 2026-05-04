@@ -18,7 +18,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   const [editGroup, setEditGroup] = useState(null);
   const [saving, setSaving] = useState(false);
   const [detailTab, setDetailTab] = useState("roster");
-  const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26", banner_url: "" };
+  const emptyGroup = { name: "", age_range: "", coach_name: "", training_schedule: "", description: "", max_players: 25, season: "2025/26", banner_url: "", display_order: 0 };
   const [form, setForm] = useState(emptyGroup);
 
   const [showPlayerForm, setShowPlayerForm] = useState(false);
@@ -48,12 +48,12 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
   const openCreate = () => { setForm(emptyGroup); setEditGroup(null); setShowForm(true); };
-  const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26", banner_url: g.banner_url || "" }); setEditGroup(g); setShowForm(true); };
+  const openEdit = (g) => { setForm({ name: g.name, age_range: g.age_range, coach_name: g.coach_name || "", training_schedule: g.training_schedule, description: g.description, max_players: g.max_players, season: g.season || "2025/26", banner_url: g.banner_url || "", display_order: g.display_order || 0 }); setEditGroup(g); setShowForm(true); };
   const handleSave = async () => {
     setSaving(true);
     try {
       const headers = getAuthHeaders();
-      const payload = { ...form, max_players: parseInt(form.max_players) || 25 };
+      const payload = { ...form, max_players: parseInt(form.max_players) || 25, display_order: parseInt(form.display_order) || 0 };
       if (editGroup) await axios.put(`${API}/admin/academy-groups/${editGroup.id}`, payload, { headers });
       else await axios.post(`${API}/admin/academy-groups`, payload, { headers });
       setShowForm(false); onRefresh();
@@ -463,7 +463,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
         <button onClick={openCreate} className="admin-btn-primary" data-testid="add-academy-group-btn"><Plus size={14} /> Νέα Ομάδα</button>
       </TabHeader>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {groups.map(g => {
+        {[...groups].sort((a, b) => (a.display_order || 999) - (b.display_order || 999)).map(g => {
           const playerCount = players.filter(p => p.academy_group_id === g.id || (p.academy_group_ids && p.academy_group_ids.includes(g.id))).length;
           return (
             <div key={g.id} className="admin-card overflow-hidden cursor-pointer hover:border-[#10B981]/40 transition-colors group" onClick={() => { setSelectedGroup(g); setDetailTab("roster"); }} data-testid={`academy-group-${g.id}`}>
@@ -481,6 +481,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
                   </div>
                 </div>
                 <span className="admin-badge admin-badge-green mb-2">{g.age_range}</span>
+                {g.display_order > 0 && <span className="admin-badge ml-1 mb-2" style={{background: "rgba(245,166,35,0.15)", color: "#F5A623"}}>#{g.display_order}</span>}
                 <p className="text-zinc-200 text-sm mb-1">{g.coach_name}</p>
                 <p className="text-zinc-400 text-sm flex items-center gap-1"><Clock size={13} /> {g.training_schedule}</p>
                 <div className="flex items-center mt-3 text-sm text-zinc-400">
@@ -502,6 +503,10 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
           <Field label="Προπονητής"><AdminInput value={form.coach_name} onChange={e => setForm({...form, coach_name: e.target.value})} /></Field>
           <Field label="Πρόγραμμα"><AdminInput value={form.training_schedule} onChange={e => setForm({...form, training_schedule: e.target.value})} /></Field>
           <Field label="Περιγραφή"><AdminTextarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Σειρα Εμφανισης"><AdminInput type="number" placeholder="1, 2, 3..." value={form.display_order} onChange={e => setForm({...form, display_order: e.target.value})} data-testid="group-display-order" /></Field>
+            <div />
+          </div>
           <Field label="Banner Ομάδας">
             <div className="flex items-center gap-3">
               {form.banner_url && (

@@ -179,7 +179,7 @@ async def get_player(player_id: str):
 # Academy Groups (Public Read)
 @api_router.get("/academy-groups", response_model=List[AcademyGroup])
 async def get_academy_groups():
-    groups = await db.academy_groups.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    groups = await db.academy_groups.find({}, {"_id": 0}).sort([("display_order", 1), ("created_at", 1)]).to_list(100)
     return [AcademyGroup(**g) for g in groups]
 
 @api_router.get("/academy-groups/{group_id}", response_model=AcademyGroup)
