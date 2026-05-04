@@ -131,3 +131,4 @@ credentials.json
 *.key
 .credentials
 frontend/node_modules/.cache/default-development/169.pack
+frontend/node_modules/.cache/default-development/171.pack
