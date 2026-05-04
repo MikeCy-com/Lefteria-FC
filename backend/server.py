@@ -28,6 +28,7 @@ from models import (
     AcademyGroup, AcademyGroupCreate, Team, TeamCreate,
     RegistrationCreate, Registration,
     PlayerStatistics, PreviousClub, Player, PlayerCreate, PlayerUpdate,
+    Sponsor, SponsorCreate,
     Staff, StaffCreate, PlayerPerformance, Fixture, FixtureCreate,
     MatchEvent, MatchEventCreate, MatchStats, MatchStatsUpdate,
     Standing, StandingCreate, Venue, VenueCreate, Season, SeasonCreate,
@@ -2561,6 +2562,58 @@ async def admin_reset_potm_votes(current_user: dict = Depends(get_current_user))
     month_key = now.strftime("%Y-%m")
     result = await db.potm_votes.delete_many({"month_key": month_key})
     return {"message": f"Διαγράφηκαν {result.deleted_count} ψήφοι"}
+
+
+# ==================== SPONSORS ====================
+@api_router.get("/sponsors", response_model=List[Sponsor])
+async def get_sponsors(type: str = None):
+    query = {}
+    if type:
+        query["sponsor_type"] = type
+    sponsors = await db.sponsors.find(query, {"_id": 0}).sort([("display_order", 1), ("created_at", 1)]).to_list(100)
+    return [Sponsor(**s) for s in sponsors]
+
+@api_router.get("/sponsors/{sponsor_id}")
+async def get_sponsor(sponsor_id: str):
+    sponsor = await db.sponsors.find_one({"id": sponsor_id}, {"_id": 0})
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    return Sponsor(**sponsor)
+
+@api_router.post("/admin/sponsors")
+async def create_sponsor(body: SponsorCreate, current_user: dict = Depends(get_current_user)):
+    sponsor = Sponsor(**body.model_dump())
+    await db.sponsors.insert_one(sponsor.model_dump())
+    return sponsor
+
+@api_router.put("/admin/sponsors/{sponsor_id}")
+async def update_sponsor(sponsor_id: str, body: SponsorCreate, current_user: dict = Depends(get_current_user)):
+    update_data = body.model_dump()
+    result = await db.sponsors.update_one({"id": sponsor_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    updated = await db.sponsors.find_one({"id": sponsor_id}, {"_id": 0})
+    return Sponsor(**updated)
+
+@api_router.delete("/admin/sponsors/{sponsor_id}")
+async def delete_sponsor(sponsor_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.sponsors.delete_one({"id": sponsor_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    return {"message": "Sponsor deleted"}
+
+@api_router.post("/admin/sponsors/upload-logo")
+async def upload_sponsor_logo(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    sponsors_dir = UPLOAD_DIR / "sponsors"
+    sponsors_dir.mkdir(exist_ok=True)
+    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+    filename = f"sponsor_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = sponsors_dir / filename
+    content = await file.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+    return {"image_url": f"/api/uploads/sponsors/{filename}"}
 
 # Include main router
 app.include_router(api_router)

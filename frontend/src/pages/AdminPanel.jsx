@@ -6,7 +6,7 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
-  Euro, Video, Landmark, Upload
+  Euro, Video, Landmark, Upload, Handshake
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -18,6 +18,7 @@ import TrainingSessionsPanel from "./admin/TrainingSessionsPanel";
 import PlayerDevelopmentPanel from "./admin/PlayerDevelopmentPanel";
 import PlayerEvaluationPanel from "./admin/PlayerEvaluationPanel";
 import FinancialDashboard from "./admin/FinancialDashboard";
+import SponsorsTab from "./admin/SponsorsTab";
 import VideoAnalyticsPanel from "./admin/VideoAnalyticsPanel";
 import ResourceManagement from "./admin/ResourceManagement";
 import SectionDashboard from "./admin/SectionDashboard";
@@ -2053,6 +2054,7 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "item", id: "news", label: "Νέα", icon: Newspaper },
     { type: "item", id: "wall", label: "Ανακοινώσεις", icon: MessageSquare },
     { type: "item", id: "messages", label: "Μηνύματα", icon: Mail },
+    { type: "item", id: "sponsors", label: "Χορηγοί", icon: Handshake },
     { type: "divider" },
     { type: "group", id: "management_section", label: "Διαχείριση", icon: Landmark, items: [
       { id: "financial", label: "Οικονομικά", icon: Euro },
@@ -2122,6 +2124,7 @@ const AdminPanel = ({ user, onLogout }) => {
       case "club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
       case "venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
       case "seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
+      case "sponsors": return <SponsorsTab />;
       default: return <DashboardTab stats={data.stats} onTabChange={setActiveTab} />;
     }
   };

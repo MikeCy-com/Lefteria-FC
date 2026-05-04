@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
-import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket, ShoppingCart, User } from "lucide-react";
+import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket, ShoppingCart, User, Handshake } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
 import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
@@ -16,6 +16,9 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import AcademyGroupPage from "./pages/AcademyGroupPage";
+import AcademyLandingPage from "./pages/AcademyLandingPage";
+import AcademyPhilosophyPage from "./pages/AcademyPhilosophyPage";
+import { SponsorsPage, SponsorDetailPage } from "./pages/SponsorsPage";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
 import { MobileAuthProvider } from "./mobile/MobileAuthContext";
 import MobileApp from "./mobile/MobileApp";
@@ -137,11 +140,23 @@ const Navigation = () => {
     { path: "/", label: "Αρχική", icon: HomeIcon },
     { path: "/about", label: "Σχετικά", icon: Info },
     { path: "/team", label: "Ομάδα", icon: Users },
-    { path: "/academy", label: "Ακαδημία", icon: GraduationCap },
+    { label: "Ακαδημία", icon: GraduationCap, dropdown: [
+      { path: "/academy", label: "Lefteria FC Academy" },
+      { path: "/academy/philosophy", label: "Η Φιλοσοφία μας" },
+      { path: "/academy/groups", label: "Ηλικιακά Τμήματα" },
+      { path: "/academy/registration", label: "Εγγραφές" },
+    ]},
+    { label: "Χορηγοί", icon: Handshake, dropdown: [
+      { path: "/sponsors/first-team", label: "Χορηγοί Πρώτης Ομάδας" },
+      { path: "/sponsors/academy", label: "Χορηγοί Ακαδημίας" },
+      { path: "/contact", label: "Γίνε Χορηγός" },
+    ]},
     { path: "/news", label: "Νέα", icon: Newspaper },
     { path: "/shop", label: "Κατάστημα", icon: ShoppingCart },
     { path: "/contact", label: "Επικοινωνία", icon: Mail },
   ];
+
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   return (
     <header
@@ -162,18 +177,48 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-6">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`nav-link font-['Bebas_Neue'] text-lg tracking-wider ${
-                  location.pathname === link.path ? "text-[#F5A623] active" : "text-white"
-                }`}
-                data-testid={`nav-${link.label.toLowerCase().replace(' ', '-')}`}
-              >
-                {link.label}
-              </Link>
+              link.dropdown ? (
+                <div key={link.label} className="relative" onMouseEnter={() => setOpenDropdown(link.label)} onMouseLeave={() => setOpenDropdown(null)}>
+                  <button
+                    className={`nav-link font-['Bebas_Neue'] text-lg tracking-wider flex items-center gap-1 ${
+                      location.pathname.startsWith(link.dropdown[0]?.path?.split('/').slice(0,2).join('/')) ? "text-[#F5A623]" : "text-white"
+                    }`}
+                    data-testid={`nav-${link.label.toLowerCase()}`}
+                  >
+                    {link.label}
+                    <ChevronDown size={14} className={`transition-transform ${openDropdown === link.label ? "rotate-180" : ""}`} />
+                  </button>
+                  {openDropdown === link.label && (
+                    <div className="absolute top-full left-0 mt-2 w-56 bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50" data-testid={`dropdown-${link.label.toLowerCase()}`}>
+                      {link.dropdown.map((sub) => (
+                        <Link
+                          key={sub.path}
+                          to={sub.path}
+                          onClick={() => setOpenDropdown(null)}
+                          className={`block px-5 py-3 text-sm transition-colors hover:bg-white/5 hover:text-[#F5A623] border-b border-white/[0.04] last:border-0 ${
+                            location.pathname === sub.path ? "text-[#F5A623] bg-white/[0.03]" : "text-zinc-300"
+                          }`}
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`nav-link font-['Bebas_Neue'] text-lg tracking-wider ${
+                    location.pathname === link.path ? "text-[#F5A623] active" : "text-white"
+                  }`}
+                  data-testid={`nav-${link.label.toLowerCase().replace(' ', '-')}`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -230,26 +275,48 @@ const Navigation = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden fixed inset-0 top-[72px] bg-black/95 backdrop-blur-xl transition-transform duration-300 ${
+        className={`lg:hidden fixed inset-0 top-[72px] bg-black/95 backdrop-blur-xl transition-transform duration-300 overflow-y-auto ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         data-testid="mobile-menu"
       >
-        <nav className="flex flex-col p-6 gap-4">
+        <nav className="flex flex-col p-6 gap-2">
           {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider ${
-                location.pathname === link.path ? "text-[#F5A623]" : "text-white"
-              }`}
-            >
-              <link.icon size={24} />
-              {link.label}
-            </Link>
+            link.dropdown ? (
+              <div key={link.label}>
+                <div className="flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider text-white">
+                  <link.icon size={24} />
+                  {link.label}
+                </div>
+                <div className="pl-12 flex flex-col">
+                  {link.dropdown.map((sub) => (
+                    <Link
+                      key={sub.path}
+                      to={sub.path}
+                      onClick={() => setIsOpen(false)}
+                      className={`py-3 text-base border-b border-white/5 ${
+                        location.pathname === sub.path ? "text-[#F5A623]" : "text-zinc-400"
+                      }`}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider ${
+                  location.pathname === link.path ? "text-[#F5A623]" : "text-white"
+                }`}
+              >
+                <link.icon size={24} />
+                {link.label}
+              </Link>
+            )
           ))}
-          {/* Mobile: Profile link */}
           <Link to={user ? "/profile" : "/login"} onClick={() => setIsOpen(false)}
             className="flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider text-white">
             <User size={24} />
@@ -1665,9 +1732,14 @@ function App() {
             <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
             <Route path="/team" element={<PublicLayout><TeamHubPage /></PublicLayout>} />
-            <Route path="/academy" element={<PublicLayout><AcademyPage /></PublicLayout>} />
+            <Route path="/academy" element={<PublicLayout><AcademyLandingPage /></PublicLayout>} />
+            <Route path="/academy/philosophy" element={<PublicLayout><AcademyPhilosophyPage /></PublicLayout>} />
+            <Route path="/academy/groups" element={<PublicLayout><AcademyPage /></PublicLayout>} />
             <Route path="/academy/registration" element={<PublicLayout><RegistrationPage /></PublicLayout>} />
             <Route path="/academy/:groupId" element={<PublicLayout><AcademyGroupPage /></PublicLayout>} />
+            <Route path="/sponsors/first-team" element={<PublicLayout><SponsorsPage type="first_team" /></PublicLayout>} />
+            <Route path="/sponsors/academy" element={<PublicLayout><SponsorsPage type="academy" /></PublicLayout>} />
+            <Route path="/sponsors/:sponsorId" element={<PublicLayout><SponsorDetailPage /></PublicLayout>} />
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />

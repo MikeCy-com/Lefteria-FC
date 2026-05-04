@@ -6,6 +6,41 @@ from datetime import datetime, timezone
 import uuid
 
 
+# ==================== SPONSORS ====================
+class SponsorLevel(str, Enum):
+    mega = "mega"
+    gold = "gold"
+    silver = "silver"
+    supporter = "supporter"
+
+class SponsorType(str, Enum):
+    first_team = "first_team"
+    academy = "academy"
+
+class Sponsor(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = ""
+    logo_url: Optional[str] = ""
+    banner_url: Optional[str] = ""
+    website: Optional[str] = ""
+    level: str = "supporter"
+    sponsor_type: str = "first_team"
+    display_order: int = 0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class SponsorCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    logo_url: Optional[str] = ""
+    banner_url: Optional[str] = ""
+    website: Optional[str] = ""
+    level: str = "supporter"
+    sponsor_type: str = "first_team"
+    display_order: int = 0
+
+
 # ==================== ENUMS ====================
 class PlayerPosition(str, Enum):
     GOALKEEPER = "Goalkeeper"
