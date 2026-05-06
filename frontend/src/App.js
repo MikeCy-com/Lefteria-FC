@@ -508,7 +508,7 @@ const HomePage = () => {
 
   const resolveImg = (url) => url && url.startsWith("/api/") ? `${BACKEND_URL}${url}` : url;
 
-  const monthNames = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
+  const monthNames = ["Ιανουαριου", "Φεβρουαριου", "Μαρτιου", "Απριλιου", "Μαϊου", "Ιουνιου", "Ιουλιου", "Αυγουστου", "Σεπτεμβριου", "Οκτωβριου", "Νοεμβριου", "Δεκεμβριου"];
   const currentMonthName = monthNames[new Date().getMonth()];
   const posLabels = { Goalkeeper: "Τερμ.", Defender: "Αμυν.", Midfielder: "Μέσος", Forward: "Επιθ." };
 
@@ -622,7 +622,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <span className="badge badge-secondary mb-3">Πρόγραμμα</span>
+              <span className="badge badge-secondary mb-3">Προγραμμα</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
                 Τελευταιοι <span className="text-[#F5A623]">Αγωνες</span>
               </h2>
@@ -671,7 +671,7 @@ const HomePage = () => {
         <section className="py-10 px-6 bg-[#0a0a0a] border-t border-[#1a1a1a]" data-testid="birthday-section">
           <div className="max-w-7xl mx-auto">
             <div className="mb-4">
-              <span className="badge badge-secondary mb-3">Γενέθλια {currentMonthName}</span>
+              <span className="badge badge-secondary mb-3">Γενεθλια {currentMonthName}</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
                 Χρονια <span className="text-[#F5A623]">Πολλα!</span>
               </h2>
@@ -709,7 +709,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <span className="badge badge-secondary mb-3">Ψηφοφορία</span>
+              <span className="badge badge-secondary mb-3">Ψηφοφορια</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white">
                 Παικτης του <span className="text-[#F5A623]">Μηνα</span>
               </h2>
@@ -771,7 +771,7 @@ const HomePage = () => {
           <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
             {/* Standings Table */}
             <div className="min-w-0">
-              <span className="badge badge-secondary mb-3">ΠΑΑΟΚ Α' Όμιλος</span>
+              <span className="badge badge-secondary mb-3">ΠΑΑΟΚ Α' Ομιλος</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
                 Βαθμολογια
               </h2>
@@ -826,7 +826,7 @@ const HomePage = () => {
 
             {/* Latest News */}
             <div>
-              <span className="badge badge-secondary mb-3">Ενημέρωση</span>
+              <span className="badge badge-secondary mb-3">Ενημερωση</span>
               <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
                 Τελευταια Νεα
               </h2>
@@ -908,7 +908,7 @@ const AboutPage = () => (
     {/* Hero */}
     <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        <span className="badge badge-secondary mb-4">Η Ιστορία μας</span>
+        <span className="badge badge-secondary mb-4">Η Ιστορια μας</span>
         <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
           Σχετικα με την <span className="text-[#F5A623]">LEFTERIA FC</span>
         </h1>
@@ -978,7 +978,7 @@ const AboutPage = () => (
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           <div>
-            <span className="badge badge-secondary mb-4">Έδρα</span>
+            <span className="badge badge-secondary mb-4">Εδρα</span>
             <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">Γηπεδο Αετου</h2>
             <div className="space-y-4 text-zinc-300">
               <p>
@@ -1104,7 +1104,7 @@ const AcademyPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
             <div>
-              <span className="badge badge-secondary mb-4">Φιλοσοφία</span>
+              <span className="badge badge-secondary mb-4">Φιλοσοφια</span>
               <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6 section-heading">
                 Η Αναπτυξιακη μας Φιλοσοφια
               </h2>
@@ -1206,7 +1206,7 @@ const FixturesPage = () => {
       {/* Hero */}
       <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">Σεζόν 2025/26</span>
+          <span className="badge badge-secondary mb-4">Σεζον 2025/26</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             Αγωνες & <span className="text-[#F5A623]">Αποτελεσματα</span>
           </h1>
@@ -1346,7 +1346,7 @@ const NewsPage = () => {
       {/* Hero */}
       <section className="py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">Τελευταία Ενημέρωση</span>
+          <span className="badge badge-secondary mb-4">Τελευταια Ενημερωση</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             Τα <span className="text-[#F5A623]">Νεα</span> μας
           </h1>
@@ -1456,7 +1456,7 @@ const ContactPage = () => {
       {/* Hero */}
       <section className="py-10 md:py-10 md:py-20 px-4 md:px-6 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto">
-          <span className="badge badge-secondary mb-4">Επικοινωνήστε Μαζί Μας</span>
+          <span className="badge badge-secondary mb-4">Επικοινωνηστε Μαζι Μας</span>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-6">
             <span className="text-[#F5A623]">Επικοινωνια</span>
           </h1>

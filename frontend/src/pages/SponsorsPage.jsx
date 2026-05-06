@@ -39,7 +39,7 @@ export const SponsorsPage = ({ type }) => {
     <div className="min-h-screen bg-black" data-testid="sponsors-page">
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-7xl mx-auto">
-          <span className="text-[#F5A623] text-sm font-medium tracking-[0.3em] block mb-4">LEFTERIA FC</span>
+          <span className="badge badge-secondary mb-4">Lefteria FC</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white tracking-wide">
             ΧΟΡΗΓΟΙ <span className="text-[#F5A623]">{title}</span>
           </h1>

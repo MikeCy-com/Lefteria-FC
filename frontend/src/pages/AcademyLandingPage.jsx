@@ -7,7 +7,7 @@ const AcademyLandingPage = () => {
       {/* Hero - left aligned matching website style */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-7xl mx-auto">
-          <span className="text-[#F5A623] text-sm font-medium tracking-[0.3em] block mb-4">ΑΚΑΔΗΜΙΑ LEFTERIA FC</span>
+          <span className="badge badge-secondary mb-4">Ακαδημια Lefteria FC</span>
           <h1 className="font-['Bebas_Neue'] text-5xl md:text-7xl text-white tracking-wide">
             LEFTERIA FC <span className="text-[#F5A623]">ACADEMY</span>
           </h1>

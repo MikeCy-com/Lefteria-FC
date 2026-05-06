@@ -160,3 +160,11 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - `/app/backend/models.py` - Pydantic models (785 lines)
 - `/app/backend/auth.py` - Auth helpers (106 lines)
 - `/app/backend/routes/mobile_auth.py` - Mobile auth + dashboard endpoints + chat + availability
+
+## Changelog
+
+### 2026-02 — Greek Uppercase Accent Compliance + Static Page UI Consistency
+- Applied `badge badge-secondary` pill pattern on new public static pages (AcademyLandingPage, AcademyPhilosophyPage, SponsorsPage) to match About page style.
+- Removed accents from all CSS-uppercased badge labels across `App.js` to comply with the Greek typographic rule (no tonos on uppercase). Fixed: Προγραμμα, Γενεθλια, Ψηφοφορια, ΠΑΑΟΚ Α' Ομιλος, Ενημερωση, Η Ιστορια μας, Εδρα, Φιλοσοφια, Σεζον 2025/26, Τελευταια Ενημερωση, Επικοινωνηστε Μαζι Μας.
+- Stripped accents from `monthNames` array (used in birthday ticker badge).
+
