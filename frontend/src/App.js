@@ -157,6 +157,7 @@ const Navigation = () => {
   ];
 
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState(null);
 
   return (
     <header
@@ -191,19 +192,21 @@ const Navigation = () => {
                     <ChevronDown size={14} className={`transition-transform ${openDropdown === link.label ? "rotate-180" : ""}`} />
                   </button>
                   {openDropdown === link.label && (
-                    <div className="absolute top-full left-0 mt-2 w-56 bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50" data-testid={`dropdown-${link.label.toLowerCase()}`}>
-                      {link.dropdown.map((sub) => (
-                        <Link
-                          key={sub.path}
-                          to={sub.path}
-                          onClick={() => setOpenDropdown(null)}
-                          className={`block px-5 py-3 text-sm transition-colors hover:bg-white/5 hover:text-[#F5A623] border-b border-white/[0.04] last:border-0 ${
-                            location.pathname === sub.path ? "text-[#F5A623] bg-white/[0.03]" : "text-zinc-300"
-                          }`}
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
+                    <div className="absolute top-full left-0 pt-1 z-50">
+                      <div className="w-56 bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden" data-testid={`dropdown-${link.label.toLowerCase()}`}>
+                        {link.dropdown.map((sub) => (
+                          <Link
+                            key={sub.path}
+                            to={sub.path}
+                            onClick={() => setOpenDropdown(null)}
+                            className={`block px-5 py-3 text-sm transition-colors hover:bg-white/5 hover:text-[#F5A623] border-b border-white/[0.04] last:border-0 ${
+                              location.pathname === sub.path ? "text-[#F5A623] bg-white/[0.03]" : "text-zinc-300"
+                            }`}
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -284,24 +287,32 @@ const Navigation = () => {
           {navLinks.map((link) => (
             link.dropdown ? (
               <div key={link.label}>
-                <div className="flex items-center gap-4 py-4 border-b border-white/10 font-['Bebas_Neue'] text-2xl tracking-wider text-white">
-                  <link.icon size={24} />
-                  {link.label}
-                </div>
-                <div className="pl-12 flex flex-col">
-                  {link.dropdown.map((sub) => (
-                    <Link
-                      key={sub.path}
-                      to={sub.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`py-3 text-base border-b border-white/5 ${
-                        location.pathname === sub.path ? "text-[#F5A623]" : "text-zinc-400"
-                      }`}
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
-                </div>
+                <button
+                  onClick={() => setOpenMobileDropdown(openMobileDropdown === link.label ? null : link.label)}
+                  className="w-full flex items-center justify-between py-4 border-b border-white/10"
+                >
+                  <span className="flex items-center gap-4 font-['Bebas_Neue'] text-2xl tracking-wider text-white">
+                    <link.icon size={24} />
+                    {link.label}
+                  </span>
+                  <ChevronDown size={18} className={`text-zinc-400 transition-transform ${openMobileDropdown === link.label ? "rotate-180" : ""}`} />
+                </button>
+                {openMobileDropdown === link.label && (
+                  <div className="pl-12 flex flex-col">
+                    {link.dropdown.map((sub) => (
+                      <Link
+                        key={sub.path}
+                        to={sub.path}
+                        onClick={() => { setIsOpen(false); setOpenMobileDropdown(null); }}
+                        className={`py-3 text-base border-b border-white/5 ${
+                          location.pathname === sub.path ? "text-[#F5A623]" : "text-zinc-400"
+                        }`}
+                      >
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <Link
