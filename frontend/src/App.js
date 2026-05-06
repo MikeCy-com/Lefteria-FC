@@ -137,23 +137,23 @@ const Navigation = () => {
   };
 
   const navLinks = [
-    { path: "/", label: "Αρχική", icon: HomeIcon },
-    { path: "/about", label: "Σχετικά", icon: Info },
-    { path: "/team", label: "Ομάδα", icon: Users },
-    { label: "Ακαδημία", icon: GraduationCap, dropdown: [
+    { path: "/", label: "Αρχικη", icon: HomeIcon },
+    { path: "/about", label: "Σχετικα", icon: Info },
+    { path: "/team", label: "Ομαδα", icon: Users },
+    { label: "Ακαδημια", icon: GraduationCap, dropdown: [
       { path: "/academy", label: "Lefteria FC Academy" },
-      { path: "/academy/philosophy", label: "Η Φιλοσοφία μας" },
-      { path: "/academy/groups", label: "Ηλικιακά Τμήματα" },
-      { path: "/academy/registration", label: "Εγγραφές" },
+      { path: "/academy/philosophy", label: "Η Φιλοσοφια μας" },
+      { path: "/academy/groups", label: "Ηλικιακα Τμηματα" },
+      { path: "/academy/registration", label: "Εγγραφες" },
     ]},
-    { label: "Χορηγοί", icon: Handshake, dropdown: [
-      { path: "/sponsors/first-team", label: "Χορηγοί Πρώτης Ομάδας" },
-      { path: "/sponsors/academy", label: "Χορηγοί Ακαδημίας" },
-      { path: "/contact", label: "Γίνε Χορηγός" },
+    { label: "Χορηγοι", icon: Handshake, dropdown: [
+      { path: "/sponsors/first-team", label: "Χορηγοι Πρωτης Ομαδας" },
+      { path: "/sponsors/academy", label: "Χορηγοι Ακαδημιας" },
+      { path: "/contact", label: "Γινε Χορηγος" },
     ]},
-    { path: "/news", label: "Νέα", icon: Newspaper },
-    { path: "/shop", label: "Κατάστημα", icon: ShoppingCart },
-    { path: "/contact", label: "Επικοινωνία", icon: Mail },
+    { path: "/news", label: "Νεα", icon: Newspaper },
+    { path: "/shop", label: "Καταστημα", icon: ShoppingCart },
+    { path: "/contact", label: "Επικοινωνια", icon: Mail },
   ];
 
   const [openDropdown, setOpenDropdown] = useState(null);

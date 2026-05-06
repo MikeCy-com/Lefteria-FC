@@ -28,6 +28,7 @@ class Sponsor(BaseModel):
     level: str = "supporter"
     sponsor_type: str = "first_team"
     display_order: int = 0
+    content_blocks: List[Dict[str, Any]] = []
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class SponsorCreate(BaseModel):
@@ -39,6 +40,7 @@ class SponsorCreate(BaseModel):
     level: str = "supporter"
     sponsor_type: str = "first_team"
     display_order: int = 0
+    content_blocks: List[Dict[str, Any]] = []
 
 
 # ==================== ENUMS ====================
