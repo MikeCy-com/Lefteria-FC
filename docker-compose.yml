@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   mongodb:
     image: mongo:7
@@ -19,6 +17,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: lefteriafc-backend:latest
     container_name: lefteria-backend
     restart: always
     ports:
@@ -46,6 +45,7 @@ services:
       args:
         - REACT_APP_BACKEND_URL=http://195.35.1.58
         - REACT_APP_VAPID_PUBLIC_KEY=BKSDwwWVyapiWEVJ6vgeqaWJvmYSeLcdJG0jEioOfXGBkCwlHV7pn3d_r0OzXJLtXPeYxhEHRTkjjrG1s528jLg
+    image: lefteriafc-frontend:latest
     container_name: lefteria-frontend
     restart: always
     ports:
