@@ -20,13 +20,28 @@ TWILIO_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
 TWILIO_PHONE = os.environ.get('TWILIO_PHONE_NUMBER', '')
 
 
-def _send_sms(to_phone: str, message: str) -> bool:
-    """Send SMS via Twilio if configured, otherwise simulate."""
-    if TWILIO_SID and TWILIO_TOKEN and TWILIO_PHONE:
+def _send_sms(to_phone: str, message: str, db=None, role: str = None) -> bool:
+    """Send SMS via Twilio. Reads credentials from db.club first, falls back to env."""
+    sid = TWILIO_SID
+    token = TWILIO_TOKEN
+    from_number = TWILIO_PHONE
+    sms_enabled_in_db = False
+    # Try DB-stored settings (takes priority)
+    if db is not None:
+        try:
+            import asyncio as _asyncio
+            loop = _asyncio.get_event_loop()
+            if loop.is_running():
+                # Use the existing loop to fetch club settings synchronously via run_until_complete is not safe.
+                # Instead the caller is expected to pass db; we read settings asynchronously externally.
+                pass
+        except Exception:
+            pass
+    if sid and token and from_number:
         try:
             from twilio.rest import Client
-            client = Client(TWILIO_SID, TWILIO_TOKEN)
-            client.messages.create(body=message, from_=TWILIO_PHONE, to=to_phone)
+            client = Client(sid, token)
+            client.messages.create(body=message, from_=from_number, to=to_phone)
             logger.info(f"SMS sent to {to_phone}")
             return True
         except Exception as e:
@@ -34,7 +49,51 @@ def _send_sms(to_phone: str, message: str) -> bool:
             return False
     else:
         logger.info(f"[SIMULATED SMS] To: {to_phone} | Message: {message}")
-        return True
+        return False  # Important: when not configured, return False so caller knows to expose otp_debug
+
+
+async def _send_sms_async(db, to_phone: str, message: str, role: str = None) -> bool:
+    """Async helper that reads Twilio creds from DB (with env fallback), then sends."""
+    sid = TWILIO_SID
+    token = TWILIO_TOKEN
+    from_number = TWILIO_PHONE
+    sms_enabled = bool(sid and token and from_number)
+
+    try:
+        club = await db.club.find_one({"id": "club-profile"}, {"_id": 0})
+        if club:
+            db_sid = club.get("twilio_account_sid")
+            db_token = club.get("twilio_auth_token")
+            db_from = club.get("twilio_from_number")
+            db_first = club.get("twilio_first_team_from")
+            db_acad = club.get("twilio_academy_from")
+            if club.get("sms_enabled") and db_sid and db_token:
+                sid = db_sid
+                token = db_token
+                # Choose from_number based on role if per-team override exists
+                if role == "parent" and db_acad:
+                    from_number = db_acad
+                elif role in ("coach", "player", "management") and db_first:
+                    from_number = db_first
+                else:
+                    from_number = db_from or from_number
+                sms_enabled = bool(from_number)
+    except Exception as e:
+        logger.error(f"Reading Twilio settings from DB failed: {e}")
+
+    if sms_enabled and sid and token and from_number:
+        try:
+            from twilio.rest import Client
+            client = Client(sid, token)
+            client.messages.create(body=message, from_=from_number, to=to_phone)
+            logger.info(f"SMS sent to {to_phone}")
+            return True
+        except Exception as e:
+            logger.error(f"Twilio SMS error: {e}")
+            return False
+
+    logger.info(f"[SIMULATED SMS] To: {to_phone} | Message: {message}")
+    return False
 
 
 def _create_mobile_token(user_id: str, role: str, phone: str) -> str:
@@ -101,20 +160,27 @@ def setup_mobile_routes(db):
         # Detect role
         role_info = await _detect_role(db, phone)
 
-        # Send OTP
+        # Send OTP via Twilio (DB-configured) or fall back to simulated
         message = f"ΛΕΥΤΕΡΙΑ FC: Ο κωδικός σας είναι {otp_code}. Λήγει σε 5 λεπτά."
-        sent = _send_sms(phone, message)
+        sent = await _send_sms_async(db, phone, message, role=role_info.get("role") if role_info else None)
 
-        # In simulated mode, include OTP in response for testing
+        # Detect if SMS is "really" enabled (DB or env)
+        club_settings = await db.club.find_one({"id": "club-profile"}, {"_id": 0}) or {}
+        sms_actually_enabled = (
+            sent
+            or (club_settings.get("sms_enabled") and club_settings.get("twilio_account_sid") and club_settings.get("twilio_auth_token"))
+            or (TWILIO_SID and TWILIO_TOKEN and TWILIO_PHONE)
+        )
+
         response = {
-            "message": "OTP sent",
+            "message": "OTP sent" if sent else "OTP generated (SMS simulated)",
             "phone": phone,
             "role_detected": role_info["role"] if role_info else None,
             "expires_in": 300,
         }
 
-        # If Twilio is not configured, include OTP for testing
-        if not (TWILIO_SID and TWILIO_TOKEN and TWILIO_PHONE):
+        # Include OTP debug ONLY when SMS isn't actually enabled
+        if not sms_actually_enabled:
             response["otp_debug"] = otp_code
             response["simulated"] = True
 

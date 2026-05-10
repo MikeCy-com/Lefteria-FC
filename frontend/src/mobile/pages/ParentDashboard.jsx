@@ -7,7 +7,8 @@ import {
   Users, Calendar, Clock, ChevronRight, ChevronDown,
   CheckCircle, RefreshCw, Trophy, Star, Check, X as XIcon,
   MapPin, ExternalLink, Shield, User, TrendingUp, Target,
-  ArrowLeft, Briefcase, Bell, Activity, Zap, Award, ClipboardCheck, Cone
+  ArrowLeft, Briefcase, Bell, Activity, Zap, Award, ClipboardCheck, Cone,
+  Receipt, AlertCircle, Euro
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -439,6 +440,9 @@ const ParentDashboard = ({ onTabChange }) => {
           </div>
         ))}
       </div>
+
+      {/* Charges / Πληρωμές */}
+      <ParentChargesCard children={children} />
 
       {/* Next Match Card */}
       {upcomingFixtures.length > 0 && (() => {

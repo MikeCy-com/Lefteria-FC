@@ -703,6 +703,97 @@ class ClubProfile(BaseModel):
     academy_twitter: Optional[str] = None
     academy_youtube: Optional[str] = None
     academy_tiktok: Optional[str] = None
+    # Twilio SMS settings
+    twilio_account_sid: Optional[str] = None
+    twilio_auth_token: Optional[str] = None
+    twilio_from_number: Optional[str] = None
+    sms_enabled: bool = False
+    # Optional: per-team-type from numbers
+    twilio_first_team_from: Optional[str] = None
+    twilio_academy_from: Optional[str] = None
+
+
+# ==================== CHARGES (BILLING) ====================
+class ChargeType(str, Enum):
+    TRAINING = "training"
+    EVENT = "event"
+    GRASSROOTS = "grassroots"
+    REGISTRATION = "registration"
+    EQUIPMENT = "equipment"
+    TOURNAMENT = "tournament"
+    TRANSPORT = "transport"
+    OTHER = "other"
+
+class ChargeStatus(str, Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    OVERDUE = "overdue"
+    CANCELLED = "cancelled"
+
+class Charge(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    player_id: str
+    player_name: Optional[str] = None  # denormalized for quick listing
+    type: ChargeType = ChargeType.OTHER
+    description: str
+    amount: float
+    currency: str = "EUR"
+    due_date: Optional[str] = None
+    season: Optional[str] = None
+    period_label: Optional[str] = None   # e.g. "Σεπτέμβριος 2025"
+    status: ChargeStatus = ChargeStatus.PENDING
+    paid_at: Optional[str] = None
+    paid_amount: Optional[float] = None
+    payment_method: Optional[str] = None  # cash, bank, card, other
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: Optional[str] = None
+
+class ChargeCreate(BaseModel):
+    player_id: str
+    type: ChargeType = ChargeType.OTHER
+    description: str
+    amount: float
+    currency: str = "EUR"
+    due_date: Optional[str] = None
+    season: Optional[str] = None
+    period_label: Optional[str] = None
+    notes: Optional[str] = None
+
+class ChargeBulkMonthly(BaseModel):
+    player_ids: List[str]
+    type: ChargeType = ChargeType.TRAINING
+    description: str = "Μηνιαία Συνδρομή Προπονήσεων"
+    amount_per_month: float
+    from_year_month: str  # "YYYY-MM"
+    to_year_month: str    # "YYYY-MM"
+    due_day: int = 5      # day of month for due date
+    season: Optional[str] = None
+    notes: Optional[str] = None
+
+class ChargePaymentBody(BaseModel):
+    paid_amount: Optional[float] = None
+    payment_method: Optional[str] = "cash"
+    notes: Optional[str] = None
+
+class ChargeTemplate(BaseModel):
+    """Reusable charge catalog item."""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    type: ChargeType
+    default_amount: float
+    description: Optional[str] = None
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ChargeTemplateCreate(BaseModel):
+    name: str
+    type: ChargeType
+    default_amount: float
+    description: Optional[str] = None
+    is_active: bool = True
 
 
 # ==================== NEWS ====================

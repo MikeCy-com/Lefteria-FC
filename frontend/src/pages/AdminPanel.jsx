@@ -6,7 +6,7 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
-  Euro, Video, Landmark, Upload, Handshake, Globe, Facebook, Instagram, Twitter, Youtube
+  Euro, Video, Landmark, Upload, Handshake, Globe, Facebook, Instagram, Twitter, Youtube, Smartphone
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -14,6 +14,7 @@ import InlineAttendance from "./admin/InlineAttendance";
 import AdminCalendarTab from "./admin/CalendarTab";
 import AdminAttendanceTab from "./admin/AttendanceTab";
 import AdminWallTab from "./admin/WallTab";
+import ChargesTab from "./admin/ChargesTab";
 import TrainingSessionsPanel from "./admin/TrainingSessionsPanel";
 import PlayerDevelopmentPanel from "./admin/PlayerDevelopmentPanel";
 import PlayerEvaluationPanel from "./admin/PlayerEvaluationPanel";
@@ -2236,6 +2237,129 @@ const ClubProfileTab = ({ club, onRefresh, facilities = [] }) => {
   );
 };
 
+// Dedicated SMS/OTP settings tab — Twilio configuration.
+const SmsSettingsTab = ({ club, onRefresh }) => {
+  const [form, setForm] = useState(club || {});
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const [showToken, setShowToken] = useState(false);
+  const [testPhone, setTestPhone] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  useEffect(() => { setForm(club || {}); }, [club]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axios.put(`${API}/admin/club`, form, { headers: getAuthHeaders() });
+      setSavedAt(new Date());
+      onRefresh && onRefresh();
+    } catch (e) { alert("Σφάλμα αποθήκευσης"); } finally { setSaving(false); }
+  };
+
+  const sendTest = async () => {
+    if (!testPhone.trim()) { alert("Συμπληρώστε αριθμό τηλεφώνου"); return; }
+    setTesting(true); setTestResult(null);
+    try {
+      const res = await axios.post(`${API}/mobile/auth/request-otp`, { phone: testPhone.trim() });
+      setTestResult({ ok: true, data: res.data });
+    } catch (e) {
+      setTestResult({ ok: false, err: e.response?.data?.detail || e.message });
+    } finally { setTesting(false); }
+  };
+
+  return (
+    <div data-testid="sms-settings-tab">
+      <TabHeader title="SMS / OTP (Twilio)" subtitle="Διαμόρφωση Twilio για αποστολή πραγματικών SMS κωδικών OTP">
+        <button onClick={save} disabled={saving} className="admin-btn-primary" data-testid="save-sms-btn">
+          {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />} Αποθήκευση
+        </button>
+      </TabHeader>
+      {savedAt && <div className="mb-4 text-xs text-emerald-400 flex items-center gap-1.5"><Check size={12} /> Αποθηκεύτηκε στις {savedAt.toLocaleTimeString("el-GR")}</div>}
+
+      {/* Master switch */}
+      <div className="admin-card p-6 mb-4">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" checked={!!form.sms_enabled} onChange={e => setForm({...form, sms_enabled: e.target.checked})} className="accent-[#F5A623] w-5 h-5" data-testid="sms-enabled-toggle" />
+          <div>
+            <p className="text-white font-medium">Ενεργοποίηση Twilio SMS</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Όταν είναι ενεργό, οι κωδικοί OTP αποστέλλονται ως πραγματικά SMS στους χρήστες.</p>
+          </div>
+        </label>
+      </div>
+
+      {/* Twilio creds */}
+      <div className="admin-card p-6 mb-4">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#262626]">
+          <Smartphone size={18} className="text-[#F5A623]" />
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623] tracking-wide">Διαπιστευτηρια Twilio</h3>
+        </div>
+        <div className="space-y-4">
+          <Field label="Account SID">
+            <AdminInput placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={form.twilio_account_sid || ""} onChange={e => setForm({...form, twilio_account_sid: e.target.value})} data-testid="twilio-sid-input" />
+          </Field>
+          <Field label="Auth Token">
+            <div className="flex gap-2">
+              <AdminInput type={showToken ? "text" : "password"} placeholder="Auth token (κρυφός)" value={form.twilio_auth_token || ""} onChange={e => setForm({...form, twilio_auth_token: e.target.value})} className="flex-1" data-testid="twilio-token-input" />
+              <button onClick={() => setShowToken(s => !s)} className="admin-btn-ghost text-xs whitespace-nowrap">{showToken ? "Απόκρυψη" : "Προβολή"}</button>
+            </div>
+          </Field>
+          <Field label="Default From Number">
+            <AdminInput placeholder="+15551234567" value={form.twilio_from_number || ""} onChange={e => setForm({...form, twilio_from_number: e.target.value})} data-testid="twilio-from-input" />
+          </Field>
+          <p className="text-[11px] text-zinc-500 leading-relaxed">
+            Βρες αυτά στο <a href="https://console.twilio.com/" target="_blank" rel="noreferrer" className="text-[#F5A623] underline">Twilio Console</a> → Account → API keys & tokens. Ο αριθμός αποστολέα πρέπει να έχει SMS capabilities και να επιβεβαιωθεί στο Twilio.
+          </p>
+        </div>
+      </div>
+
+      {/* Optional per-team-type from numbers */}
+      <div className="admin-card p-6 mb-4">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#262626]">
+          <Shield size={18} className="text-[#F5A623]" />
+          <h3 className="font-['Bebas_Neue'] text-base text-zinc-300 tracking-wide">Ξεχωριστοι αριθμοι (προαιρετικα)</h3>
+        </div>
+        <p className="text-[11px] text-zinc-500 mb-4">Άσε κενά για να χρησιμοποιείται ο default αριθμός για όλους.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Α' Ομάδα From"><AdminInput placeholder="+15551234567" value={form.twilio_first_team_from || ""} onChange={e => setForm({...form, twilio_first_team_from: e.target.value})} /></Field>
+          <Field label="Ακαδημία From"><AdminInput placeholder="+15551234568" value={form.twilio_academy_from || ""} onChange={e => setForm({...form, twilio_academy_from: e.target.value})} /></Field>
+        </div>
+      </div>
+
+      {/* Test sender */}
+      <div className="admin-card p-6 mb-4">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#262626]">
+          <Check size={18} className="text-emerald-400" />
+          <h3 className="font-['Bebas_Neue'] text-xl text-emerald-400 tracking-wide">Δοκιμη Αποστολης</h3>
+        </div>
+        <p className="text-[11px] text-zinc-500 mb-3">Στείλτε δοκιμαστικό OTP για να επιβεβαιώσετε ότι όλα δουλεύουν. <strong>Αποθηκεύστε πρώτα τις ρυθμίσεις.</strong></p>
+        <div className="flex gap-2 items-end">
+          <Field label="Αριθμός για Δοκιμή">
+            <AdminInput placeholder="+357 99 123456" value={testPhone} onChange={e => setTestPhone(e.target.value)} data-testid="test-phone-input" />
+          </Field>
+          <button onClick={sendTest} disabled={testing} className="admin-btn-primary mb-1" data-testid="test-sms-btn">
+            {testing ? <RefreshCw size={14} className="animate-spin" /> : <Smartphone size={14} />} Στείλε Δοκιμή
+          </button>
+        </div>
+        {testResult && testResult.ok && (
+          <div className="mt-3 bg-emerald-500/10 border border-emerald-500/30 rounded p-3 text-xs">
+            <p className="text-emerald-400 font-medium">✓ Επιτυχία</p>
+            <p className="text-zinc-400 mt-1">{testResult.data.message}</p>
+            {testResult.data.simulated && (
+              <p className="text-[#F5A623] mt-1">⚠️ Προσοχή: Twilio δεν είναι ενεργό — λειτουργία simulation (debug code: <code className="text-white">{testResult.data.otp_debug}</code>)</p>
+            )}
+          </div>
+        )}
+        {testResult && !testResult.ok && (
+          <div className="mt-3 bg-red-500/10 border border-red-500/30 rounded p-3 text-xs text-red-400">
+            ✗ {testResult.err}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Dedicated Social Media settings tab — separate fields for First Team and Academy.
 const SocialMediaTab = ({ club, onRefresh }) => {
   const [form, setForm] = useState(club || {});
@@ -2565,8 +2689,10 @@ const AdminPanel = ({ user, onLogout }) => {
     ]},
     { type: "group", id: "settings_section", label: "Ρυθμίσεις", icon: Settings, items: [
       { id: "settings_club", label: "Πληροφορίες", icon: Building2 },
+      { id: "settings_charges", label: "Χρεώσεις", icon: Euro },
       { id: "settings_staff", label: "Τεχνικό Επιτελείο", icon: UserCog },
       { id: "settings_social", label: "Social Media", icon: Globe },
+      { id: "settings_sms", label: "SMS / OTP", icon: Smartphone },
       { id: "settings_seasons", label: "Σεζόν", icon: Archive },
       { id: "settings_venues", label: "Γήπεδα", icon: MapPin },
     ]},
@@ -2614,6 +2740,8 @@ const AdminPanel = ({ user, onLogout }) => {
       case "shop_tickets": return <AdminTicketsTab />;
       case "shop_orders": return <AdminOrdersTab />;
       case "settings_club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} facilities={data.facilities} />;
+      case "settings_charges": return <ChargesTab players={data.players} academyGroups={data.academyGroups} teams={data.teams} onRefresh={fetchAll} />;
+      case "settings_sms": return <SmsSettingsTab club={data.club} onRefresh={fetchAll} />;
       case "settings_staff": return <StaffTab staff={data.staff} teams={data.teams} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
       case "settings_social": return <SocialMediaTab club={data.club} onRefresh={fetchAll} />;
       case "settings_seasons": return <SeasonsTab seasons={data.seasons} players={data.players} onRefresh={fetchAll} />;

@@ -2752,18 +2752,21 @@ from routes.videos import router as video_router, setup_video_routes
 from routes.resources import router as resource_router, setup_resource_routes
 from routes.mobile_auth import router as mobile_router, setup_mobile_routes
 from routes.opponents import router as opponents_router, setup_opponents_routes
+from routes.charges import router as charges_router, setup_charges_routes
 
 setup_financial_routes(db, get_current_user)
 setup_video_routes(db, get_current_user)
 setup_resource_routes(db, get_current_user)
 setup_mobile_routes(db)
 setup_opponents_routes(db, get_current_user)
+setup_charges_routes(db, get_current_user)
 
 app.include_router(financial_router)
 app.include_router(video_router)
 app.include_router(resource_router)
 app.include_router(mobile_router)
 app.include_router(opponents_router)
+app.include_router(charges_router)
 
 app.add_middleware(
     CORSMiddleware,
