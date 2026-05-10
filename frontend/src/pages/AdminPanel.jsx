@@ -6,7 +6,7 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
-  Euro, Video, Landmark, Upload, Handshake
+  Euro, Video, Landmark, Upload, Handshake, Globe, Facebook, Instagram, Twitter, Youtube
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -1826,35 +1826,94 @@ const ClubProfileTab = ({ club, onRefresh }) => {
           <Field label="Email"><AdminInput value={form.email || ""} onChange={e => setForm({...form, email: e.target.value})} /></Field>
           <Field label="Τηλέφωνο"><AdminInput value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></Field>
         </div>
-      </div>
-
-      {/* First Team Social Media */}
-      <div className="admin-card p-6 mt-4 space-y-4" data-testid="first-team-social-section">
-        <div className="border-b border-[#262626] pb-3 mb-2">
-          <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623] tracking-wide">Social Media — Πρωτη Ομαδα</h3>
-          <p className="text-xs text-zinc-500 mt-1">Συνδέσεις που εμφανίζονται στο footer για την Πρώτη Ομάδα.</p>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Facebook"><AdminInput placeholder="https://facebook.com/..." value={form.first_team_facebook || ""} onChange={e => setForm({...form, first_team_facebook: e.target.value})} data-testid="first-team-facebook" /></Field>
-          <Field label="Instagram"><AdminInput placeholder="https://instagram.com/..." value={form.first_team_instagram || ""} onChange={e => setForm({...form, first_team_instagram: e.target.value})} data-testid="first-team-instagram" /></Field>
-          <Field label="Twitter / X"><AdminInput placeholder="https://twitter.com/..." value={form.first_team_twitter || ""} onChange={e => setForm({...form, first_team_twitter: e.target.value})} data-testid="first-team-twitter" /></Field>
-          <Field label="YouTube"><AdminInput placeholder="https://youtube.com/..." value={form.first_team_youtube || ""} onChange={e => setForm({...form, first_team_youtube: e.target.value})} data-testid="first-team-youtube" /></Field>
-          <Field label="TikTok"><AdminInput placeholder="https://tiktok.com/@..." value={form.first_team_tiktok || ""} onChange={e => setForm({...form, first_team_tiktok: e.target.value})} data-testid="first-team-tiktok" /></Field>
+        <div className="bg-[#F5A623]/5 border border-[#F5A623]/20 rounded-lg p-3 text-xs text-[#F5A623]/80">
+          💡 Για Social Media (Facebook / Instagram / Twitter / YouTube / TikTok) ξεχωριστά για Α' Ομάδα και Ακαδημία, πήγαινε στο <strong>Ρυθμίσεις → Social Media</strong>.
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Academy Social Media */}
-      <div className="admin-card p-6 mt-4 space-y-4" data-testid="academy-social-section">
-        <div className="border-b border-[#262626] pb-3 mb-2">
-          <h3 className="font-['Bebas_Neue'] text-xl text-[#10B981] tracking-wide">Social Media — Ακαδημια</h3>
-          <p className="text-xs text-zinc-500 mt-1">Ξεχωριστές συνδέσεις για την Ακαδημία (αν διαφέρουν από την Α' ομάδα).</p>
+// Dedicated Social Media settings tab — separate fields for First Team and Academy.
+const SocialMediaTab = ({ club, onRefresh }) => {
+  const [form, setForm] = useState(club || {});
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  useEffect(() => { setForm(club || {}); }, [club]);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axios.put(`${API}/admin/club`, form, { headers: getAuthHeaders() });
+      setSavedAt(new Date());
+      onRefresh && onRefresh();
+    } catch (e) { alert("Σφάλμα αποθήκευσης"); } finally { setSaving(false); }
+  };
+  const SocialRow = ({ Icon, label, prefix, color }) => (
+    <div className="grid grid-cols-2 gap-4">
+      <Field label={
+        <span className="inline-flex items-center gap-2">
+          <Icon size={14} style={{ color }} /> Facebook
+        </span>
+      }><AdminInput placeholder="https://facebook.com/..." value={form[`${prefix}facebook`] || ""} onChange={e => setForm({...form, [`${prefix}facebook`]: e.target.value})} data-testid={`${prefix}facebook`} /></Field>
+    </div>
+  );
+  return (
+    <div data-testid="social-media-tab">
+      <TabHeader title="Social Media" subtitle="Ξεχωριστές συνδέσεις για την Α' Ομάδα και την Ακαδημία (εμφανίζονται στο footer)">
+        <button onClick={save} disabled={saving} className="admin-btn-primary" data-testid="save-socials-btn">
+          {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />} Αποθήκευση
+        </button>
+      </TabHeader>
+      {savedAt && <div className="mb-4 text-xs text-emerald-400 flex items-center gap-1.5"><Check size={12} /> Αποθηκεύτηκε στις {savedAt.toLocaleTimeString("el-GR")}</div>}
+
+      {/* First Team */}
+      <div className="admin-card p-6 mb-4" data-testid="first-team-social-section">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#262626]">
+          <Shield size={18} className="text-[#F5A623]" />
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623] tracking-wide">Α' Ομαδα — Πρωτη Ομαδα</h3>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Facebook"><AdminInput placeholder="https://facebook.com/..." value={form.academy_facebook || ""} onChange={e => setForm({...form, academy_facebook: e.target.value})} data-testid="academy-facebook" /></Field>
-          <Field label="Instagram"><AdminInput placeholder="https://instagram.com/..." value={form.academy_instagram || ""} onChange={e => setForm({...form, academy_instagram: e.target.value})} data-testid="academy-instagram" /></Field>
-          <Field label="Twitter / X"><AdminInput placeholder="https://twitter.com/..." value={form.academy_twitter || ""} onChange={e => setForm({...form, academy_twitter: e.target.value})} data-testid="academy-twitter" /></Field>
-          <Field label="YouTube"><AdminInput placeholder="https://youtube.com/..." value={form.academy_youtube || ""} onChange={e => setForm({...form, academy_youtube: e.target.value})} data-testid="academy-youtube" /></Field>
-          <Field label="TikTok"><AdminInput placeholder="https://tiktok.com/@..." value={form.academy_tiktok || ""} onChange={e => setForm({...form, academy_tiktok: e.target.value})} data-testid="academy-tiktok" /></Field>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label={<span className="inline-flex items-center gap-2"><Facebook size={13} className="text-[#1877F2]" /> Facebook</span>}>
+            <AdminInput placeholder="https://facebook.com/..." value={form.first_team_facebook || ""} onChange={e => setForm({...form, first_team_facebook: e.target.value})} data-testid="first-team-facebook" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Instagram size={13} className="text-[#E4405F]" /> Instagram</span>}>
+            <AdminInput placeholder="https://instagram.com/..." value={form.first_team_instagram || ""} onChange={e => setForm({...form, first_team_instagram: e.target.value})} data-testid="first-team-instagram" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Twitter size={13} className="text-[#1DA1F2]" /> Twitter / X</span>}>
+            <AdminInput placeholder="https://twitter.com/..." value={form.first_team_twitter || ""} onChange={e => setForm({...form, first_team_twitter: e.target.value})} data-testid="first-team-twitter" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Youtube size={13} className="text-[#FF0000]" /> YouTube</span>}>
+            <AdminInput placeholder="https://youtube.com/..." value={form.first_team_youtube || ""} onChange={e => setForm({...form, first_team_youtube: e.target.value})} data-testid="first-team-youtube" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Globe size={13} className="text-zinc-400" /> TikTok</span>}>
+            <AdminInput placeholder="https://tiktok.com/@..." value={form.first_team_tiktok || ""} onChange={e => setForm({...form, first_team_tiktok: e.target.value})} data-testid="first-team-tiktok" />
+          </Field>
+        </div>
+      </div>
+
+      {/* Academy */}
+      <div className="admin-card p-6" data-testid="academy-social-section">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#262626]">
+          <GraduationCap size={18} className="text-[#10B981]" />
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#10B981] tracking-wide">Ακαδημια</h3>
+        </div>
+        <p className="text-xs text-zinc-500 mb-4">Άσε κενά αν θες να εμφανίζονται οι ίδιες συνδέσεις με την Πρώτη Ομάδα.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label={<span className="inline-flex items-center gap-2"><Facebook size={13} className="text-[#1877F2]" /> Facebook</span>}>
+            <AdminInput placeholder="https://facebook.com/..." value={form.academy_facebook || ""} onChange={e => setForm({...form, academy_facebook: e.target.value})} data-testid="academy-facebook" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Instagram size={13} className="text-[#E4405F]" /> Instagram</span>}>
+            <AdminInput placeholder="https://instagram.com/..." value={form.academy_instagram || ""} onChange={e => setForm({...form, academy_instagram: e.target.value})} data-testid="academy-instagram" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Twitter size={13} className="text-[#1DA1F2]" /> Twitter / X</span>}>
+            <AdminInput placeholder="https://twitter.com/..." value={form.academy_twitter || ""} onChange={e => setForm({...form, academy_twitter: e.target.value})} data-testid="academy-twitter" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Youtube size={13} className="text-[#FF0000]" /> YouTube</span>}>
+            <AdminInput placeholder="https://youtube.com/..." value={form.academy_youtube || ""} onChange={e => setForm({...form, academy_youtube: e.target.value})} data-testid="academy-youtube" />
+          </Field>
+          <Field label={<span className="inline-flex items-center gap-2"><Globe size={13} className="text-zinc-400" /> TikTok</span>}>
+            <AdminInput placeholder="https://tiktok.com/@..." value={form.academy_tiktok || ""} onChange={e => setForm({...form, academy_tiktok: e.target.value})} data-testid="academy-tiktok" />
+          </Field>
         </div>
       </div>
     </div>
@@ -2103,6 +2162,7 @@ const AdminPanel = ({ user, onLogout }) => {
     ]},
     { type: "group", id: "settings_section", label: "Ρυθμίσεις", icon: Settings, items: [
       { id: "settings_club", label: "Πληροφορίες", icon: Building2 },
+      { id: "settings_social", label: "Social Media", icon: Globe },
       { id: "settings_seasons", label: "Σεζόν", icon: Archive },
       { id: "settings_venues", label: "Γήπεδα", icon: MapPin },
     ]},
@@ -2150,6 +2210,7 @@ const AdminPanel = ({ user, onLogout }) => {
       case "shop_tickets": return <AdminTicketsTab />;
       case "shop_orders": return <AdminOrdersTab />;
       case "settings_club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} />;
+      case "settings_social": return <SocialMediaTab club={data.club} onRefresh={fetchAll} />;
       case "settings_seasons": return <SeasonsTab seasons={data.seasons} onRefresh={fetchAll} />;
       case "settings_venues": return <VenuesTab venues={data.venues} onRefresh={fetchAll} />;
       // Legacy tabs (accessible from dashboard stats)

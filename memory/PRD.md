@@ -195,3 +195,8 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - **Pretty player URLs** (`utils/playerHelpers.js`): URLs are now `/player/<slugified-name>--<uuid>` (e.g. `/player/ανδρεας-πραστιτης--cc9e1511-07d6-40e2-...`). The `extractPlayerId` helper parses the trailing UUID from the slug; back-compat: bare UUIDs still work for old links. Applied to all 8 link sites: TeamHubPage, AcademyGroupPage (4 places), App.js (homepage roster + birthday widget), and PlayerProfilePage (lookup logic).
 - **Academy-player privacy on website**: `formatAcademyDisplayName(name)` shows full first name + first 2 letters of last name + dot ("Πετρος Νικολαου" → "Πετρος Νι."). Applied to AcademyGroupPage roster + Top Scorers/Assisters/Appearances + PlayerProfilePage (header, breadcrumb, bio paragraph, "Ονοματεπώνυμο" row). **Mobile app is intentionally not affected** (they need full names).
 
+
+### 2026-02 — Social Media Tab Discoverability + Academy Data Migration Script
+- **Dedicated Social Media admin tab**: split out of Club Profile and made into its own sidebar entry **Ρυθμίσεις → Social Media** (with globe icon). Two visually distinct sections (gold "Α' Ομάδα" / green "Ακαδημία"), brand-colored icons (FB blue, IG pink, Twitter cyan, YT red), and a save button. Banner hint added on Club Profile pointing users to the new tab.
+- **Academy data migration script** at `/app/deploy/seed_academy_data.py` + `/app/deploy/academy_data_seed.json` — exports the 17 academy opponents and 11 academy facilities entered on preview. Run on the VPS once with `docker compose exec backend python /app/deploy/seed_academy_data.py` to import them. Idempotent: skips entries whose name (case-insensitive) already exists.
+
