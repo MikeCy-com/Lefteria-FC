@@ -202,7 +202,7 @@ const SponsorsTab = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [filterType, setFilterType] = useState("all");
 
-  const emptyForm = { name: "", description: "", logo_url: "", banner_url: "", website: "", level: "supporter", sponsor_type: "first_team", display_order: 0, content_blocks: [] };
+  const emptyForm = { name: "", description: "", logo_url: "", banner_url: "", website: "", facebook: "", instagram: "", twitter: "", youtube: "", linkedin: "", level: "supporter", sponsor_type: "first_team", display_order: 0, content_blocks: [] };
   const [form, setForm] = useState(emptyForm);
 
   const fetchSponsors = () => {
@@ -215,7 +215,9 @@ const SponsorsTab = () => {
   const openEdit = (s) => {
     setForm({
       name: s.name, description: s.description || "", logo_url: s.logo_url || "",
-      banner_url: s.banner_url || "", website: s.website || "", level: s.level || "supporter",
+      banner_url: s.banner_url || "", website: s.website || "",
+      facebook: s.facebook || "", instagram: s.instagram || "", twitter: s.twitter || "", youtube: s.youtube || "", linkedin: s.linkedin || "",
+      level: s.level || "supporter",
       sponsor_type: s.sponsor_type || "first_team", display_order: s.display_order || 0,
       content_blocks: s.content_blocks || [],
     });
@@ -375,6 +377,18 @@ const SponsorsTab = () => {
               </label>
             </div>
           </Field>
+
+          {/* Social Media */}
+          <div className="border-t border-[#262626] pt-4 mt-4">
+            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Social Media Χορηγου</p>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Facebook"><AdminInput placeholder="https://facebook.com/..." value={form.facebook} onChange={e => setForm({...form, facebook: e.target.value})} data-testid="sponsor-facebook" /></Field>
+              <Field label="Instagram"><AdminInput placeholder="https://instagram.com/..." value={form.instagram} onChange={e => setForm({...form, instagram: e.target.value})} data-testid="sponsor-instagram" /></Field>
+              <Field label="Twitter / X"><AdminInput placeholder="https://twitter.com/..." value={form.twitter} onChange={e => setForm({...form, twitter: e.target.value})} /></Field>
+              <Field label="YouTube"><AdminInput placeholder="https://youtube.com/..." value={form.youtube} onChange={e => setForm({...form, youtube: e.target.value})} /></Field>
+              <Field label="LinkedIn"><AdminInput placeholder="https://linkedin.com/..." value={form.linkedin} onChange={e => setForm({...form, linkedin: e.target.value})} /></Field>
+            </div>
+          </div>
 
           {/* Content Blocks Editor */}
           <div className="border-t border-[#262626] pt-4 mt-4">

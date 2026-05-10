@@ -1650,7 +1650,12 @@ const NewsTab = ({ news, onRefresh }) => {
         <FormModal title={editNews ? "Επεξεργασία" : "Νέο Άρθρο"} onClose={() => setShowForm(false)} onSave={handleSave} saving={saving}>
           <Field label="Τίτλος *"><AdminInput value={form.title} onChange={e => setForm({...form, title: e.target.value})} data-testid="news-title-input" /></Field>
           <Field label="Περίληψη *"><AdminInput value={form.excerpt} onChange={e => setForm({...form, excerpt: e.target.value})} /></Field>
-          <Field label="Περιεχόμενο *"><AdminTextarea rows={5} value={form.content} onChange={e => setForm({...form, content: e.target.value})} data-testid="news-content-input" /></Field>
+          <Field label="Περιεχόμενο *">
+            <AdminTextarea rows={10} value={form.content} onChange={e => setForm({...form, content: e.target.value})} data-testid="news-content-input" placeholder={"# Επικεφαλιδα\n\nΓραψτε το κειμενο σας εδω.\n\n## Υποτιτλος\n\nΕνας ακομα παραγραφος.\n\n![Λεζαντα εικονας](https://example.com/photo.jpg)\n\n[Δειτε περισσοτερα](https://lefteriafc.cy)\n\n- Σημειο 1\n- Σημειο 2\n- Σημειο 3"} />
+            <p className="text-[11px] text-zinc-500 mt-1.5">
+              Υποστηρίζεται <span className="text-[#F5A623]">Markdown</span>: <code className="text-zinc-300">**έντονα**</code>, <code className="text-zinc-300">*πλάγια*</code>, <code className="text-zinc-300">## τίτλοι</code>, <code className="text-zinc-300">[κείμενο](url)</code> για συνδέσμους, <code className="text-zinc-300">![alt](url)</code> για εικόνες, <code className="text-zinc-300">- λίστες</code>.
+            </p>
+          </Field>
           <Field label="URL Εικόνας"><AdminInput value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} /></Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Κατηγορία"><AdminSelect value={form.category} onChange={e => setForm({...form, category: e.target.value})}><option value="Νέα">Νέα</option><option value="Αποτελέσματα">Αποτελέσματα</option><option value="Μεταγραφές">Μεταγραφές</option><option value="Ακαδημία">Ακαδημία</option></AdminSelect></Field>
@@ -1820,6 +1825,36 @@ const ClubProfileTab = ({ club, onRefresh }) => {
         <div className="grid grid-cols-2 gap-4">
           <Field label="Email"><AdminInput value={form.email || ""} onChange={e => setForm({...form, email: e.target.value})} /></Field>
           <Field label="Τηλέφωνο"><AdminInput value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></Field>
+        </div>
+      </div>
+
+      {/* First Team Social Media */}
+      <div className="admin-card p-6 mt-4 space-y-4" data-testid="first-team-social-section">
+        <div className="border-b border-[#262626] pb-3 mb-2">
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623] tracking-wide">Social Media — Πρωτη Ομαδα</h3>
+          <p className="text-xs text-zinc-500 mt-1">Συνδέσεις που εμφανίζονται στο footer για την Πρώτη Ομάδα.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Facebook"><AdminInput placeholder="https://facebook.com/..." value={form.first_team_facebook || ""} onChange={e => setForm({...form, first_team_facebook: e.target.value})} data-testid="first-team-facebook" /></Field>
+          <Field label="Instagram"><AdminInput placeholder="https://instagram.com/..." value={form.first_team_instagram || ""} onChange={e => setForm({...form, first_team_instagram: e.target.value})} data-testid="first-team-instagram" /></Field>
+          <Field label="Twitter / X"><AdminInput placeholder="https://twitter.com/..." value={form.first_team_twitter || ""} onChange={e => setForm({...form, first_team_twitter: e.target.value})} data-testid="first-team-twitter" /></Field>
+          <Field label="YouTube"><AdminInput placeholder="https://youtube.com/..." value={form.first_team_youtube || ""} onChange={e => setForm({...form, first_team_youtube: e.target.value})} data-testid="first-team-youtube" /></Field>
+          <Field label="TikTok"><AdminInput placeholder="https://tiktok.com/@..." value={form.first_team_tiktok || ""} onChange={e => setForm({...form, first_team_tiktok: e.target.value})} data-testid="first-team-tiktok" /></Field>
+        </div>
+      </div>
+
+      {/* Academy Social Media */}
+      <div className="admin-card p-6 mt-4 space-y-4" data-testid="academy-social-section">
+        <div className="border-b border-[#262626] pb-3 mb-2">
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#10B981] tracking-wide">Social Media — Ακαδημια</h3>
+          <p className="text-xs text-zinc-500 mt-1">Ξεχωριστές συνδέσεις για την Ακαδημία (αν διαφέρουν από την Α' ομάδα).</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Facebook"><AdminInput placeholder="https://facebook.com/..." value={form.academy_facebook || ""} onChange={e => setForm({...form, academy_facebook: e.target.value})} data-testid="academy-facebook" /></Field>
+          <Field label="Instagram"><AdminInput placeholder="https://instagram.com/..." value={form.academy_instagram || ""} onChange={e => setForm({...form, academy_instagram: e.target.value})} data-testid="academy-instagram" /></Field>
+          <Field label="Twitter / X"><AdminInput placeholder="https://twitter.com/..." value={form.academy_twitter || ""} onChange={e => setForm({...form, academy_twitter: e.target.value})} data-testid="academy-twitter" /></Field>
+          <Field label="YouTube"><AdminInput placeholder="https://youtube.com/..." value={form.academy_youtube || ""} onChange={e => setForm({...form, academy_youtube: e.target.value})} data-testid="academy-youtube" /></Field>
+          <Field label="TikTok"><AdminInput placeholder="https://tiktok.com/@..." value={form.academy_tiktok || ""} onChange={e => setForm({...form, academy_tiktok: e.target.value})} data-testid="academy-tiktok" /></Field>
         </div>
       </div>
     </div>

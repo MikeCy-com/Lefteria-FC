@@ -25,6 +25,11 @@ class Sponsor(BaseModel):
     logo_url: Optional[str] = ""
     banner_url: Optional[str] = ""
     website: Optional[str] = ""
+    facebook: Optional[str] = ""
+    instagram: Optional[str] = ""
+    twitter: Optional[str] = ""
+    youtube: Optional[str] = ""
+    linkedin: Optional[str] = ""
     level: str = "supporter"
     sponsor_type: str = "first_team"
     display_order: int = 0
@@ -37,6 +42,11 @@ class SponsorCreate(BaseModel):
     logo_url: Optional[str] = ""
     banner_url: Optional[str] = ""
     website: Optional[str] = ""
+    facebook: Optional[str] = ""
+    instagram: Optional[str] = ""
+    twitter: Optional[str] = ""
+    youtube: Optional[str] = ""
+    linkedin: Optional[str] = ""
     level: str = "supporter"
     sponsor_type: str = "first_team"
     display_order: int = 0
@@ -609,6 +619,17 @@ class ClubProfile(BaseModel):
     instagram: Optional[str] = None
     twitter: Optional[str] = None
     youtube: Optional[str] = None
+    # Per-team-type social media (overrides the legacy fields above)
+    first_team_facebook: Optional[str] = None
+    first_team_instagram: Optional[str] = None
+    first_team_twitter: Optional[str] = None
+    first_team_youtube: Optional[str] = None
+    first_team_tiktok: Optional[str] = None
+    academy_facebook: Optional[str] = None
+    academy_instagram: Optional[str] = None
+    academy_twitter: Optional[str] = None
+    academy_youtube: Optional[str] = None
+    academy_tiktok: Optional[str] = None
 
 
 # ==================== NEWS ====================

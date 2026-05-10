@@ -180,3 +180,12 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - "Past Seasons" read-only public page (P2).
 - Bulk fixture import for First Team (CSV/copy-paste) (P3).
 
+
+### 2026-02 — Social Media (per team type), Sponsor Socials, News Blog Articles, Contact Cleanup
+- **Removed** "Αίτημα Μέσων" subject from contact form.
+- **ClubProfile model**: added `first_team_facebook/instagram/twitter/youtube/tiktok` and `academy_facebook/instagram/twitter/youtube/tiktok` so admin can configure separate socials per team type. New "Social Media — Πρωτη Ομαδα" and "Social Media — Ακαδημια" sections in Admin → Profile.
+- **Footer** now reads `club` from `/api/club` and renders both First Team and Academy social columns dynamically (only shows ones that have a URL set).
+- **Sponsor model**: added `facebook/instagram/twitter/youtube/linkedin` fields. Admin SponsorsTab form now includes a "Social Media Χορηγου" section. Public sponsor detail page renders these as branded social icons.
+- **News blog articles**: added route `/news/:newsId` → `NewsArticlePage.jsx` (markdown rendering via `react-markdown`). News cards on `/news` (featured + grid) and homepage now link to the article page. Admin NewsTab shows markdown syntax help and a placeholder template, supporting headings, bold/italic, **inline images** `![alt](url)` and **external links** `[text](url)`, lists, blockquotes, and HR.
+- **Production-data safety**: docker compose preserves Mongo data via the `mongo_data` volume, so first-team players, academy groups, players, stats, and existing data remain untouched on `git pull && docker compose up -d --build`. Code is updated; data is preserved.
+

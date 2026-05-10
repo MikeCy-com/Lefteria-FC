@@ -19,6 +19,7 @@ import AcademyGroupPage from "./pages/AcademyGroupPage";
 import AcademyLandingPage from "./pages/AcademyLandingPage";
 import AcademyPhilosophyPage from "./pages/AcademyPhilosophyPage";
 import { SponsorsPage, SponsorDetailPage } from "./pages/SponsorsPage";
+import NewsArticlePage from "./pages/NewsArticlePage";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
 import { MobileAuthProvider } from "./mobile/MobileAuthContext";
 import MobileApp from "./mobile/MobileApp";
@@ -340,7 +341,40 @@ const Navigation = () => {
 };
 
 // Footer
-const Footer = () => (
+const Footer = () => {
+  const [club, setClub] = useState(null);
+  useEffect(() => {
+    axios.get(`${API}/club`).then(res => setClub(res.data)).catch(() => {});
+  }, []);
+
+  const renderSocialIcons = (prefix, label) => {
+    const socials = [
+      { Icon: Facebook, key: `${prefix}facebook` },
+      { Icon: Instagram, key: `${prefix}instagram` },
+      { Icon: Twitter, key: `${prefix}twitter` },
+      { Icon: Youtube, key: `${prefix}youtube` },
+    ];
+    const active = socials.filter(s => club?.[s.key]);
+    if (active.length === 0) return null;
+    return (
+      <div className="mb-5">
+        <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">{label}</p>
+        <div className="flex gap-3">
+          {active.map(({ Icon, key }) => (
+            <a key={key} href={club[key].startsWith("http") ? club[key] : `https://${club[key]}`} target="_blank" rel="noreferrer" data-testid={`footer-${key}`}
+              className="w-10 h-10 bg-[#1F1F1F] border border-[#262626] flex items-center justify-center hover:bg-[#F5A623] hover:border-[#F5A623] hover:text-black transition-all">
+              <Icon size={18} />
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const hasFirstTeamSocial = club && (club.first_team_facebook || club.first_team_instagram || club.first_team_twitter || club.first_team_youtube);
+  const hasAcademySocial = club && (club.academy_facebook || club.academy_instagram || club.academy_twitter || club.academy_youtube);
+
+  return (
   <footer className="bg-[#0a0a0a] border-t border-[#262626]" data-testid="footer">
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-12">
@@ -403,17 +437,21 @@ const Footer = () => (
         {/* Social */}
         <div>
           <h4 className="font-['Bebas_Neue'] text-xl text-[#F5A623] mb-6 tracking-wider">Ακολουθησε μας</h4>
-          <div className="flex gap-4">
-            {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-              <a
-                key={i}
-                href="#"
-                className="w-10 h-10 bg-[#1F1F1F] border border-[#262626] flex items-center justify-center hover:bg-[#F5A623] hover:border-[#F5A623] hover:text-black transition-all"
-              >
-                <Icon size={18} />
-              </a>
-            ))}
-          </div>
+          {hasFirstTeamSocial && renderSocialIcons("first_team_", "Πρωτη Ομαδα")}
+          {hasAcademySocial && renderSocialIcons("academy_", "Ακαδημια")}
+          {!hasFirstTeamSocial && !hasAcademySocial && (
+            <div className="flex gap-4">
+              {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="w-10 h-10 bg-[#1F1F1F] border border-[#262626] flex items-center justify-center hover:bg-[#F5A623] hover:border-[#F5A623] hover:text-black transition-all"
+                >
+                  <Icon size={18} />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -422,7 +460,8 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-);
+  );
+};
 
 // Loading Component
 const Loading = () => (
@@ -1357,8 +1396,9 @@ const NewsPage = () => {
       {featuredNews && (
         <section className="py-10 md:py-12 px-4 md:px-6">
           <div className="max-w-7xl mx-auto">
-            <div 
-              className="card group cursor-pointer overflow-hidden"
+            <Link
+              to={`/news/${featuredNews.id}`}
+              className="card group cursor-pointer overflow-hidden block"
               data-testid={`featured-news-${featuredNews.id}`}
             >
               <div className="grid md:grid-cols-2">
@@ -1383,7 +1423,7 @@ const NewsPage = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </section>
       )}
@@ -1393,9 +1433,10 @@ const NewsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {otherNews.map((item) => (
-              <div 
-                key={item.id} 
-                className="card group cursor-pointer news-card overflow-hidden"
+              <Link
+                key={item.id}
+                to={`/news/${item.id}`}
+                className="card group cursor-pointer news-card overflow-hidden block"
                 data-testid={`news-item-${item.id}`}
               >
                 <div className="aspect-video overflow-hidden">
@@ -1417,7 +1458,7 @@ const NewsPage = () => {
                     })}
                   </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -1553,7 +1594,6 @@ const ContactPage = () => {
                       <option value="Εγγραφή Ακαδημίας">Εγγραφή Ακαδημίας</option>
                       <option value="Πληροφορίες Εισιτηρίων">Πληροφορίες Εισιτηρίων</option>
                       <option value="Συνεργασία/Χορηγία">Συνεργασία/Χορηγία</option>
-                      <option value="Αίτημα Μέσων">Αίτημα Μέσων</option>
                       <option value="Άλλο">Άλλο</option>
                     </select>
                   </div>
@@ -1753,6 +1793,7 @@ function App() {
             <Route path="/sponsors/:sponsorId" element={<PublicLayout><SponsorDetailPage /></PublicLayout>} />
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
+            <Route path="/news/:newsId" element={<PublicLayout><NewsArticlePage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/shop" element={<PublicLayout><NewShopPage /></PublicLayout>} />
             <Route path="/vote" element={<PublicLayout><VotePage /></PublicLayout>} />
