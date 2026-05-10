@@ -354,8 +354,11 @@ class Staff(BaseModel):
     image_url: Optional[str] = None
     bio: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[str] = None
     team_type: TeamType = TeamType.FIRST_TEAM
-    academy_group_id: Optional[str] = None
+    academy_group_id: Optional[str] = None  # legacy single-assignment field
+    team_ids: List[str] = Field(default_factory=list)
+    academy_group_ids: List[str] = Field(default_factory=list)
     joined_date: Optional[str] = None
     previous_experience: List[Dict[str, str]] = Field(default_factory=list)
     qualifications: List[str] = Field(default_factory=list)
@@ -370,8 +373,11 @@ class StaffCreate(BaseModel):
     image_url: Optional[str] = None
     bio: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[str] = None
     team_type: TeamType = TeamType.FIRST_TEAM
     academy_group_id: Optional[str] = None
+    team_ids: List[str] = Field(default_factory=list)
+    academy_group_ids: List[str] = Field(default_factory=list)
     joined_date: Optional[str] = None
     previous_experience: List[Dict[str, str]] = Field(default_factory=list)
     qualifications: List[str] = Field(default_factory=list)
@@ -582,9 +588,16 @@ class Season(BaseModel):
     start_date: str
     end_date: str
     is_current: bool = False
+    is_archived: bool = False
+    archived_at: Optional[str] = None
     competitions: List[str] = Field(default_factory=list)
     achievements: List[str] = Field(default_factory=list)
     final_position: Optional[int] = None
+    # Snapshot of frozen data captured at archive time
+    snapshot_fixtures_count: int = 0
+    snapshot_players_count: int = 0
+    snapshot_top_scorer: Optional[str] = None
+    snapshot_top_scorer_goals: int = 0
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class SeasonCreate(BaseModel):
@@ -606,11 +619,71 @@ class ClubProfile(BaseModel):
     founded: int = 2024
     logo_url: str = ""
     stadium: str = "Γήπεδο Αετού"
+    home_venue_id: Optional[str] = None
     city: str = "Λεμεσός"
     country: str = "Κύπρος"
     description: str = ""
+    motto: Optional[str] = None
+    slogan: Optional[str] = None
+    anthem_url: Optional[str] = None
+    history: Optional[str] = None
+    founders: Optional[str] = None
     primary_color: str = "#F5A623"
     secondary_color: str = "#000000"
+
+    # Stadium
+    stadium_capacity: Optional[int] = None
+    stadium_surface: Optional[str] = None
+    stadium_dimensions: Optional[str] = None
+    stadium_image_url: Optional[str] = None
+
+    # Operating hours
+    office_hours: Optional[str] = None
+    training_hours: Optional[str] = None
+    ticket_office_hours: Optional[str] = None
+
+    # Tax / registration
+    vat_number: Optional[str] = None
+    registration_number: Optional[str] = None
+    bank_name: Optional[str] = None
+    bank_account: Optional[str] = None
+    bank_iban: Optional[str] = None
+
+    # Kits
+    kit_home_color: Optional[str] = None
+    kit_home_secondary: Optional[str] = None
+    kit_away_color: Optional[str] = None
+    kit_away_secondary: Optional[str] = None
+    kit_third_color: Optional[str] = None
+    kit_third_secondary: Optional[str] = None
+
+    # Fees
+    membership_fee_yearly: Optional[float] = None
+    membership_fee_monthly: Optional[float] = None
+    academy_fee: Optional[float] = None
+    first_team_fee: Optional[float] = None
+    registration_fee: Optional[float] = None
+
+    # Trophies
+    championships_won: int = 0
+    cups_won: int = 0
+    super_cups_won: int = 0
+    trophies_history: Optional[str] = None
+
+    # Leadership
+    president_name: Optional[str] = None
+    president_photo: Optional[str] = None
+    general_manager_name: Optional[str] = None
+    general_manager_photo: Optional[str] = None
+    board_members: Optional[str] = None  # JSON string or comma-separated
+
+    # Press / media
+    press_contact_name: Optional[str] = None
+    press_contact_email: Optional[str] = None
+    press_contact_phone: Optional[str] = None
+    media_kit_url: Optional[str] = None
+
+    # Existing
     website: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None

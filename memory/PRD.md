@@ -200,3 +200,45 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - **Dedicated Social Media admin tab**: split out of Club Profile and made into its own sidebar entry **Ρυθμίσεις → Social Media** (with globe icon). Two visually distinct sections (gold "Α' Ομάδα" / green "Ακαδημία"), brand-colored icons (FB blue, IG pink, Twitter cyan, YT red), and a save button. Banner hint added on Club Profile pointing users to the new tab.
 - **Academy data migration script** at `/app/deploy/seed_academy_data.py` + `/app/deploy/academy_data_seed.json` — exports the 17 academy opponents and 11 academy facilities entered on preview. Run on the VPS once with `docker compose exec backend python /app/deploy/seed_academy_data.py` to import them. Idempotent: skips entries whose name (case-insensitive) already exists.
 
+
+### 2026-02 — Big Batch: Πρόγραμμα top-level, Club Profile expansion, Staff multi-assign, Season Archive
+**Phase A — First Team Πρόγραμμα tab**
+- Added `Σύλλογος → Πρόγραμμα` top-level admin sidebar entry (Calendar icon).
+- Added Dashboard "Αγώνες" stat card → routes to `fixtures` tab.
+- Existing FixturesTab now accepts a `scope` prop ("first_team" | "academy" | "all"). Top-level entry uses `first_team` scope; auto-filters out academy fixtures and only shows First Team opponents/venues in the dropdowns.
+- Title dynamically changes to "Πρόγραμμα Α' Ομάδας" when scoped.
+
+**Phase B — Club Profile expansion (`Ρυθμίσεις → Πληροφορίες`)**
+ClubProfile model + admin tab now organized in 10 collapsible-card sections:
+1. Βασικα Στοιχεια (name, founders, motto, slogan, anthem URL, history, description)
+2. Έδρα & Γήπεδο — `home_venue_id` dropdown picks from facilities (auto-fills stadium name); capacity, surface, dimensions, photo URL
+3. Επικοινωνία (email/phone/website/address)
+4. Ώρες Λειτουργίας (office, training, ticket office hours)
+5. Νομικά & Τραπεζικά (VAT, registration #, bank, IBAN)
+6. Χρώματα Φανέλας (3 kits × primary+secondary, color pickers + hex)
+7. Συνδρομές & Τέλη (yearly/monthly/academy/first-team/registration fees in EUR)
+8. Επιτυχίες & Τρόπαια (championships/cups/super cups counts + free-text history)
+9. Διοίκηση (president, GM, board members)
+10. Τύπος & Μέσα (press contact name/email/phone, media kit URL)
+11. Branding (primary/secondary brand colors with picker)
+
+**Phase C — Staff (Τεχνικό Επιτελείο)**
+- Moved to `Ρυθμίσεις → Τεχνικό Επιτελείο` (UserCog icon).
+- Staff model: added `team_ids: List[str]`, `academy_group_ids: List[str]`, `email`. Backwards-compatible — keeps legacy `team_type`/`academy_group_id`.
+- New StaffTab UI: filter by All/First Team/Academy, multi-select chip toggles for Teams (gold) and Academy Groups (green), so a coach can be assigned to many teams/groups and many coaches to one group. Assignment column shows joined names.
+
+**Phase D — Season Archive workflow**
+- Backend: `Season` model gets `is_archived`, `archived_at`, snapshot fields. New collection `archived_seasons`. Endpoints:
+  - `GET /api/admin/seasons/{id}/preview` — shows what will be archived (counts + player list)
+  - `POST /api/admin/seasons/{id}/archive` — snapshots fixtures/standings/player stats, marks season archived, optionally creates new current season, resets stats for migrated players, marks non-migrated players as archived/inactive
+  - `GET /api/seasons/archive` — public list
+  - `GET /api/seasons/archive/{id}` — public detail with full snapshot
+- Admin UI: Each season card (when not archived) shows gold "Αρχειοθέτηση" button → opens modal with:
+  - Snapshot summary (fixtures count, completed, standings)
+  - "Νέα Τρέχουσα Σεζόν" optional input (auto-creates next season)
+  - Player migration checklist (checkbox grid with photo, number, name, team_type) with "Όλοι/Κανείς" quick toggles
+- Public:
+  - `/seasons` page (PastSeasonsPage) — grid of archived seasons with top scorer preview
+  - `/seasons/:archiveId` (ArchivedSeasonDetailPage) — snapshot detail with W/D/L summary, top scorers, recent results, full squad list
+  - Footer link "Παλαιότερες Σεζόν" added.
+

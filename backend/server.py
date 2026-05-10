@@ -4,12 +4,12 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Response, Depends, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Response, Depends, UploadFile, File, Body
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 import aiofiles
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone, timedelta
 import json
@@ -1117,6 +1117,134 @@ async def delete_season(season_id: str, current_user: dict = Depends(get_current
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Η σεζόν δεν βρέθηκε")
     return {"message": "Η σεζόν διαγράφηκε"}
+
+# ====== Season Archive Workflow ======
+@api_router.get("/admin/seasons/{season_id}/preview")
+async def preview_archive(season_id: str, current_user: dict = Depends(get_current_user)):
+    """Preview what will be archived: counts of fixtures, players, standings, etc."""
+    season = await db.seasons.find_one({"id": season_id}, {"_id": 0})
+    if not season:
+        raise HTTPException(status_code=404, detail="Η σεζόν δεν βρέθηκε")
+    season_name = season["name"]
+    fixtures_count = await db.fixtures.count_documents({"season": season_name})
+    completed_count = await db.fixtures.count_documents({"season": season_name, "status": "Completed"})
+    standings_count = await db.standings.count_documents({"season": season_name})
+    players = await db.players.find({}, {"_id": 0}).to_list(length=None)
+    return {
+        "season_name": season_name,
+        "fixtures": fixtures_count,
+        "completed_fixtures": completed_count,
+        "standings": standings_count,
+        "players": [{"id": p["id"], "name": p["name"], "team_type": p.get("team_type"), "team_id": p.get("team_id"), "academy_group_id": p.get("academy_group_id"), "number": p.get("number"), "image_url": p.get("image_url"), "stats": p.get("statistics", {})} for p in players],
+    }
+
+@api_router.post("/admin/seasons/{season_id}/archive")
+async def archive_season(season_id: str, payload: Dict[str, Any] = Body(...), current_user: dict = Depends(get_current_user)):
+    """
+    Archive a season:
+      - payload.migrate_player_ids: list of player IDs to keep in the new season (their stats will be reset)
+      - payload.new_season_name: the new current season string (e.g. "2026/27")
+      - payload.reset_stats: if true, players in migrate list have stats reset
+    Snapshot is stored in `archived_seasons` collection.
+    """
+    season = await db.seasons.find_one({"id": season_id}, {"_id": 0})
+    if not season:
+        raise HTTPException(status_code=404, detail="Η σεζόν δεν βρέθηκε")
+    season_name = season["name"]
+    migrate_ids = payload.get("migrate_player_ids", [])
+    new_name = payload.get("new_season_name", "").strip()
+    reset_stats = payload.get("reset_stats", True)
+
+    # Snapshot
+    fixtures = await db.fixtures.find({"season": season_name}, {"_id": 0}).to_list(length=None)
+    standings = await db.standings.find({"season": season_name}, {"_id": 0}).to_list(length=None)
+    players = await db.players.find({}, {"_id": 0}).to_list(length=None)
+    top_scorer = max(
+        (p for p in players if (p.get("statistics", {}).get("goals") or 0) > 0),
+        key=lambda p: p.get("statistics", {}).get("goals") or 0,
+        default=None,
+    )
+
+    archive_doc = {
+        "id": str(uuid.uuid4()),
+        "season_id": season_id,
+        "season_name": season_name,
+        "archived_at": datetime.now(timezone.utc).isoformat(),
+        "fixtures": fixtures,
+        "standings": standings,
+        "player_stats": [
+            {
+                "player_id": p["id"],
+                "name": p["name"],
+                "number": p.get("number"),
+                "image_url": p.get("image_url"),
+                "team_type": p.get("team_type"),
+                "team_id": p.get("team_id"),
+                "academy_group_id": p.get("academy_group_id"),
+                "statistics": p.get("statistics", {}),
+            }
+            for p in players
+        ],
+        "top_scorer_name": top_scorer["name"] if top_scorer else None,
+        "top_scorer_goals": (top_scorer.get("statistics", {}).get("goals") if top_scorer else 0) or 0,
+    }
+    await db.archived_seasons.insert_one(archive_doc)
+
+    # Mark season as archived
+    await db.seasons.update_one(
+        {"id": season_id},
+        {"$set": {
+            "is_archived": True,
+            "archived_at": datetime.now(timezone.utc).isoformat(),
+            "is_current": False,
+            "snapshot_fixtures_count": len(fixtures),
+            "snapshot_players_count": len(players),
+            "snapshot_top_scorer": archive_doc["top_scorer_name"],
+            "snapshot_top_scorer_goals": archive_doc["top_scorer_goals"],
+        }},
+    )
+
+    # Reset stats for migrated players (keep them, zero their stats so the new season starts fresh)
+    if reset_stats and migrate_ids:
+        empty_stats = {"appearances": 0, "goals": 0, "assists": 0, "yellow_cards": 0, "red_cards": 0, "minutes": 0, "clean_sheets": 0}
+        await db.players.update_many({"id": {"$in": migrate_ids}}, {"$set": {"statistics": empty_stats}})
+
+    # Mark non-migrated players as inactive (they remain in archive only)
+    if migrate_ids:
+        await db.players.update_many(
+            {"id": {"$nin": migrate_ids}},
+            {"$set": {"is_archived": True, "is_active": False}},
+        )
+
+    # Optional: create new current season
+    if new_name:
+        existing = await db.seasons.find_one({"name": new_name})
+        if not existing:
+            new_season = Season(name=new_name, start_date="", end_date="", is_current=True)
+            await db.seasons.insert_one(new_season.model_dump())
+        else:
+            await db.seasons.update_one({"id": existing["id"]}, {"$set": {"is_current": True}})
+
+    return {
+        "message": "Η σεζόν αρχειοθετήθηκε",
+        "archive_id": archive_doc["id"],
+        "fixtures_archived": len(fixtures),
+        "players_migrated": len(migrate_ids),
+    }
+
+@api_router.get("/seasons/archive")
+async def list_archived_seasons():
+    """Public list of archived seasons with summary."""
+    docs = await db.archived_seasons.find({}, {"_id": 0, "fixtures": 0, "player_stats": 0, "standings": 0}).sort("archived_at", -1).to_list(length=None)
+    return docs
+
+@api_router.get("/seasons/archive/{archive_id}")
+async def get_archived_season(archive_id: str):
+    """Public detail view of one archived season (full snapshot)."""
+    doc = await db.archived_seasons.find_one({"id": archive_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε")
+    return doc
 
 # News Admin
 @api_router.post("/admin/news", response_model=News)

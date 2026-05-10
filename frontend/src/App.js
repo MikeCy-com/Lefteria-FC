@@ -20,6 +20,7 @@ import AcademyLandingPage from "./pages/AcademyLandingPage";
 import AcademyPhilosophyPage from "./pages/AcademyPhilosophyPage";
 import { SponsorsPage, SponsorDetailPage } from "./pages/SponsorsPage";
 import NewsArticlePage from "./pages/NewsArticlePage";
+import { PastSeasonsPage, ArchivedSeasonDetailPage } from "./pages/PastSeasonsPage";
 import SponsorSpotlight from "./components/SponsorSpotlight";
 import { playerLink, formatAcademyDisplayName } from "./utils/playerHelpers";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
@@ -405,6 +406,7 @@ const Footer = () => {
               { name: "Πρόγραμμα", path: "/team?tab=schedule" },
               { name: "Γήπεδα", path: "/team?tab=venues" },
               { name: "Νέα", path: "/news" },
+              { name: "Παλαιότερες Σεζόν", path: "/seasons" },
               { name: "Εισιτήρια", path: "/shop" },
               { name: "Επικοινωνία", path: "/contact" },
             ].map((item) => (
@@ -1799,6 +1801,8 @@ function App() {
             <Route path="/fixtures" element={<Navigate to="/team?tab=results" replace />} />
             <Route path="/news" element={<PublicLayout><NewsPage /></PublicLayout>} />
             <Route path="/news/:newsId" element={<PublicLayout><NewsArticlePage /></PublicLayout>} />
+            <Route path="/seasons" element={<PublicLayout><PastSeasonsPage /></PublicLayout>} />
+            <Route path="/seasons/:archiveId" element={<PublicLayout><ArchivedSeasonDetailPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/shop" element={<PublicLayout><NewShopPage /></PublicLayout>} />
             <Route path="/vote" element={<PublicLayout><VotePage /></PublicLayout>} />
