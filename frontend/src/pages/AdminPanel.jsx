@@ -2007,7 +2007,7 @@ const AdminPanel = ({ user, onLogout }) => {
       const [stats, players, fixtures, news, standings, groups, staffRes, venues, seasons, messages, club, teamsRes, opponentsRes, facilitiesRes] = await Promise.all([
         axios.get(`${API}/admin/dashboard`, { headers }),
         axios.get(`${API}/players?is_active=true`),
-        axios.get(`${API}/fixtures`),
+        axios.get(`${API}/fixtures?limit=500`),
         axios.get(`${API}/news`),
         axios.get(`${API}/standings`),
         axios.get(`${API}/academy-groups`),

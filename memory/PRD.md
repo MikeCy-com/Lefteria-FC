@@ -168,3 +168,15 @@ Complete football club CMS and public website for "Lefteria FC". Fully functioni
 - Removed accents from all CSS-uppercased badge labels across `App.js` to comply with the Greek typographic rule (no tonos on uppercase). Fixed: Προγραμμα, Γενεθλια, Ψηφοφορια, ΠΑΑΟΚ Α' Ομιλος, Ενημερωση, Η Ιστορια μας, Εδρα, Φιλοσοφια, Σεζον 2025/26, Τελευταια Ενημερωση, Επικοινωνηστε Μαζι Μας.
 - Stripped accents from `monthNames` array (used in birthday ticker badge).
 
+### 2026-02 — First Team Manual Fixtures + Stats Auto-Calc Wiring
+- Added "Νέος Αγώνας" (Add Fixture) form to **First Team → Πρόγραμμα** tab in admin (`TeamsTab.jsx`), with full edit, status, score, opponent dropdown (filtered to First Team only), venue dropdown (filtered to First Team only), date/time/competition/season fields.
+- Filtered `teamFixtures` in TeamsTab to exclude academy fixtures (`!f.academy_group_id`).
+- Filtered `TrainingSessionsPanel` facilities by team context (Academy → academyFacilities, First Team → clubFacilities) so cross-context leakage is fixed.
+- Increased fixtures fetch limit in AdminPanel from default 50 → 500 so admin sees all fixtures.
+- Auto-calc of Θεση Πρωταθληματος / Αγωνες / Γκολ / Βαθμοι is already wired via `auto_update_standings_for_match` (called when fixture status → Completed). The "Επανυπολογισμός" button in StandingsTab rebuilds standings from all completed fixtures.
+
+### Pending / Backlog
+- Season Archive flow with player migration checklist UI (P1).
+- "Past Seasons" read-only public page (P2).
+- Bulk fixture import for First Team (CSV/copy-paste) (P3).
+

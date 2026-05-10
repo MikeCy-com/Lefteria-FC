@@ -412,7 +412,7 @@ const EnhancedAcademyTab = ({ groups, players, opponents = [], facilities = [], 
         )}
 
         {detailTab === "training" && (
-          <TrainingSessionsPanel academyGroupId={selectedGroup.id} facilities={facilities} players={groupPlayers} />
+          <TrainingSessionsPanel academyGroupId={selectedGroup.id} facilities={academyFacilities} players={groupPlayers} />
         )}
 
         {detailTab === "videos" && (

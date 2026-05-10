@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Users, Calendar, Plus, Edit2, Trash2, X, ChevronRight, ChevronDown,
-  Image, UserCog, Trophy, MapPin, RefreshCw, Shield, Dumbbell, Video, Upload, Clock
+  Image, UserCog, Trophy, MapPin, RefreshCw, Shield, Dumbbell, Video, Upload, Clock, Check, BarChart3
 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import InlineAttendance from "./InlineAttendance";
@@ -11,6 +11,14 @@ import VideoAnalyticsPanel from "./VideoAnalyticsPanel";
 import { API, getAuthHeaders, stripGreekAccents, FormModal, Field, AdminInput, AdminSelect, AdminTextarea, TabHeader, EmptyState } from "./shared";
 
 const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], facilities = [], onRefresh, onTabChange, StandingsTab, AdminPlayerProfile, MatchStatsModal }) => {
+  const clubOpponents = opponents.filter(o => o.team_type === "First Team");
+  const clubFacilities = facilities.filter(f => f.team_type === "First Team");
+  const emptyFixture = { home_team: "LEFTERIA FC", home_team_logo: "", away_team: "", away_team_logo: "", match_date: "", match_time: "", arrival_time: "", venue: "", venue_id: "", location: "", location_url: "", competition: "", season: "2025/26", opponent_id: "", status: "Scheduled" };
+  const [fixtureForm, setFixtureForm] = useState(emptyFixture);
+  const [showFixtureForm, setShowFixtureForm] = useState(false);
+  const [editFixture, setEditFixture] = useState(null);
+  const [savingFixture, setSavingFixture] = useState(false);
+  const [matchStatsFixture, setMatchStatsFixture] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [viewingPlayer, setViewingPlayer] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -109,6 +117,37 @@ const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], 
     try { await axios.delete(`${API}/admin/gallery/${id}`, { headers: getAuthHeaders() }); fetchGallery(); } catch (e) { alert("Σφάλμα"); }
   };
 
+  const openCreateFixture = () => { setFixtureForm({ ...emptyFixture }); setEditFixture(null); setShowFixtureForm(true); };
+  const openEditFixture = (f) => {
+    setFixtureForm({
+      home_team: f.home_team || "LEFTERIA FC", home_team_logo: f.home_team_logo || "",
+      away_team: f.away_team || "", away_team_logo: f.away_team_logo || "",
+      match_date: f.match_date?.split('T')[0] || "", match_time: f.match_time || "", arrival_time: f.arrival_time || "",
+      venue: f.venue || "", venue_id: f.venue_id || "", location: f.location || "", location_url: f.location_url || "",
+      competition: f.competition || "", season: f.season || "2025/26",
+      opponent_id: f.opponent_id || "", status: f.status || "Scheduled",
+      home_score: f.home_score ?? null, away_score: f.away_score ?? null,
+    });
+    setEditFixture(f); setShowFixtureForm(true);
+  };
+  const handleSaveFixture = async () => {
+    if (!fixtureForm.home_team || !fixtureForm.away_team || !fixtureForm.match_date) { alert("Συμπληρώστε γηπεδούχο, αντίπαλο και ημερομηνία"); return; }
+    setSavingFixture(true);
+    try {
+      const headers = getAuthHeaders();
+      const payload = { ...fixtureForm };
+      // First-team fixtures must NOT carry an academy_group_id
+      delete payload.academy_group_id;
+      if (editFixture) await axios.put(`${API}/admin/fixtures/${editFixture.id}`, payload, { headers });
+      else await axios.post(`${API}/admin/fixtures`, payload, { headers });
+      setShowFixtureForm(false); setEditFixture(null); onRefresh();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSavingFixture(false); }
+  };
+  const handleDeleteFixture = async (fid) => {
+    if (!window.confirm("Διαγραφή αγώνα;")) return;
+    try { await axios.delete(`${API}/admin/fixtures/${fid}`, { headers: getAuthHeaders() }); onRefresh(); } catch (e) { alert("Σφάλμα"); }
+  };
+
   const handleBannerUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -130,7 +169,8 @@ const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], 
 
   if (selectedTeam) {
     const teamPlayers = players.filter(p => p.team_id === selectedTeam.id);
-    const teamFixtures = fixtures.sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
+    // Only first-team fixtures (exclude academy ones)
+    const teamFixtures = fixtures.filter(f => !f.academy_group_id).sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
     const teamStaff = staff.filter(s => s.team_type === "First Team");
 
     if (viewingPlayer) {
@@ -239,7 +279,11 @@ const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], 
         )}
 
         {detailTab === "schedule" && (
-          <div className="space-y-2" data-testid="team-fixtures-list">
+          <div data-testid="team-fixtures-list">
+            <div className="flex justify-end mb-4">
+              <button onClick={openCreateFixture} className="admin-btn-primary" data-testid="add-team-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
+            </div>
+            <div className="space-y-2">
             {teamFixtures.map(f => {
               const isExp = expandedTeamFixtureId === f.id;
               return (
@@ -261,6 +305,16 @@ const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], 
                         {f.venue && <span className="flex items-center gap-1"><MapPin size={10} /> {f.venue}</span>}
                       </div>
                     </div>
+                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                      {f.status === 'Scheduled' && MatchStatsModal && (
+                        <button onClick={() => setMatchStatsFixture(f)} className="admin-icon-btn text-green-400/70 hover:text-green-300" title="Ολοκλήρωση & Στατιστικά" data-testid={`complete-team-fixture-${f.id}`}><Check size={14} /></button>
+                      )}
+                      {f.status === 'Completed' && MatchStatsModal && (
+                        <button onClick={() => setMatchStatsFixture(f)} className="admin-icon-btn text-[#F5A623]/70 hover:text-[#F5A623]" title="Στατιστικά Αγώνα" data-testid={`edit-team-stats-${f.id}`}><BarChart3 size={14} /></button>
+                      )}
+                      <button onClick={() => openEditFixture(f)} className="admin-icon-btn" title="Επεξεργασία" data-testid={`edit-team-fixture-${f.id}`}><Edit2 size={14} /></button>
+                      <button onClick={() => handleDeleteFixture(f.id)} className="admin-icon-btn text-red-500/70 hover:text-red-400" data-testid={`delete-team-fixture-${f.id}`}><Trash2 size={14} /></button>
+                    </div>
                     {isExp ? <ChevronDown size={14} className="text-zinc-500" /> : <ChevronRight size={14} className="text-zinc-500" />}
                   </div>
                   {isExp && (
@@ -277,11 +331,62 @@ const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], 
                 <p className="text-zinc-500 text-sm">Δεν υπάρχουν αγώνες</p>
               </div>
             )}
+            </div>
+            {showFixtureForm && (
+              <FormModal title={editFixture ? "Επεξεργασία Αγώνα" : "Νέος Αγώνας"} onClose={() => { setShowFixtureForm(false); setEditFixture(null); }} onSave={handleSaveFixture} saving={savingFixture}>
+                <Field label="Γηπεδούχος *"><AdminInput value={fixtureForm.home_team} onChange={e => setFixtureForm({...fixtureForm, home_team: e.target.value})} data-testid="team-fixture-home" /></Field>
+                <Field label="Αντίπαλος *">
+                  <AdminSelect value={fixtureForm.opponent_id} onChange={e => { const opp = clubOpponents.find(o => o.id === e.target.value); if (opp) setFixtureForm({...fixtureForm, away_team: opp.name, away_team_logo: opp.logo_url, opponent_id: opp.id, location_url: opp.location_url || fixtureForm.location_url}); else setFixtureForm({...fixtureForm, opponent_id: ""}); }} data-testid="team-fixture-opp-select">
+                    <option value="">— Επιλέξτε ή πληκτρολογήστε —</option>
+                    {clubOpponents.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </AdminSelect>
+                  <AdminInput value={fixtureForm.away_team} onChange={e => setFixtureForm({...fixtureForm, away_team: e.target.value})} placeholder="Ή πληκτρολογήστε" className="mt-1" data-testid="team-fixture-away" />
+                </Field>
+                <div className="grid grid-cols-3 gap-4">
+                  <Field label="Ημερομηνία *"><AdminInput type="date" value={fixtureForm.match_date} onChange={e => setFixtureForm({...fixtureForm, match_date: e.target.value})} data-testid="team-fixture-date" /></Field>
+                  <Field label="Ώρα Έναρξης"><AdminInput type="time" value={fixtureForm.match_time} onChange={e => setFixtureForm({...fixtureForm, match_time: e.target.value})} data-testid="team-fixture-time" /></Field>
+                  <Field label="Ώρα Άφιξης"><AdminInput type="time" value={fixtureForm.arrival_time} onChange={e => setFixtureForm({...fixtureForm, arrival_time: e.target.value})} /></Field>
+                </div>
+                <Field label="Γήπεδο">
+                  <AdminSelect value={fixtureForm.venue_id} onChange={e => { const fac = clubFacilities.find(f => f.id === e.target.value); if (fac) setFixtureForm({...fixtureForm, venue: fac.name, venue_id: fac.id, location_url: fac.location_url || fixtureForm.location_url}); else setFixtureForm({...fixtureForm, venue_id: ""}); }} data-testid="team-fixture-venue-select">
+                    <option value="">— Επιλέξτε ή πληκτρολογήστε —</option>
+                    {clubFacilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </AdminSelect>
+                  <AdminInput value={fixtureForm.venue} onChange={e => setFixtureForm({...fixtureForm, venue: e.target.value})} placeholder="Ή πληκτρολογήστε" className="mt-1" data-testid="team-fixture-venue" />
+                </Field>
+                <Field label="Google Maps Link"><AdminInput value={fixtureForm.location_url} onChange={e => setFixtureForm({...fixtureForm, location_url: e.target.value})} placeholder="https://maps.google.com/..." /></Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Διοργάνωση"><AdminInput value={fixtureForm.competition} onChange={e => setFixtureForm({...fixtureForm, competition: e.target.value})} placeholder="ΠΑΑΟΚ Α' Όμιλος" data-testid="team-fixture-comp" /></Field>
+                  <Field label="Σεζόν"><AdminInput value={fixtureForm.season} onChange={e => setFixtureForm({...fixtureForm, season: e.target.value})} placeholder="2025/26" /></Field>
+                </div>
+                {editFixture && (
+                  <div className="grid grid-cols-3 gap-4">
+                    <Field label="Status">
+                      <AdminSelect value={fixtureForm.status} onChange={e => setFixtureForm({...fixtureForm, status: e.target.value})}>
+                        <option value="Scheduled">Προγραμματισμένος</option>
+                        <option value="Live">Live</option>
+                        <option value="Completed">Ολοκληρωμένος</option>
+                      </AdminSelect>
+                    </Field>
+                    <Field label="Σκορ Γηπεδούχου"><AdminInput type="number" value={fixtureForm.home_score ?? ""} onChange={e => setFixtureForm({...fixtureForm, home_score: e.target.value === "" ? null : parseInt(e.target.value)})} /></Field>
+                    <Field label="Σκορ Φιλοξενούμενου"><AdminInput type="number" value={fixtureForm.away_score ?? ""} onChange={e => setFixtureForm({...fixtureForm, away_score: e.target.value === "" ? null : parseInt(e.target.value)})} /></Field>
+                  </div>
+                )}
+              </FormModal>
+            )}
+            {matchStatsFixture && MatchStatsModal && (
+              <MatchStatsModal
+                fixture={matchStatsFixture}
+                players={teamPlayers}
+                onClose={() => setMatchStatsFixture(null)}
+                onSaved={() => { setMatchStatsFixture(null); onRefresh(); }}
+              />
+            )}
           </div>
         )}
 
         {detailTab === "training" && (
-          <TrainingSessionsPanel teamId={selectedTeam.id} facilities={facilities} players={teamPlayers} />
+          <TrainingSessionsPanel teamId={selectedTeam.id} facilities={clubFacilities} players={teamPlayers} />
         )}
 
         {detailTab === "videos" && (
