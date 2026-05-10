@@ -20,6 +20,8 @@ import AcademyLandingPage from "./pages/AcademyLandingPage";
 import AcademyPhilosophyPage from "./pages/AcademyPhilosophyPage";
 import { SponsorsPage, SponsorDetailPage } from "./pages/SponsorsPage";
 import NewsArticlePage from "./pages/NewsArticlePage";
+import SponsorSpotlight from "./components/SponsorSpotlight";
+import { playerLink, formatAcademyDisplayName } from "./utils/playerHelpers";
 import { CustomerAuthProvider, useAuth } from "./context/CustomerAuth";
 import { MobileAuthProvider } from "./mobile/MobileAuthContext";
 import MobileApp from "./mobile/MobileApp";
@@ -720,7 +722,7 @@ const HomePage = () => {
                 {[...birthdayPlayers, ...birthdayPlayers].map((p, i) => (
                   <Link
                     key={`${p.id}-${i}`}
-                    to={`/player/${p.id}`}
+                    to={playerLink(p)}
                     className="flex items-center gap-3 flex-shrink-0 group"
                     data-testid={`birthday-player-${p.id}`}
                   >
@@ -906,6 +908,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Sponsor Spotlight */}
+      <SponsorSpotlight />
 
       {/* Academy CTA */}
       <section 
@@ -1180,9 +1185,9 @@ const AcademyPage = () => {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {groupPlayers.map(player => (
-                        <Link to={`/player/${player.id}`} key={player.id} className="card p-4 hover:border-[#F5A623]/30 transition-colors" data-testid={`academy-player-${player.id}`}>
+                        <Link to={playerLink(player)} key={player.id} className="card p-4 hover:border-[#F5A623]/30 transition-colors" data-testid={`academy-player-${player.id}`}>
                           <span className="text-xs text-[#F5A623] tracking-wider">{player.position === 'Goalkeeper' ? 'Τερμ.' : player.position === 'Defender' ? 'Αμυν.' : player.position === 'Midfielder' ? 'Μέσος' : 'Επιθ.'}</span>
-                          <h4 className="font-['Bebas_Neue'] text-lg text-white">{player.name}</h4>
+                          <h4 className="font-['Bebas_Neue'] text-lg text-white">{formatAcademyDisplayName(player.name)}</h4>
                           {player.age && <span className="text-zinc-500 text-sm">{player.age} ετών</span>}
                         </Link>
                       ))}

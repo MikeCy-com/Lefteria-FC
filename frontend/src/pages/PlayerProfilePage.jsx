@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Users, Shield, Target, TrendingUp, Award } from "lucide-react";
 import axios from "axios";
+import { extractPlayerId, formatAcademyDisplayName } from "../utils/playerHelpers";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -60,7 +61,8 @@ const PlayerTabBar = ({ activeTab, setActiveTab }) => {
 
 // ==================== PLAYER PROFILE PAGE ====================
 const PlayerProfilePage = () => {
-  const { playerId } = useParams();
+  const { playerId: routeParam } = useParams();
+  const playerId = extractPlayerId(routeParam);
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -98,6 +100,7 @@ const PlayerProfilePage = () => {
   );
 
   const isAcademy = player.team_type === "Academy";
+  const displayName = isAcademy ? formatAcademyDisplayName(player.name) : player.name;
   const imgUrl = resolveImg(player.image_url);
   const stats = player.statistics || {};
   const positionGr = { Goalkeeper: "Τερματοφύλακας", Defender: "Αμυντικός", Midfielder: "Μέσος", Forward: "Επιθετικός" };
@@ -126,7 +129,7 @@ const PlayerProfilePage = () => {
           ) : (
             <><Link to="/team" className="hover:text-zinc-300 transition-colors">Ομάδα</Link><ChevronRight size={12} /></>
           )}
-          <span className="text-zinc-300">{player.name}</span>
+          <span className="text-zinc-300">{displayName}</span>
         </div>
       </div>
 
@@ -171,10 +174,10 @@ const PlayerProfilePage = () => {
                 <span className="font-['Bebas_Neue'] text-6xl lg:text-7xl text-[#F5A623] leading-none">{player.number}</span>
                 <div>
                   <h1 className="font-['Bebas_Neue'] text-3xl lg:text-4xl text-white leading-tight uppercase" data-testid="player-name">
-                    {player.name.split(' ').slice(0, -1).join(' ')}
+                    {displayName.split(' ').slice(0, -1).join(' ')}
                   </h1>
                   <h1 className="font-['Bebas_Neue'] text-4xl lg:text-5xl text-[#F5A623] leading-tight uppercase">
-                    {player.name.split(' ').slice(-1)}
+                    {displayName.split(' ').slice(-1)}
                   </h1>
                 </div>
               </div>
@@ -266,7 +269,7 @@ const PlayerProfilePage = () => {
             ) : (
               <div className="mb-8">
                 <p className="text-zinc-400 text-sm leading-relaxed">
-                  {player.name} αγωνίζεται στη θέση {positionGr[player.position] || player.position} 
+                  {displayName} αγωνίζεται στη θέση {positionGr[player.position] || player.position} 
                   στην {player.team_type === 'First Team' ? "Α' Ομάδα" : "Ακαδημία"} της LEFTERIA FC, 
                   δείχνοντας αφοσίωση και πάθος σε κάθε προπόνηση και αγώνα.
                 </p>

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { stripGreekAccents } from "../utils/greekText";
 import { ChevronRight, Users, Calendar, Clock, Image as ImageIcon, MapPin, BarChart3, Trophy, Target, Shield } from "lucide-react";
 import axios from "axios";
+import { playerLink, formatAcademyDisplayName } from "../utils/playerHelpers";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -195,7 +196,7 @@ const AcademyGroupPage = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {players.map(player => (
                   <Link
-                    to={`/player/${player.id}`}
+                    to={playerLink(player)}
                     key={player.id}
                     className="card group overflow-hidden hover:border-[#F5A623]/30 transition-all duration-300"
                     data-testid={`group-player-${player.id}`}
@@ -204,7 +205,7 @@ const AcademyGroupPage = () => {
                       {player.image_url ? (
                         <img
                           src={resolveImg(player.image_url)}
-                          alt={player.name}
+                          alt={formatAcademyDisplayName(player.name)}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
@@ -225,7 +226,7 @@ const AcademyGroupPage = () => {
                     </div>
                     <div className="p-3">
                       <h3 className="font-['Bebas_Neue'] text-lg text-white group-hover:text-[#F5A623] transition-colors leading-tight">
-                        {player.name}
+                        {formatAcademyDisplayName(player.name)}
                       </h3>
                       {player.age && (
                         <span className="text-xs text-zinc-500">{player.age} ετών</span>
@@ -438,7 +439,7 @@ const AcademyGroupPage = () => {
                   <div className="space-y-2">
                     {topScorers.map((p, i) => (
                       <Link
-                        to={`/player/${p.id}`}
+                        to={playerLink(p)}
                         key={p.id}
                         className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
                         data-testid={`scorer-${p.id}`}
@@ -451,7 +452,7 @@ const AcademyGroupPage = () => {
                             <div className="w-full h-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>
                           )}
                         </div>
-                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</span>
+                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{formatAcademyDisplayName(p.name)}</span>
                         <span className="font-['Bebas_Neue'] text-xl text-[#F5A623]">{p.statistics?.goals || 0}</span>
                       </Link>
                     ))}
@@ -470,7 +471,7 @@ const AcademyGroupPage = () => {
                   <div className="space-y-2">
                     {topAssisters.map((p, i) => (
                       <Link
-                        to={`/player/${p.id}`}
+                        to={playerLink(p)}
                         key={p.id}
                         className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
                         data-testid={`assister-${p.id}`}
@@ -483,7 +484,7 @@ const AcademyGroupPage = () => {
                             <div className="w-full h-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>
                           )}
                         </div>
-                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</span>
+                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{formatAcademyDisplayName(p.name)}</span>
                         <span className="font-['Bebas_Neue'] text-xl text-[#F5A623]">{p.statistics?.assists || 0}</span>
                       </Link>
                     ))}
@@ -502,7 +503,7 @@ const AcademyGroupPage = () => {
                   <div className="space-y-2">
                     {mostAppearances.map((p, i) => (
                       <Link
-                        to={`/player/${p.id}`}
+                        to={playerLink(p)}
                         key={p.id}
                         className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
                         data-testid={`appearance-${p.id}`}
@@ -515,7 +516,7 @@ const AcademyGroupPage = () => {
                             <div className="w-full h-full flex items-center justify-center"><Users size={12} className="text-zinc-700" /></div>
                           )}
                         </div>
-                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{p.name}</span>
+                        <span className="flex-1 text-sm text-white group-hover:text-[#F5A623] transition-colors truncate">{formatAcademyDisplayName(p.name)}</span>
                         <span className="font-['Bebas_Neue'] text-xl text-[#F5A623]">{p.statistics?.appearances || 0}</span>
                       </Link>
                     ))}

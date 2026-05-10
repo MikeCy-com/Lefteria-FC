@@ -4,6 +4,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Users, MapPin, Clock, Trophy, Target, Shield, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
 import axios from "axios";
+import { playerLink } from "../utils/playerHelpers";
 
 const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -166,7 +167,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
                       <tr key={p.id} className="border-b border-[#1a1a1a] hover:bg-[#111] transition-colors">
                         <td className="p-3 text-zinc-500 font-medium">{p.number}</td>
                         <td className="p-3">
-                          <Link to={`/player/${p.id}`} className="flex items-center gap-3 hover:text-[#F5A623] transition-colors">
+                          <Link to={playerLink(p)} className="flex items-center gap-3 hover:text-[#F5A623] transition-colors">
                             <div className="w-8 h-8 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 flex items-center justify-center">
                               {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Users size={14} className="text-zinc-700" />}
                             </div>
@@ -360,7 +361,7 @@ const RosterTab = ({ players }) => {
                 return (
                   <tr key={p.id} className="border-b border-[#1a1a1a] hover:bg-[#111] transition-colors" data-testid={`roster-player-${p.id}`}>
                     <td className="p-2 sm:p-4">
-                      <Link to={`/player/${p.id}`} className="flex items-center gap-2 sm:gap-3 hover:text-[#F5A623] transition-colors">
+                      <Link to={playerLink(p)} className="flex items-center gap-2 sm:gap-3 hover:text-[#F5A623] transition-colors">
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 flex items-center justify-center">
                           {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Users size={16} className="text-zinc-700" />}
                         </div>
