@@ -242,3 +242,39 @@ ClubProfile model + admin tab now organized in 10 collapsible-card sections:
   - `/seasons/:archiveId` (ArchivedSeasonDetailPage) — snapshot detail with W/D/L summary, top scorers, recent results, full squad list
   - Footer link "Παλαιότερες Σεζόν" added.
 
+
+### 2026-02 — Charges/Billing System + Twilio SMS Settings
+**Charges (Billing per Player)**
+- New model `Charge` with types: training, event, grassroots, registration, equipment, tournament, transport, other. Status: pending / paid / overdue / cancelled. Fields include amount, due_date, season, period_label, payment method.
+- New model `ChargeTemplate` (catalog for reusable charges, e.g. "Φανέλα Προπόνησης €25").
+- Backend routes (`/app/backend/routes/charges.py`):
+  - CRUD: POST/GET/PUT/DELETE `/api/admin/charges`
+  - `/api/admin/charges/summary` — totals per status
+  - `/api/admin/charges/{id}/mark-paid` and `/mark-pending`
+  - **`/api/admin/charges/bulk-monthly`** — creates 1 charge per (player × month) in a date range with Greek month labels
+  - Template endpoints + `/from-template/{id}`
+  - Public **`/api/mobile/charges/{player_id}`** for parent app (balance + pending count + history)
+- Admin UI (`/app/frontend/src/pages/admin/ChargesTab.jsx`):
+  - 4 stat cards (Εκκρεμεί / Ληγμένη / Πληρωμένα / Συνολικά)
+  - Filters: status, type, player, search clear
+  - Color-coded type badges
+  - **Νέα Χρέωση** form (single)
+  - **Μηνιαίες Συνδρομές** modal: type, amount/month, from/to month pickers, due day, group filter (Α' Ομάδα / Ακαδημία / per-academy-group), multi-select player checklist with "Επιλογή Όλων", live preview of months + totals
+  - Mark Paid modal (amount, method: cash/bank/card/online/other, notes)
+- Parent Mobile App (`ParentDashboard.jsx`):
+  - New `ParentChargesCard` component, shown on home dashboard between Quick Stats and Επόμενος Αγώνας
+  - Displays total balance, count of pending charges; click expands per-child breakdown with pending list + paid history (collapsible)
+
+**Twilio SMS OTP Settings**
+- `ClubProfile` model extended with `twilio_account_sid`, `twilio_auth_token`, `twilio_from_number`, `sms_enabled`, plus optional per-team-type from numbers (`twilio_first_team_from`, `twilio_academy_from`).
+- Admin Sidebar `Ρυθμίσεις → SMS / OTP` with new `SmsSettingsTab`:
+  - Master "Ενεργοποίηση Twilio SMS" toggle
+  - Credentials inputs (Auth Token with show/hide), link to Twilio Console
+  - Optional separate From numbers per team type
+  - **Test Send** section: enter phone → triggers real `/mobile/auth/request-otp`, shows success/error inline (incl. simulated OTP code when not yet configured)
+- `routes/mobile_auth.py`:
+  - Replaced `_send_sms` with async `_send_sms_async` that reads creds from DB (`club.twilio_*` fields) with env fallback
+  - Routes role-specific from numbers: parent → academy from; coach/player/management → first_team from
+  - `otp_debug` is now only included in response when SMS is NOT actually enabled (real production won't leak codes)
+- `twilio==9.10.9` added to backend requirements.
+

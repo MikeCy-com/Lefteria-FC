@@ -648,5 +648,114 @@ const InfoRow = ({ label, value }) => (
   </div>
 );
 
+// ===================== Parent Charges Card =====================
+const ParentChargesCard = ({ children = [] }) => {
+  const { getHeaders } = useMobileAuth();
+  const [items, setItems] = useState([]); // [{player, data}]
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!children.length) { setLoading(false); return; }
+      try {
+        const results = await Promise.all(children.map(async (p) => {
+          try {
+            const res = await axios.get(`${API}/mobile/charges/${p.id}`, { headers: getHeaders() });
+            return { player: p, data: res.data };
+          } catch (e) { return { player: p, data: { balance: 0, pending_count: 0, charges: [], totals: {} } }; }
+        }));
+        if (active) setItems(results);
+      } finally { if (active) setLoading(false); }
+    })();
+    return () => { active = false; };
+  }, [children, getHeaders]);
+
+  const totalBalance = items.reduce((s, i) => s + (i.data.balance || 0), 0);
+  const totalPending = items.reduce((s, i) => s + (i.data.pending_count || 0), 0);
+
+  if (loading || items.length === 0) return null;
+  if (totalBalance === 0 && items.every(i => (i.data.charges || []).length === 0)) return null;
+
+  return (
+    <div className="mb-5" data-testid="parent-charges-card">
+      <div className="bg-[#111] border border-white/[0.06] rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="w-full px-4 py-3 flex items-center justify-between text-left"
+          data-testid="charges-card-toggle"
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${totalBalance > 0 ? "bg-[#F5A623]/15" : "bg-emerald-500/15"}`}>
+              {totalBalance > 0 ? <AlertCircle size={18} className="text-[#F5A623]" /> : <Check size={18} className="text-emerald-400" />}
+            </div>
+            <div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Πληρωμες</p>
+              <p className="text-sm text-white font-semibold">
+                {totalBalance > 0 ? `Εκκρεμη πληρωμη €${totalBalance.toFixed(2)}` : "Ολες οι πληρωμες ενημερωμενες"}
+              </p>
+              {totalPending > 0 && <p className="text-[10px] text-zinc-500 mt-0.5">{totalPending} εκκρεμη παραστατικα</p>}
+            </div>
+          </div>
+          <ChevronDown size={16} className={`text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        {open && (
+          <div className="border-t border-white/[0.04]">
+            {items.map(({ player, data }) => {
+              const pending = (data.charges || []).filter(c => c.status === "pending" || c.status === "overdue");
+              const paid = (data.charges || []).filter(c => c.status === "paid").slice(0, 5);
+              return (
+                <div key={player.id} className="px-4 py-3 border-b border-white/[0.04] last:border-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-white font-medium">{noAccent(player.name)}</p>
+                    <span className={`text-xs font-['Bebas_Neue'] ${data.balance > 0 ? "text-[#F5A623]" : "text-emerald-400"}`}>
+                      €{data.balance.toFixed(2)}
+                    </span>
+                  </div>
+                  {pending.length === 0 && <p className="text-[11px] text-emerald-400 flex items-center gap-1"><Check size={11} /> Καμια εκκρεμοτητα</p>}
+                  {pending.length > 0 && (
+                    <div className="space-y-1.5 mt-2">
+                      {pending.slice(0, 6).map(c => (
+                        <div key={c.id} className="flex items-center justify-between bg-[#0a0a0a] border border-white/[0.04] rounded-lg px-3 py-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] text-white truncate">{noAccent(c.description)}</p>
+                            <p className="text-[9px] text-zinc-600">
+                              {c.period_label && `${noAccent(c.period_label)} · `}
+                              {c.due_date && `Ληξη ${new Date(c.due_date).toLocaleDateString("el-GR")}`}
+                            </p>
+                          </div>
+                          <span className="font-['Bebas_Neue'] text-base text-[#F5A623] ml-2">€{c.amount.toFixed(2)}</span>
+                        </div>
+                      ))}
+                      {pending.length > 6 && <p className="text-[10px] text-zinc-500 text-center pt-1">+{pending.length - 6} ακομα</p>}
+                    </div>
+                  )}
+                  {paid.length > 0 && (
+                    <details className="mt-3">
+                      <summary className="text-[10px] text-zinc-500 cursor-pointer hover:text-zinc-300">
+                        Ιστορικο πληρωμων ({paid.length})
+                      </summary>
+                      <div className="space-y-1 mt-2">
+                        {paid.map(c => (
+                          <div key={c.id} className="flex items-center justify-between text-[10px] text-zinc-500">
+                            <span>✓ {noAccent(c.description)}</span>
+                            <span className="text-emerald-400">€{(c.paid_amount || c.amount).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default ParentDashboard;
 ;
