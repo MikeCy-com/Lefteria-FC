@@ -223,3 +223,176 @@ def setup_charges_routes(db, get_current_user):
                 "paid": round(sum(d.get("paid_amount", d.get("amount", 0)) for d in paid), 2),
             },
         }
+
+    # ============ PDF RECEIPTS ============
+    @router.get("/admin/charges/{charge_id}/receipt.pdf")
+    async def receipt_admin(charge_id: str, current_user: dict = Depends(get_current_user)):
+        from fastapi.responses import StreamingResponse
+        return await _build_receipt(db, charge_id)
+
+    @router.get("/mobile/charges/{charge_id}/receipt.pdf")
+    async def receipt_public(charge_id: str):
+        return await _build_receipt(db, charge_id)
+
+
+async def _build_receipt(db, charge_id: str):
+    """Generate a PDF receipt for a charge (paid only)."""
+    from fastapi.responses import StreamingResponse
+    charge = await db.charges.find_one({"id": charge_id}, {"_id": 0})
+    if not charge:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε")
+    if charge.get("status") != "paid":
+        raise HTTPException(status_code=400, detail="Διαθέσιμη μόνο για πληρωμένες χρεώσεις")
+
+    club = await db.club.find_one({"id": "club-profile"}, {"_id": 0}) or {}
+    player = await db.players.find_one({"id": charge.get("player_id")}, {"_id": 0}) or {}
+
+    # Build PDF
+    import io, os as _os
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    # Register a Unicode font that covers Greek
+    font_name = "Helvetica"
+    candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    ]
+    bold_candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    ]
+    reg_font = next((p for p in candidates if _os.path.exists(p)), None)
+    bold_font = next((p for p in bold_candidates if _os.path.exists(p)), reg_font)
+    if reg_font:
+        try:
+            pdfmetrics.registerFont(TTFont("GreekRegular", reg_font))
+            font_name = "GreekRegular"
+            if bold_font and bold_font != reg_font:
+                pdfmetrics.registerFont(TTFont("GreekBold", bold_font))
+                bold_name = "GreekBold"
+            else:
+                bold_name = font_name
+        except Exception:
+            bold_name = font_name
+    else:
+        bold_name = "Helvetica-Bold"
+
+    TYPE_GR = {
+        "training": "Προπονήσεις", "event": "Εκδήλωση", "grassroots": "Grassroots",
+        "registration": "Εγγραφή", "equipment": "Εξοπλισμός", "tournament": "Τουρνουά",
+        "transport": "Μεταφορά", "other": "Άλλο",
+    }
+    METHOD_GR = {"cash": "Μετρητά", "bank": "Τράπεζα", "card": "Κάρτα", "online": "Online", "other": "Άλλο"}
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    W, H = A4
+
+    # Header band
+    c.setFillColorRGB(0.96, 0.65, 0.14)  # #F5A623
+    c.rect(0, H - 30 * mm, W, 30 * mm, fill=1, stroke=0)
+    c.setFillColorRGB(0, 0, 0)
+    c.setFont(bold_name, 22)
+    c.drawString(20 * mm, H - 14 * mm, (club.get("greek_name") or club.get("name") or "LEFTERIA FC"))
+    c.setFont(font_name, 10)
+    c.drawString(20 * mm, H - 20 * mm, club.get("stadium") or "")
+    c.drawString(20 * mm, H - 24 * mm, f"{club.get('city') or ''} · {club.get('country') or ''}")
+    c.setFont(bold_name, 28)
+    c.drawRightString(W - 20 * mm, H - 18 * mm, "ΑΠΟΔΕΙΞΗ")
+
+    # Receipt meta
+    y = H - 45 * mm
+    c.setFillColorRGB(0, 0, 0)
+    c.setFont(font_name, 9)
+    c.setFillColorRGB(0.4, 0.4, 0.4)
+    c.drawString(20 * mm, y, "Αρ. Απόδειξης:")
+    c.drawString(110 * mm, y, "Ημερομηνία:")
+    y -= 5 * mm
+    c.setFillColorRGB(0, 0, 0)
+    c.setFont(bold_name, 11)
+    c.drawString(20 * mm, y, charge["id"][:8].upper())
+    pay_date = ""
+    if charge.get("paid_at"):
+        try:
+            pay_date = datetime.fromisoformat(charge["paid_at"].replace("Z", "+00:00")).strftime("%d/%m/%Y %H:%M")
+        except Exception:
+            pay_date = charge.get("paid_at", "")
+    c.drawString(110 * mm, y, pay_date)
+
+    # Player block
+    y -= 14 * mm
+    c.setStrokeColorRGB(0.85, 0.85, 0.85)
+    c.line(20 * mm, y, W - 20 * mm, y)
+    y -= 8 * mm
+    c.setFillColorRGB(0.4, 0.4, 0.4); c.setFont(font_name, 9)
+    c.drawString(20 * mm, y, "ΠΑΙΚΤΗΣ")
+    y -= 5 * mm
+    c.setFillColorRGB(0, 0, 0); c.setFont(bold_name, 13)
+    c.drawString(20 * mm, y, charge.get("player_name") or player.get("name") or "—")
+    y -= 5 * mm
+    c.setFont(font_name, 10); c.setFillColorRGB(0.4, 0.4, 0.4)
+    team_label = "Α' Ομάδα" if player.get("team_type") == "First Team" else "Ακαδημία"
+    c.drawString(20 * mm, y, team_label)
+
+    # Charge details box
+    y -= 14 * mm
+    c.setFillColorRGB(0.96, 0.96, 0.96)
+    c.rect(20 * mm, y - 35 * mm, W - 40 * mm, 35 * mm, fill=1, stroke=0)
+    c.setFillColorRGB(0, 0, 0)
+
+    yy = y - 7 * mm
+    c.setFont(font_name, 9); c.setFillColorRGB(0.4, 0.4, 0.4)
+    c.drawString(25 * mm, yy, "Περιγραφή")
+    c.setFont(bold_name, 11); c.setFillColorRGB(0, 0, 0)
+    c.drawString(25 * mm, yy - 5 * mm, charge.get("description", ""))
+
+    yy -= 13 * mm
+    c.setFont(font_name, 9); c.setFillColorRGB(0.4, 0.4, 0.4)
+    c.drawString(25 * mm, yy, "Τύπος")
+    c.drawString(90 * mm, yy, "Περίοδος")
+    c.drawString(150 * mm, yy, "Τρόπος Πληρωμής")
+    c.setFont(font_name, 11); c.setFillColorRGB(0, 0, 0)
+    c.drawString(25 * mm, yy - 5 * mm, TYPE_GR.get(charge.get("type"), charge.get("type") or "—"))
+    c.drawString(90 * mm, yy - 5 * mm, charge.get("period_label") or charge.get("season") or "—")
+    c.drawString(150 * mm, yy - 5 * mm, METHOD_GR.get(charge.get("payment_method"), charge.get("payment_method") or "—"))
+
+    # Amount total
+    y_amount = y - 45 * mm
+    c.setStrokeColorRGB(0.85, 0.85, 0.85)
+    c.line(20 * mm, y_amount, W - 20 * mm, y_amount)
+    y_amount -= 8 * mm
+    c.setFont(font_name, 11); c.setFillColorRGB(0.4, 0.4, 0.4)
+    c.drawString(110 * mm, y_amount, "Σύνολο:")
+    paid_amt = charge.get("paid_amount") or charge.get("amount", 0)
+    c.setFont(bold_name, 22); c.setFillColorRGB(0, 0, 0)
+    c.drawRightString(W - 20 * mm, y_amount, f"€{paid_amt:.2f}")
+
+    # Paid stamp
+    c.setFillColorRGB(0.06, 0.72, 0.51)
+    c.setFont(bold_name, 14)
+    c.drawString(20 * mm, y_amount, "✓ ΠΛΗΡΩΘΗΚΕ")
+
+    # Footer
+    c.setFillColorRGB(0.5, 0.5, 0.5)
+    c.setFont(font_name, 8)
+    footer_y = 25 * mm
+    c.drawString(20 * mm, footer_y, (club.get("name") or "LEFTERIA FC") + " · " + (club.get("email") or "") + " · " + (club.get("phone") or ""))
+    c.drawString(20 * mm, footer_y - 4 * mm, "Ευχαριστούμε για την υποστήριξή σας!")
+    if club.get("vat_number"):
+        c.drawString(20 * mm, footer_y - 8 * mm, f"ΑΦΜ: {club.get('vat_number')}")
+
+    c.showPage()
+    c.save()
+    buf.seek(0)
+    filename = f"receipt-{charge['id'][:8]}.pdf"
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

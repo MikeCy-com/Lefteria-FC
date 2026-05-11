@@ -6,7 +6,8 @@ import {
   MapPin, Archive, UserCog, Zap, RefreshCw, Activity, AlertCircle,
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
-  Euro, Video, Landmark, Upload, Handshake, Globe, Facebook, Instagram, Twitter, Youtube, Smartphone
+  Euro, Video, Landmark, Upload, Handshake, Globe, Facebook, Instagram, Twitter, Youtube, Smartphone,
+  Receipt, Download
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -177,6 +178,234 @@ const PlayerAttendanceStats = ({ playerId }) => {
   );
 };
 
+// ==================== PLAYER CHARGES SECTION ====================
+const PLAYER_CHARGE_TYPE_LABELS = {
+  training: "Προπονήσεις", event: "Εκδήλωση", grassroots: "Grassroots",
+  registration: "Εγγραφή", equipment: "Εξοπλισμός", tournament: "Τουρνουά",
+  transport: "Μεταφορά", other: "Άλλο",
+};
+
+const PlayerChargesSection = ({ playerId, playerName }) => {
+  const [charges, setCharges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [payCharge, setPayCharge] = useState(null);
+
+  const fetchCharges = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/admin/charges?player_id=${playerId}`, { headers: getAuthHeaders() });
+      setCharges(res.data || []);
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { fetchCharges(); }, [playerId]);
+
+  const pending = charges.filter(c => c.status === "pending" || c.status === "overdue");
+  const paid = charges.filter(c => c.status === "paid");
+  const totalPending = pending.reduce((s, c) => s + c.amount, 0);
+  const totalPaid = paid.reduce((s, c) => s + (c.paid_amount || c.amount), 0);
+
+  const downloadReceipt = async (chargeId) => {
+    try {
+      const res = await axios.get(`${API}/admin/charges/${chargeId}/receipt.pdf`, {
+        headers: getAuthHeaders(),
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = `Αποδειξη-${playerName.replace(/\s+/g, "-")}-${chargeId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) { alert("Σφάλμα κατά τη λήψη της απόδειξης"); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Διαγραφή χρέωσης;")) return;
+    await axios.delete(`${API}/admin/charges/${id}`, { headers: getAuthHeaders() });
+    fetchCharges();
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl p-5 mt-5" data-testid={`player-charges-${playerId}`}>
+      <button onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between mb-4 text-left">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#F5A623]/10 rounded-lg flex items-center justify-center">
+            <Receipt size={18} className="text-[#F5A623]" />
+          </div>
+          <div>
+            <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide">Χρεωσεις & Πληρωμες</h3>
+            <p className="text-[11px] text-zinc-500">
+              {pending.length > 0 ? <span className="text-[#F5A623]">€{totalPending.toFixed(2)} εκκρεμή</span> : <span className="text-emerald-400">Όλα πληρωμένα</span>}
+              {paid.length > 0 && <span className="text-zinc-500"> · €{totalPaid.toFixed(2)} ιστορικό</span>}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={(e) => { e.stopPropagation(); setShowForm(true); }} className="admin-btn-primary text-xs" data-testid="add-player-charge-btn">
+            <Plus size={12} /> Νέα Χρέωση
+          </button>
+          <ChevronDown size={14} className={`text-zinc-500 transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+
+      {expanded && (
+        <>
+          {charges.length === 0 ? (
+            <div className="text-center py-8 text-zinc-500 text-sm">
+              <Receipt size={28} className="mx-auto mb-2 text-zinc-700" />
+              <p>Δεν υπάρχουν χρεώσεις για αυτόν τον παίκτη.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left py-2">Τύπος</th>
+                    <th className="text-left py-2">Περιγραφή</th>
+                    <th className="text-right py-2">Ποσό</th>
+                    <th className="text-left py-2">Λήξη / Πληρώθηκε</th>
+                    <th className="text-left py-2">Status</th>
+                    <th className="text-right py-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {charges.map(c => {
+                    const isPaid = c.status === "paid";
+                    const isOverdue = !isPaid && c.due_date && new Date(c.due_date) < new Date();
+                    return (
+                      <tr key={c.id} className="border-t border-[#1a1a1a]" data-testid={`pcharge-${c.id}`}>
+                        <td className="py-2.5 text-xs text-zinc-400">{PLAYER_CHARGE_TYPE_LABELS[c.type] || c.type}</td>
+                        <td className="py-2.5 text-xs text-white">
+                          <div>{c.description}</div>
+                          {c.period_label && <div className="text-zinc-500 text-[10px]">{c.period_label}</div>}
+                        </td>
+                        <td className="py-2.5 text-right font-['Bebas_Neue'] text-base" style={{ color: isPaid ? "#10B981" : "#fff" }}>€{c.amount.toFixed(2)}</td>
+                        <td className="py-2.5 text-xs text-zinc-400">
+                          {isPaid ? (
+                            <span className="text-emerald-400">{c.paid_at ? new Date(c.paid_at).toLocaleDateString("el-GR") : ""} ({c.payment_method || "—"})</span>
+                          ) : (
+                            c.due_date ? new Date(c.due_date).toLocaleDateString("el-GR") : "—"
+                          )}
+                        </td>
+                        <td className="py-2.5">
+                          {isPaid && <span className="text-emerald-400 text-[11px] flex items-center gap-1"><Check size={10} /> Πληρώθηκε</span>}
+                          {!isPaid && isOverdue && <span className="text-red-400 text-[11px]">Ληγμένη</span>}
+                          {!isPaid && !isOverdue && <span className="text-[#F5A623] text-[11px]">Εκκρεμεί</span>}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <div className="flex gap-1 justify-end">
+                            {!isPaid && <button onClick={() => setPayCharge(c)} className="admin-icon-btn text-emerald-400 hover:text-emerald-300" title="Σήμανση πληρωμής"><Check size={12} /></button>}
+                            {isPaid && <button onClick={() => downloadReceipt(c.id)} className="admin-icon-btn" title="Λήψη Απόδειξης PDF" data-testid={`receipt-${c.id}`}><Download size={12} /></button>}
+                            <button onClick={() => handleDelete(c.id)} className="admin-icon-btn text-red-400/60 hover:text-red-400"><Trash2 size={12} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {showForm && (
+        <PlayerInlineChargeForm playerId={playerId} playerName={playerName} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); fetchCharges(); }} />
+      )}
+      {payCharge && (
+        <PlayerInlinePaymentModal charge={payCharge} onClose={() => setPayCharge(null)} onSaved={() => { setPayCharge(null); fetchCharges(); }} />
+      )}
+    </div>
+  );
+};
+
+const PlayerInlineChargeForm = ({ playerId, playerName, onClose, onSaved }) => {
+  const [form, setForm] = useState({ type: "training", description: "", amount: "", due_date: "", season: "2025/26", period_label: "" });
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    if (!form.description || !form.amount) { alert("Περιγραφή και ποσό είναι υποχρεωτικά"); return; }
+    setSaving(true);
+    try {
+      await axios.post(`${API}/admin/charges`, { ...form, player_id: playerId, amount: parseFloat(form.amount) }, { headers: getAuthHeaders() });
+      onSaved();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl w-full max-w-xl">
+        <div className="px-6 py-4 border-b border-[#262626] flex justify-between items-center">
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Νεα Χρεωση — {playerName}</h3>
+          <button onClick={onClose} className="admin-icon-btn"><X size={16} /></button>
+        </div>
+        <div className="p-6 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Τύπος">
+              <AdminSelect value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                {Object.entries(PLAYER_CHARGE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </AdminSelect>
+            </Field>
+            <Field label="Ποσό (€) *"><AdminInput type="number" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} /></Field>
+          </div>
+          <Field label="Περιγραφή *"><AdminInput value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Λήξη"><AdminInput type="date" value={form.due_date} onChange={e => setForm({...form, due_date: e.target.value})} /></Field>
+            <Field label="Σεζόν"><AdminInput value={form.season} onChange={e => setForm({...form, season: e.target.value})} /></Field>
+          </div>
+        </div>
+        <div className="px-6 py-3 border-t border-[#262626] flex justify-end gap-2">
+          <button onClick={onClose} className="admin-btn-ghost text-xs">Άκυρο</button>
+          <button onClick={save} disabled={saving} className="admin-btn-primary"><Save size={14} /> Αποθήκευση</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PlayerInlinePaymentModal = ({ charge, onClose, onSaved }) => {
+  const [paid_amount, setPaidAmount] = useState(charge.amount);
+  const [payment_method, setPaymentMethod] = useState("cash");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axios.post(`${API}/admin/charges/${charge.id}/mark-paid`, { paid_amount: parseFloat(paid_amount), payment_method, notes: notes || null }, { headers: getAuthHeaders() });
+      onSaved();
+    } catch (e) { alert(e.response?.data?.detail || "Σφάλμα"); } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl w-full max-w-md">
+        <div className="px-6 py-4 border-b border-[#262626] flex justify-between items-center">
+          <h3 className="font-['Bebas_Neue'] text-xl text-[#F5A623]">Πληρωμη Χρεωσης</h3>
+          <button onClick={onClose} className="admin-icon-btn"><X size={16} /></button>
+        </div>
+        <div className="p-6 space-y-3">
+          <p className="text-zinc-400 text-sm">{charge.description}</p>
+          <p className="text-[#F5A623] font-['Bebas_Neue'] text-3xl">€{charge.amount.toFixed(2)}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Πληρωμένο (€)"><AdminInput type="number" step="0.01" value={paid_amount} onChange={e => setPaidAmount(e.target.value)} /></Field>
+            <Field label="Μέθοδος">
+              <AdminSelect value={payment_method} onChange={e => setPaymentMethod(e.target.value)}>
+                <option value="cash">Μετρητά</option><option value="bank">Τράπεζα</option><option value="card">Κάρτα</option><option value="online">Online</option><option value="other">Άλλο</option>
+              </AdminSelect>
+            </Field>
+          </div>
+          <Field label="Σημειώσεις"><AdminTextarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} /></Field>
+        </div>
+        <div className="px-6 py-3 border-t border-[#262626] flex justify-end gap-2">
+          <button onClick={onClose} className="admin-btn-ghost text-xs">Άκυρο</button>
+          <button onClick={save} disabled={saving} className="admin-btn-primary"><Check size={14} /> Καταχώρηση</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // ==================== ADMIN PLAYER PROFILE VIEW ====================
 const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) => {
   const [editing, setEditing] = useState(false);
@@ -322,6 +551,9 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
 
         {/* Attendance Stats */}
         <PlayerAttendanceStats playerId={player.id} />
+
+        {/* Charges / Billing history */}
+        <PlayerChargesSection playerId={player.id} playerName={player.name} />
         </>
       ) : (
         <div className="bg-[#121212] border border-[#262626] rounded-xl p-6 lg:p-8" data-testid="player-edit-form">
@@ -1393,6 +1625,7 @@ const FixturesTab = ({ fixtures, opponents = [], facilities = [], players = [], 
   const [editFixture, setEditFixture] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showOpponentModal, setShowOpponentModal] = useState(false);
+  const [showCsvImport, setShowCsvImport] = useState(false);
   const [oppForm, setOppForm] = useState({ name: "", logo_url: "", venue: "", location: "", location_url: "" });
   const [oppSaving, setOppSaving] = useState(false);
   const [expandedFixtureId, setExpandedFixtureId] = useState(null);
@@ -1458,6 +1691,7 @@ const FixturesTab = ({ fixtures, opponents = [], facilities = [], players = [], 
     <div data-testid="admin-fixtures-tab">
       <TabHeader title={scope === "first_team" ? "Πρόγραμμα Α' Ομάδας" : "Αγώνες"} count={scopedFixtures.length}>
         <button onClick={() => setShowOpponentModal(true)} className="admin-btn-ghost text-xs" data-testid="manage-opponents-btn"><Plus size={12} /> Αντίπαλος</button>
+        <button onClick={() => setShowCsvImport(true)} className="admin-btn-ghost text-xs" data-testid="bulk-import-fixtures-btn"><Upload size={12} /> Μαζική Εισαγωγή</button>
         <button onClick={openCreate} className="admin-btn-primary" data-testid="add-fixture-btn"><Plus size={14} /> Νέος Αγώνας</button>
       </TabHeader>
       <div className="space-y-2" data-testid="admin-fixtures-list">
@@ -1564,6 +1798,189 @@ const FixturesTab = ({ fixtures, opponents = [], facilities = [], players = [], 
           <Field label="Google Maps"><AdminInput value={oppForm.location_url} onChange={e => setOppForm({...oppForm, location_url: e.target.value})} placeholder="https://maps.google.com/..." /></Field>
         </FormModal>
       )}
+      {showCsvImport && (
+        <FixturesCsvImport
+          scope={scope}
+          opponents={scopedOpponents}
+          facilities={scopedFacilities}
+          onClose={() => setShowCsvImport(false)}
+          onImported={() => { setShowCsvImport(false); onRefresh(); }}
+        />
+      )}
+    </div>
+  );
+};
+
+// ==================== FIXTURES CSV IMPORT ====================
+const FixturesCsvImport = ({ scope, opponents = [], facilities = [], onClose, onImported }) => {
+  const [csv, setCsv] = useState("");
+  const [season, setSeason] = useState("2025/26");
+  const [competition, setCompetition] = useState("");
+  const [parsed, setParsed] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [results, setResults] = useState(null);
+
+  // Parse CSV preview
+  useEffect(() => {
+    if (!csv.trim()) { setParsed([]); return; }
+    const lines = csv.trim().split(/\r?\n/).filter(Boolean);
+    const rows = [];
+    for (const line of lines) {
+      // Split CSV — support comma OR tab OR semicolon
+      const parts = line.split(/[,;\t]/).map(p => p.trim().replace(/^"|"$/g, ""));
+      if (parts.length < 4) continue;
+      const [date, time, home, away, comp, venue, status] = parts;
+      // Skip header row
+      if (date.toLowerCase().startsWith("date") || date.startsWith("ημερ")) continue;
+      rows.push({
+        match_date: date,
+        match_time: time || "",
+        home_team: home,
+        away_team: away,
+        competition: comp || competition,
+        venue: venue || "",
+        status: status || "Scheduled",
+        season,
+      });
+    }
+    setParsed(rows);
+  }, [csv, season, competition]);
+
+  const validate = (row) => {
+    if (!row.match_date || !row.home_team || !row.away_team) return "Λείπει απαιτούμενο πεδίο";
+    if (isNaN(Date.parse(row.match_date))) return "Μη έγκυρη ημερομηνία";
+    return null;
+  };
+
+  const doImport = async () => {
+    if (parsed.length === 0) { alert("Δεν υπάρχουν γραμμές για εισαγωγή"); return; }
+    if (!window.confirm(`Εισαγωγή ${parsed.length} αγώνων;`)) return;
+    setImporting(true);
+    const results = { created: 0, failed: 0, errors: [] };
+    try {
+      for (const row of parsed) {
+        const err = validate(row);
+        if (err) { results.failed += 1; results.errors.push(`${row.match_date} ${row.home_team} vs ${row.away_team}: ${err}`); continue; }
+        // Try matching opponent/venue by name (case-insensitive)
+        const opp = opponents.find(o => o.name.toLowerCase() === row.away_team.toLowerCase());
+        const venue = facilities.find(f => f.name.toLowerCase() === (row.venue || "").toLowerCase());
+        const payload = {
+          home_team: row.home_team || "LEFTERIA FC",
+          home_team_logo: "",
+          away_team: row.away_team,
+          away_team_logo: opp?.logo_url || "",
+          match_date: row.match_date,
+          match_time: row.match_time,
+          venue: row.venue,
+          venue_id: venue?.id,
+          location_url: venue?.location_url || opp?.location_url || "",
+          competition: row.competition,
+          season: row.season,
+          opponent_id: opp?.id,
+          status: row.status,
+        };
+        try {
+          await axios.post(`${API}/admin/fixtures`, payload, { headers: getAuthHeaders() });
+          results.created += 1;
+        } catch (e) {
+          results.failed += 1;
+          results.errors.push(`${row.match_date} ${row.home_team}: ${e.response?.data?.detail || "Σφάλμα"}`);
+        }
+      }
+      setResults(results);
+      if (results.created > 0 && results.failed === 0) {
+        setTimeout(() => onImported(), 1200);
+      }
+    } finally { setImporting(false); }
+  };
+
+  const sampleCsv = `Ημερομηνία,Ώρα,Γηπεδούχος,Φιλοξενούμενος,Διοργάνωση,Γήπεδο,Status
+2025-09-21,17:00,LEFTERIA FC,APOEL,ΠΑΑΟΚ Α' Όμιλος,Γήπεδο Αετού,Scheduled
+2025-09-28,16:30,Anorthosis,LEFTERIA FC,ΠΑΑΟΚ Α' Όμιλος,Antonis Papadopoulos Stadium,Scheduled
+2025-10-05,17:00,LEFTERIA FC,Apollon,ΠΑΑΟΚ Α' Όμιλος,Γήπεδο Αετού,Scheduled`;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-[#262626] flex justify-between items-center">
+          <div>
+            <h3 className="font-['Bebas_Neue'] text-2xl text-[#F5A623] tracking-wide">Μαζικη Εισαγωγη Αγωνων</h3>
+            <p className="text-zinc-500 text-xs mt-1">Επικόλληση CSV — Ημερομηνία, Ώρα, Γηπεδούχος, Φιλοξενούμενος, Διοργάνωση, Γήπεδο, Status</p>
+          </div>
+          <button onClick={onClose} className="admin-icon-btn"><X size={16} /></button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Default Σεζόν"><AdminInput value={season} onChange={e => setSeason(e.target.value)} placeholder="2025/26" /></Field>
+            <Field label="Default Διοργάνωση"><AdminInput value={competition} onChange={e => setCompetition(e.target.value)} placeholder="ΠΑΑΟΚ Α' Όμιλος" /></Field>
+          </div>
+
+          <Field label="CSV Δεδομένα">
+            <AdminTextarea
+              rows={8}
+              value={csv}
+              onChange={e => setCsv(e.target.value)}
+              placeholder={sampleCsv}
+              className="font-mono text-xs"
+              data-testid="csv-input"
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">
+              Δεκτοί διαχωριστές: comma (,) / semicolon (;) / tab. Η πρώτη γραμμή τίτλων αγνοείται. Ημερομηνία σε μορφή <code>YYYY-MM-DD</code>.
+            </p>
+          </Field>
+
+          <div className="flex gap-2">
+            <button onClick={() => setCsv(sampleCsv)} className="admin-btn-ghost text-xs" data-testid="load-sample-csv">📋 Φόρτωση Δείγματος</button>
+          </div>
+
+          {parsed.length > 0 && (
+            <div className="bg-[#0d0d0d] border border-[#1e1e1e] rounded p-3">
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-2">Προεπισκοπηση ({parsed.length} αγωνες)</p>
+              <div className="max-h-60 overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-zinc-600 text-[10px]">
+                    <tr><th className="text-left py-1">Ημ/νία</th><th className="text-left py-1">Ώρα</th><th className="text-left py-1">Αγώνας</th><th className="text-left py-1">Διοργάνωση</th><th className="text-left py-1">Γήπεδο</th></tr>
+                  </thead>
+                  <tbody>
+                    {parsed.map((r, i) => {
+                      const err = validate(r);
+                      return (
+                        <tr key={i} className={`border-t border-[#1a1a1a] ${err ? "bg-red-500/10" : ""}`}>
+                          <td className="py-1 text-zinc-300">{r.match_date}</td>
+                          <td className="py-1 text-zinc-500">{r.match_time}</td>
+                          <td className="py-1 text-white">{r.home_team} <span className="text-zinc-500">vs</span> {r.away_team}</td>
+                          <td className="py-1 text-zinc-500">{r.competition || "—"}</td>
+                          <td className="py-1 text-zinc-500">{r.venue || "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {results && (
+            <div className={`rounded p-3 text-xs ${results.failed === 0 ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300" : "bg-[#F5A623]/10 border border-[#F5A623]/30 text-[#F5A623]"}`}>
+              <p className="font-medium">Εισήχθησαν: {results.created} · Απέτυχαν: {results.failed}</p>
+              {results.errors.length > 0 && (
+                <ul className="mt-2 space-y-0.5 list-disc list-inside opacity-80">
+                  {results.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                  {results.errors.length > 5 && <li>... και {results.errors.length - 5} ακόμα</li>}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-3 border-t border-[#262626] flex justify-end gap-2">
+          <button onClick={onClose} className="admin-btn-ghost text-xs">Άκυρο</button>
+          <button onClick={doImport} disabled={importing || parsed.length === 0} className="admin-btn-primary" data-testid="csv-import-btn">
+            {importing ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />} Εισαγωγή ({parsed.length})
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
