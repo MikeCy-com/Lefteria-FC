@@ -278,3 +278,43 @@ ClubProfile model + admin tab now organized in 10 collapsible-card sections:
   - `otp_debug` is now only included in response when SMS is NOT actually enabled (real production won't leak codes)
 - `twilio==9.10.9` added to backend requirements.
 
+
+### 2026-02 — Player Charges History, PDF Receipts, Bulk Fixture CSV Import
+**Player Charges Section (AdminPlayerProfile)**
+- New `PlayerChargesSection` component shown on each player's admin profile, right after Attendance Stats.
+- Shows: collapse toggle with balance summary ("€X εκκρεμή" / "Όλα πληρωμένα"), table of all charges (type, description, amount, due/paid date, status, actions).
+- Inline "Νέα Χρέωση" button + form (single charge for this player).
+- Per-row actions: Mark Paid (with method modal), Download Receipt PDF (paid only), Delete.
+
+**PDF Receipts**
+- `reportlab==4.5.0` added to requirements.
+- New backend endpoints (`routes/charges.py`):
+  - `GET /api/admin/charges/{id}/receipt.pdf` — admin auth required
+  - `GET /api/mobile/charges/{id}/receipt.pdf` — public (parent app)
+- `_build_receipt()` generates a professional A4 PDF with:
+  - Orange header band with club Greek name + stadium + city
+  - Receipt number (first 8 chars of UUID, uppercase) + paid date/time
+  - ΠΑΙΚΤΗΣ block (full name + team type label "Α' Ομάδα" / "Ακαδημία")
+  - Grey details box: Περιγραφή / Τύπος (Greek labels for all 8 types) / Περίοδος / Τρόπος Πληρωμής (Greek)
+  - Large €amount with green "✓ ΠΛΗΡΩΘΗΚΕ" stamp
+  - Footer with club name, email, phone, VAT, thank-you message
+- Registers `DejaVuSans` TTF so Greek characters render correctly (analyzed PDF confirms 100% rendering).
+- Frontend: download button on every paid charge row in PlayerChargesSection.
+
+**Bulk Fixture CSV Import**
+- New `FixturesCsvImport` modal opened from FixturesTab "Μαζική Εισαγωγή" button (next to Νέος Αγώνας).
+- Accepts comma / semicolon / tab-separated input with columns: `Ημερομηνία, Ώρα, Γηπεδούχος, Φιλοξενούμενος, Διοργάνωση, Γήπεδο, Status`.
+- Live preview table with row-level validation (highlights rows with errors in red).
+- Auto-matches opponent name → opponent_id + logo + location_url; same for venue → venue_id.
+- Inherits scope-aware filtering (first-team-only opponents/venues).
+- "Φόρτωση Δείγματος" loads a 3-row Greek sample.
+- Default Σεζόν + Διοργάνωση inputs to set per-import defaults.
+- After import: results panel with success/failure counts and per-row errors list.
+
+### Pending Backlog
+- Stripe payment links on unpaid charges (parent self-serve)
+- Open Graph tags for news/player share previews
+- Video uploads in gallery
+- AI match-report narratives
+- English language toggle
+
