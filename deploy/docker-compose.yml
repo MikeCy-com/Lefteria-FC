@@ -1,14 +1,40 @@
 version: "3.8"
 
+# ============================================================================
+# LEFTERIA FC — Hostinger Docker Manager + Traefik deployment
+# ----------------------------------------------------------------------------
+# • All public traffic enters via Hostinger's shared Traefik (network: traefik-proxy)
+# • Traefik terminates SSL (Let's Encrypt) and forwards to the frontend container
+# • Nginx inside the frontend container proxies /api/* → backend on port 8001
+# • Mongo is internal only (no public port)
+#
+# Required external resources on the VPS:
+#   - Docker network: traefik-proxy (already created by Hostinger)
+#   - DNS: lefteriafc.cy + www.lefteriafc.cy → VPS public IP
+#
+# Environment variables (set in Hostinger Docker Manager → Variables OR a `.env`
+# file beside this docker-compose.yml):
+#   COMPOSE_PROJECT_NAME=lefteriafc
+#   DOMAIN=lefteriafc.cy
+#   DOMAIN_URL=https://lefteriafc.cy
+#   JWT_SECRET=<long-random-string>
+#   ADMIN_USERNAME=Lefteria FC
+#   ADMIN_PASSWORD=<your-secure-password>
+#   VAPID_PUBLIC_KEY=<vapid-pub>
+#   VAPID_PRIVATE_KEY=<vapid-priv>
+#   VAPID_CONTACT=mailto:admin@lefteriafc.cy
+# ============================================================================
+
 services:
   mongodb:
     image: mongo:7
-    container_name: lefteria-mongo
+    container_name: ${COMPOSE_PROJECT_NAME:-lefteriafc}-mongo
     restart: always
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
+    # Internal-only — no port exposure to the public host.
+    networks:
+      - lefteriafc-internal
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh --quiet
       interval: 10s
@@ -19,14 +45,12 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: lefteria-backend
+    container_name: ${COMPOSE_PROJECT_NAME:-lefteriafc}-backend
     restart: always
-    ports:
-      - "8001:8001"
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=lefteria_fc
-      - CORS_ORIGINS=*
+      - CORS_ORIGINS=https://${DOMAIN:-lefteriafc.cy},https://www.${DOMAIN:-lefteriafc.cy}
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
@@ -35,6 +59,8 @@ services:
       - VAPID_CONTACT=${VAPID_CONTACT}
     volumes:
       - uploads_data:/app/uploads
+    networks:
+      - lefteriafc-internal
     depends_on:
       mongodb:
         condition: service_healthy
@@ -44,18 +70,46 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_BACKEND_URL=${DOMAIN_URL}
+        - REACT_APP_BACKEND_URL=${DOMAIN_URL:-https://lefteriafc.cy}
         - REACT_APP_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
-    container_name: lefteria-frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-lefteriafc}-frontend
     restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - lefteriafc-internal
+      - traefik-proxy
     depends_on:
       - backend
+    labels:
+      # ---- Traefik routing ----
+      - traefik.enable=true
+      - traefik.docker.network=traefik-proxy
+
+      # HTTP → HTTPS redirect router
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-http.rule=Host(`${DOMAIN:-lefteriafc.cy}`) || Host(`www.${DOMAIN:-lefteriafc.cy}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-http.entrypoints=web
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-http.middlewares=${COMPOSE_PROJECT_NAME:-lefteriafc}-redirect
+
+      # Secure HTTPS router with Let's Encrypt
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-secure.rule=Host(`${DOMAIN:-lefteriafc.cy}`) || Host(`www.${DOMAIN:-lefteriafc.cy}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-secure.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-secure.tls=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-lefteriafc}-secure.tls.certresolver=letsencrypt
+
+      # Backing service — nginx inside the frontend container listens on 80
+      - traefik.http.services.${COMPOSE_PROJECT_NAME:-lefteriafc}.loadbalancer.server.port=80
+
+      # Redirect middleware: HTTP → HTTPS
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME:-lefteriafc}-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME:-lefteriafc}-redirect.redirectscheme.permanent=true
 
 volumes:
   mongo_data:
   uploads_data:
+
+networks:
+  # Shared with Hostinger's Traefik instance
+  traefik-proxy:
+    external: true
+  # Private network for backend ↔ mongo ↔ frontend internal proxy
+  lefteriafc-internal:
+    driver: bridge

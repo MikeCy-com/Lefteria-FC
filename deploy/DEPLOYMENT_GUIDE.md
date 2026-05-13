@@ -1,164 +1,108 @@
-# Lefteria FC - Deployment Guide
-# Hostinger VPS KVM 1 + Docker + Ubuntu 24.04
+# Lefteria FC — Hostinger Docker Manager Deployment Guide
 
-## Step 1: Access Your VPS
+This guide assumes your VPS uses **Hostinger Docker Manager** with the shared **Traefik** reverse proxy (default setup). Traefik handles SSL automatically via Let's Encrypt.
 
-After setting up your Hostinger VPS with Docker Ubuntu 24.04:
+## 1. Prerequisites on Hostinger VPS
 
-```
-ssh root@YOUR_VPS_IP
-```
+✅ Hostinger Docker Manager is enabled.
+✅ Traefik is running (Hostinger sets this up automatically).
+✅ A Docker network named **`traefik-proxy`** exists (it does on Hostinger by default).
+✅ DNS: `lefteriafc.cy` and `www.lefteriafc.cy` → your VPS public IP (A records).
 
-## Step 2: Upload Project Files
-
-From your local machine, upload the deploy folder:
-
-```
-scp -r deploy/* root@YOUR_VPS_IP:/root/lefteria-fc/
+Verify:
+```bash
+docker network ls | grep traefik-proxy
 ```
 
-Or use FileZilla/WinSCP to upload all files to `/root/lefteria-fc/`
-
-Your folder structure should be:
-```
-/root/lefteria-fc/
-  docker-compose.yml
-  deploy.sh
-  .env.example
-  backend/
-    Dockerfile
-    server.py
-    models.py
-    database.py
-    auth.py
-    routes/
-    requirements.txt
-  frontend/
-    Dockerfile
-    nginx.conf
-    src/
-    public/
-    package.json
-    yarn.lock
-    tailwind.config.js
+If missing (rare on Hostinger), create it:
+```bash
+docker network create traefik-proxy
 ```
 
-## Step 3: Configure Environment
+## 2. Pull the latest code
 
 ```bash
-cd /root/lefteria-fc
-
-# Create .env from example
-cp .env.example .env
-
-# Edit .env - IMPORTANT: set your domain/IP
-nano .env
+cd /docker/lefteriafc
+git pull origin main
 ```
 
-Change `DOMAIN_URL=http://YOUR_VPS_IP` to your actual VPS IP, e.g.:
-```
-DOMAIN_URL=http://123.45.67.89
-```
+## 3. Create `.env` beside `docker-compose.yml`
 
-If you have a domain name later:
-```
-DOMAIN_URL=https://lefteriafc.com
-```
-
-## Step 4: Deploy
-
+Copy the example and edit:
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+cp deploy/.env.example deploy/.env
+nano deploy/.env
 ```
 
-That's it! The script will:
-1. Build the backend (Python/FastAPI)
-2. Build the frontend (React -> Nginx)
-3. Start MongoDB
-4. Start everything
+Required values:
+- `JWT_SECRET` — long random string (`openssl rand -hex 64`)
+- `ADMIN_PASSWORD` — your admin login password
+- `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` — for push notifications (`npx web-push generate-vapid-keys`)
 
-## Step 5: Verify
+## 4. Build & deploy
 
-Open your browser:
-- Website: `http://YOUR_VPS_IP`
-- Admin: `http://YOUR_VPS_IP/admin`
-- Mobile App: `http://YOUR_VPS_IP/app`
-
----
-
-## Adding a Domain Name (Optional)
-
-1. Buy a domain (e.g. lefteriafc.com)
-2. In your domain DNS settings, add an A record:
-   - Type: A
-   - Name: @ 
-   - Value: YOUR_VPS_IP
-3. Update `.env`:
-   ```
-   DOMAIN_URL=https://lefteriafc.com
-   ```
-4. Rebuild: `docker compose up -d --build`
-
-## Adding SSL/HTTPS (Optional, after domain setup)
-
+From the **`deploy/`** folder (where docker-compose.yml lives):
 ```bash
-# Install certbot
-apt install certbot
-certbot certonly --standalone -d lefteriafc.com
-
-# Copy certs
-mkdir -p /root/lefteria-fc/nginx/ssl
-cp /etc/letsencrypt/live/lefteriafc.com/fullchain.pem /root/lefteria-fc/nginx/ssl/
-cp /etc/letsencrypt/live/lefteriafc.com/privkey.pem /root/lefteria-fc/nginx/ssl/
+cd /docker/lefteriafc/deploy
+docker compose --env-file .env up -d --build
 ```
 
-Then update `frontend/nginx.conf` to add HTTPS server block.
-
----
-
-## Useful Commands
-
+Watch logs:
 ```bash
-# View all logs
 docker compose logs -f
-
-# View backend logs only
-docker compose logs -f backend
-
-# Restart everything
-docker compose restart
-
-# Stop everything
-docker compose down
-
-# Rebuild and restart (after code changes)
-docker compose up -d --build
-
-# Backup MongoDB
-docker exec lefteria-mongo mongodump --out /dump
-docker cp lefteria-mongo:/dump ./backup_$(date +%Y%m%d)
-
-# Restore MongoDB
-docker cp ./backup_folder lefteria-mongo:/dump
-docker exec lefteria-mongo mongorestore /dump
 ```
+
+Wait until you see `Application startup complete.` (backend) and the frontend nginx ready.
+
+## 5. Verify Traefik routing
+
+```bash
+docker network inspect traefik-proxy | grep -A2 lefteriafc-frontend
+```
+
+Visit:
+- **https://lefteriafc.cy** → public site
+- **https://lefteriafc.cy/admin/login** → admin panel
+
+Traefik automatically requests a Let's Encrypt SSL cert the first time (allow ~30 seconds).
+
+## 6. One-time seed (Academy opponents/fields from preview)
+
+```bash
+docker compose exec backend python /app/deploy/seed_academy_data.py
+```
+
+## 7. Updating later
+
+Whenever code changes:
+```bash
+cd /docker/lefteriafc
+git pull origin main
+cd deploy
+docker compose --env-file .env up -d --build
+```
+
+Mongo data is **preserved** because it lives on the `mongo_data` Docker volume.
 
 ## Troubleshooting
 
-**Port 80 already in use:**
-```bash
-sudo systemctl stop apache2   # if Apache is running
-sudo systemctl disable apache2
-```
+### 404 / "default backend"
+- Make sure the frontend container is on the **`traefik-proxy`** network: `docker inspect lefteriafc-frontend --format '{{json .NetworkSettings.Networks}}'`
+- Check Traefik picks up the labels: `docker logs <traefik-container> 2>&1 | grep lefteriafc`
+- DNS must resolve to the VPS IP: `dig lefteriafc.cy`
 
-**Backend not connecting to MongoDB:**
-```bash
-docker compose logs backend    # check error
-docker compose restart backend
-```
+### SSL cert not issued
+- Hostinger's Traefik uses `letsencrypt` as the certresolver name (matches our config).
+- Let's Encrypt rate-limits after too many requests — wait 1 hour before retrying.
+- Make sure port 80 + 443 are open on the VPS firewall (Hostinger has them open by default).
 
-**Out of disk space:**
+### Backend not reachable from frontend
+- Both containers must share the `lefteriafc-internal` network (they do automatically per the compose file).
+- Inside the frontend container, the backend is reachable as `http://backend:8001`.
+
+### Reset Mongo (DESTRUCTIVE)
 ```bash
-docker system prune -a    # clean unused images
+docker compose down
+docker volume rm deploy_mongo_data    # name = <project>_mongo_data
+docker compose --env-file .env up -d --build
 ```
