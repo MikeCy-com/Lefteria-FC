@@ -82,20 +82,34 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-proxy"
 
-      # ---- HTTPS router (Hostinger Traefik defaults: entrypoint websecure, resolver letsencrypt) ----
-      # NOTE: per Hostinger docs we do NOT set `tls=true` — using only `tls.certresolver`
-      # lets Let's Encrypt issue a real cert instead of a self-signed fallback.
-      - "traefik.http.routers.lefteriafc.rule=Host(`lefteriafc.cy`) || Host(`www.lefteriafc.cy`)"
-      - "traefik.http.routers.lefteriafc.entrypoints=websecure"
-      - "traefik.http.routers.lefteriafc.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.lefteriafc.service=lefteriafc"
+      # ============================================================
+      # HTTPS routers — one router per host (Traefik v3 safe pattern)
+      # Hostinger Traefik defaults: entrypoint=websecure, resolver=letsencrypt
+      # We do NOT set `tls=true` — only `tls.certresolver` so Let's Encrypt
+      # issues a real cert instead of a self-signed fallback.
+      # ============================================================
+      - "traefik.http.routers.lefteriafc-apex.rule=Host(`lefteriafc.cy`)"
+      - "traefik.http.routers.lefteriafc-apex.entrypoints=websecure"
+      - "traefik.http.routers.lefteriafc-apex.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lefteriafc-apex.service=lefteriafc"
 
-      # ---- HTTP → HTTPS redirect router ----
-      - "traefik.http.routers.lefteriafc-http.rule=Host(`lefteriafc.cy`) || Host(`www.lefteriafc.cy`)"
-      - "traefik.http.routers.lefteriafc-http.entrypoints=web"
-      - "traefik.http.routers.lefteriafc-http.middlewares=lefteriafc-redirect"
+      - "traefik.http.routers.lefteriafc-www.rule=Host(`www.lefteriafc.cy`)"
+      - "traefik.http.routers.lefteriafc-www.entrypoints=websecure"
+      - "traefik.http.routers.lefteriafc-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lefteriafc-www.service=lefteriafc"
 
-      # ---- Redirect middleware ----
+      # ============================================================
+      # HTTP → HTTPS redirect routers (one per host)
+      # ============================================================
+      - "traefik.http.routers.lefteriafc-apex-http.rule=Host(`lefteriafc.cy`)"
+      - "traefik.http.routers.lefteriafc-apex-http.entrypoints=web"
+      - "traefik.http.routers.lefteriafc-apex-http.middlewares=lefteriafc-redirect"
+
+      - "traefik.http.routers.lefteriafc-www-http.rule=Host(`www.lefteriafc.cy`)"
+      - "traefik.http.routers.lefteriafc-www-http.entrypoints=web"
+      - "traefik.http.routers.lefteriafc-www-http.middlewares=lefteriafc-redirect"
+
+      # ---- Redirect middleware (shared) ----
       - "traefik.http.middlewares.lefteriafc-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.lefteriafc-redirect.redirectscheme.permanent=true"
 
