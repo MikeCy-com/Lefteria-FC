@@ -1,320 +1,90 @@
-# Lefteria FC - Football Club CMS & Public Website
+# Lefteria FC — Product Requirements & Status
 
 ## Original Problem Statement
-Complete football club CMS and public website for "Lefteria FC". Fully functioning CMS + Public facing club hub, entirely in Greek. Mobile PWA with Role-based OTP login. Mobile PWA redesigned with premium dark-mode card-based UI inspired by 3 soccer app design references.
+Complete football club CMS + public website for **Lefteria FC**, including:
+- Centralized Team Hub, Player Profiles, Match Reports, Academy Management
+- Season statistics and archives
+- Comprehensive club management tools (Admin CMS)
+- Mobile PWA app with role-based OTP login
+- Frontend UI strictly in **Greek** (no accents on uppercase Greek)
+- Production deployment on Hostinger VPS via Docker + Traefik
 
-## Architecture
-- **Frontend**: React, Tailwind CSS, PWA
+## Tech Stack
+- **Frontend**: React + Tailwind CSS, PWA setup
 - **Backend**: FastAPI, MongoDB (Motor), PyJWT
-- **Auth**: JWT Admin/Customer + Role-based OTP Mobile (Twilio mocked)
+- **Integrations**: `reportlab` (PDF receipts), `twilio` (SMS — configurable via Admin UI), Web Push (native VAPID)
+- **Deployment**: Docker, Docker Compose, Traefik reverse proxy, Nginx
 
-## Key Constraints
-- All UI text in **Greek**, ALL CAPS text without accent marks
-- Academy age groups: **U6 to U12** only
-- Currency: **Euro** symbol
-- OTP via Twilio is **mocked**
-- Mobile PWA uses ONLY bottom navigation (5 tabs, no top tabs)
-- Global `pb-36` padding on mobile container prevents badge overlap
+## Code Architecture
+```
+/app/
+├── backend/
+│   ├── server.py
+│   ├── models.py
+│   ├── routes/
+│   │   ├── mobile_auth.py
+│   │   └── charges.py
+│   └── tests/
+├── frontend/
+│   ├── src/
+│   │   ├── App.js
+│   │   ├── pages/
+│   │   │   ├── NewsArticlePage.jsx
+│   │   │   └── PastSeasonsPage.jsx
+│   │   ├── admin/
+│   │   │   └── ChargesTab.jsx
+│   │   ├── mobile/
+│   │   └── components/
+│   │       └── SponsorSpotlight.jsx
+└── deploy/
+    ├── docker-compose.yml         # Traefik v3 — 4-router pattern (apex+www × https+http)
+    ├── frontend/nginx.conf        # serves SPA on :80, proxies /api → backend:8001
+    ├── academy_data_seed.json
+    └── seed_academy_data.py
+```
 
-## What's Been Implemented
+## Completed Features
+- Public website (Greek) with Home, Team, Academy, Fixtures, Standings, News, Past Seasons, Sponsors, Contact
+- Admin CMS: Players, Staff, Teams, Fixtures, Match Reports, Standings, News, Sponsors, Charges, Settings
+- Mobile PWA with OTP login (Twilio configurable; mock toggle in Admin Settings)
+- Push notifications (VAPID) — match reminders, POTM
+- Player Charges/Fees system with PDF receipts (reportlab)
+- Bulk CSV fixture import
+- Season Archive workflow (snapshot + Past Seasons public page)
+- Sponsor Spotlight homepage widget
+- Markdown news articles with images
+- Configurable social media (club + sponsors) shown in footer/pages
+- Player slugs (academy last-names masked)
+- Automated standings recalc from match results
+- Greek-accent uppercase guards across public UI
 
-### Core CMS (Admin Panel)
-- Full admin UI with sidebar (Club/Academy/Management/Shop sections)
-- Teams, Academy Groups, Players (CRUD + image uploads)
-- Fixtures with inline attendance (expandable cards)
-- Training sessions with bulk creation + inline attendance
-- News, announcements, wall posts, financial dashboard
-- Resources, shop, seasons, settings
+## Deployment Status — ✅ LIVE
+- **Domain**: https://lefteriafc.cy and https://www.lefteriafc.cy
+- **Traefik routing**: 4 separate routers (apex/www × https/http-redirect) using Traefik v3-safe single-host rules. No `||` in router rules.
+- **Cert resolver**: `letsencrypt` — confirmed issuing real certs.
+- **Last verified**: Feb 2026 by user ("i have and https").
 
-### Public Website
-- Homepage, Team hub, Academy pages, Match reports
-- News, Contact, Customer auth, Shop, POTM voting
+## Pending Items
+### P2 — Regression checks (testing pending)
+- Match-day push notifications (`/api/admin/push/match-reminder`)
+- POTM social share (`VoteShareSection` in `VotePage.jsx`)
 
-### Mobile PWA - Premium Redesign (ALL ROLES COMPLETED Apr 2026)
-**5-Tab Bottom Navigation:**
-- Αρχικη (Home) → Role-specific Dashboard
-- Ημερολογιο (Calendar) → Schedule
-- Αγωνες (Matches) → Central elevated tab, upcoming/completed matches
-- Μηνυματα (Chat) → Team + private messaging
-- Προφιλ (Profile) → User profile with avatar
-
-**Parent Dashboard (Card-based):**
-- Welcome header with avatar + greeting ("Καλως ηρθες, [name]")
-- 3 Quick Stat cards (Teams, Upcoming Matches, Attendance %)
-- Next Match card with VS layout
-- My Kids horizontal scrollable cards
-- Teams list with age range badges and drill-down
-- Recent Results with W/D/L indicators
-- Team detail with expandable sections (Events, Roster, Staff, Announcements)
-- Player profile view with stats
-
-**Coach Dashboard (COMPLETED Apr 2026):**
-- Blue-themed welcome header with avatar + "Γεια σου, Προπονητη"
-- 3 Quick Stats (Players, Teams, Training Sessions)
-- Next Match card with VS layout
-- My Teams list with drill-down to team detail (expandable events + roster)
-- Player profile view from roster with stats
-- Training schedule cards with dates/times
-- Recent Results with W/D/L indicators
-- Announcements section
-
-**Player Dashboard (COMPLETED Apr 2026):**
-- Player hero card with photo, number badge, position, team name
-- 4-column season stats grid (Goals, Assists, Appearances, Minutes)
-- Next Match card with VS layout
-- Development Plans with progress bars
-- Evaluations with star ratings
-- Schedule section (always visible, shows empty state)
-- Announcements section (always visible, shows empty state)
-- Recent Results with W/D/L indicators
-
-**Management Dashboard (COMPLETED Apr 2026):**
-- Amber-themed welcome header with avatar + "Διοικηση"
-- 2x2 KPI grid (Players, Teams, Registrations, Revenue)
-- Financial overview (Revenue/Pending/Overdue in €)
-- Teams list with drill-down
-- Recent Registrations list with status badges
-- Full Registrations detail view
-- Upcoming Events section
-- Announcements section
-
-**Matches Page:**
-- Upcoming/Completed filter pills
-- Match score cards with team shields, VS/score, competition badge
-- Date/venue/map info
-- Availability buttons (Παω/Δεν παω)
-
-**Chat System:**
-- Team chats per academy group
-- Private messaging between parents/coaches
-
-### Codebase Refactoring (COMPLETED)
-- Backend: server.py 3638→2782 lines; extracted models.py, auth.py, database.py
-- Frontend: AdminPanel.jsx 3669→2223 lines; extracted TeamsTab, AcademyTab, RegistrationsTab, ShopTabs
-
-### Bug Fixes (Apr 2026)
-- Fixed "Invalid Date" on match result cards — `parseDate()` helper handles both ISO datetime and plain date formats
-- Fixed € symbol rendering in Management financial overview
-- Fixed name overflow/truncation in Coach and Player hero cards
-- Fixed empty Player dashboard — always shows schedule and announcements with empty states
-- Reduced all mobile font sizes: section headers text-xs uppercase, names text-xs, detail titles text-xs, stat values text-sm/text-base
-- Removed Greek accent marks (τονοι) from ALL text: static UI text + dynamic DB content (names, team names, dates) via noAccent() runtime function
-- Added per-player attendance stats (present/absent/percentage) to Admin CMS player profile with gradient progress bar
-
-### Attendance Tracker (COMPLETED Apr 2026)
-- All roles (Coach, Player, Parent, Management) can mark attendance
-- Present/Absent toggle buttons for each player
-- Coach/Management see full roster; Player sees self; Parent sees children
-- Summary stats (Present/Absent/Unmarked counts + percentage bar)
-- Locked after event date passes (read-only badges + lock notice)
-- Works for Training Sessions, Matches, and Events
-- Accessible via clickable training session cards on all dashboards
-- Backend: POST /api/mobile/attendance/mark, GET /api/mobile/attendance/{event_id}, GET /api/mobile/my-attendance
-
-### Academy Group Display Order (COMPLETED Apr 2026)
-- Admin can set display_order (1, 2, 3...) for each academy group
-- Groups render on public website sorted by display_order
-- Admin form includes "Σειρα Εμφανισης" number input
-- Group cards show #N order badge in admin list
-- Groups without order value appear last
-
-### Sponsors System (COMPLETED Apr 2026)
-- Full CRUD admin panel for sponsors with name, logo, banner, description, website, level, type
-- Sponsor levels: Mega, Gold, Silver, Supporter (each with distinct visual treatment)
-- Sponsor types: First Team / Academy
-- Public pages: /sponsors/first-team, /sponsors/academy (grouped by level)
-- Each sponsor gets dedicated detail page: /sponsors/{id}
-- Display order control per sponsor
-
-### Navigation Dropdowns (COMPLETED Apr 2026)
-- Academy dropdown: Landing page, Philosophy, Age Groups, Registration
-- Sponsors dropdown: First Team Sponsors, Academy Sponsors, Become a Sponsor
-- Desktop: hover-triggered dropdowns
-- Mobile: nested sub-items in hamburger menu
-
-## Prioritized Backlog
-### P2
-- Push notifications & POTM share verification
-
-### P3
+### P3 — Future / Backlog
 - Video uploads in gallery
-- AI match report narratives
-- Multi-language support (English toggle)
+- AI-generated match report narratives
+- Multi-language toggle (EN/GR)
 
-## Key Files
-### Mobile PWA
-- `/app/frontend/src/mobile/MobileApp.jsx` - 5-tab routing with role-based dashboard selection
-- `/app/frontend/src/mobile/components/BottomNav.jsx` - 5-tab nav with center elevated
-- `/app/frontend/src/mobile/pages/ParentDashboard.jsx` - Parent dashboard with team drill-down
-- `/app/frontend/src/mobile/pages/CoachDashboard.jsx` - Coach dashboard with team/player management
-- `/app/frontend/src/mobile/pages/PlayerDashboard.jsx` - Player dashboard with stats and hero card
-- `/app/frontend/src/mobile/pages/ManagementDashboard.jsx` - Management dashboard with KPIs/financials
-- `/app/frontend/src/mobile/pages/MatchesPage.jsx` - Matches page
-- `/app/frontend/src/mobile/pages/ChatPage.jsx` - Chat system
-- `/app/frontend/src/mobile/pages/SchedulePage.jsx` - Calendar
-- `/app/frontend/src/mobile/pages/ProfilePage.jsx` - Profile
-- `/app/frontend/src/mobile/components/SharedComponents.jsx` - Shared UI components
+## Key API Endpoints
+- `POST /api/admin/seasons/{id}/archive`
+- `GET  /api/admin/charges`
+- `GET  /api/charges/{id}/receipt`
+- `POST /api/admin/push/match-reminder`
 
-### Backend
-- `/app/backend/server.py` - Main routes (2782 lines)
-- `/app/backend/models.py` - Pydantic models (785 lines)
-- `/app/backend/auth.py` - Auth helpers (106 lines)
-- `/app/backend/routes/mobile_auth.py` - Mobile auth + dashboard endpoints + chat + availability
+## Critical Notes
+- **Language**: UI text strictly Greek. NEVER use accents on uppercase Greek.
+- **Traefik rules**: Always one `Host()` per router (Traefik v3 rejects multi-arg `Host()`).
+- **OTP**: Respect Admin Settings mock toggle.
+- **Mongo**: Exclude `_id` from all API responses.
 
-## Changelog
-
-### 2026-02 — Greek Uppercase Accent Compliance + Static Page UI Consistency
-- Applied `badge badge-secondary` pill pattern on new public static pages (AcademyLandingPage, AcademyPhilosophyPage, SponsorsPage) to match About page style.
-- Removed accents from all CSS-uppercased badge labels across `App.js` to comply with the Greek typographic rule (no tonos on uppercase). Fixed: Προγραμμα, Γενεθλια, Ψηφοφορια, ΠΑΑΟΚ Α' Ομιλος, Ενημερωση, Η Ιστορια μας, Εδρα, Φιλοσοφια, Σεζον 2025/26, Τελευταια Ενημερωση, Επικοινωνηστε Μαζι Μας.
-- Stripped accents from `monthNames` array (used in birthday ticker badge).
-
-### 2026-02 — First Team Manual Fixtures + Stats Auto-Calc Wiring
-- Added "Νέος Αγώνας" (Add Fixture) form to **First Team → Πρόγραμμα** tab in admin (`TeamsTab.jsx`), with full edit, status, score, opponent dropdown (filtered to First Team only), venue dropdown (filtered to First Team only), date/time/competition/season fields.
-- Filtered `teamFixtures` in TeamsTab to exclude academy fixtures (`!f.academy_group_id`).
-- Filtered `TrainingSessionsPanel` facilities by team context (Academy → academyFacilities, First Team → clubFacilities) so cross-context leakage is fixed.
-- Increased fixtures fetch limit in AdminPanel from default 50 → 500 so admin sees all fixtures.
-- Auto-calc of Θεση Πρωταθληματος / Αγωνες / Γκολ / Βαθμοι is already wired via `auto_update_standings_for_match` (called when fixture status → Completed). The "Επανυπολογισμός" button in StandingsTab rebuilds standings from all completed fixtures.
-
-### Pending / Backlog
-- Season Archive flow with player migration checklist UI (P1).
-- "Past Seasons" read-only public page (P2).
-- Bulk fixture import for First Team (CSV/copy-paste) (P3).
-
-
-### 2026-02 — Social Media (per team type), Sponsor Socials, News Blog Articles, Contact Cleanup
-- **Removed** "Αίτημα Μέσων" subject from contact form.
-- **ClubProfile model**: added `first_team_facebook/instagram/twitter/youtube/tiktok` and `academy_facebook/instagram/twitter/youtube/tiktok` so admin can configure separate socials per team type. New "Social Media — Πρωτη Ομαδα" and "Social Media — Ακαδημια" sections in Admin → Profile.
-- **Footer** now reads `club` from `/api/club` and renders both First Team and Academy social columns dynamically (only shows ones that have a URL set).
-- **Sponsor model**: added `facebook/instagram/twitter/youtube/linkedin` fields. Admin SponsorsTab form now includes a "Social Media Χορηγου" section. Public sponsor detail page renders these as branded social icons.
-- **News blog articles**: added route `/news/:newsId` → `NewsArticlePage.jsx` (markdown rendering via `react-markdown`). News cards on `/news` (featured + grid) and homepage now link to the article page. Admin NewsTab shows markdown syntax help and a placeholder template, supporting headings, bold/italic, **inline images** `![alt](url)` and **external links** `[text](url)`, lists, blockquotes, and HR.
-- **Production-data safety**: docker compose preserves Mongo data via the `mongo_data` volume, so first-team players, academy groups, players, stats, and existing data remain untouched on `git pull && docker compose up -d --build`. Code is updated; data is preserved.
-
-
-### 2026-02 — Sponsor Spotlight Widget, Pretty Player URLs, Academy-Player Privacy
-- **Sponsor Spotlight** (`components/SponsorSpotlight.jsx`): auto-rotating homepage section between Mega/Gold sponsors with logo, level badge, name, description, CTA → detail page. Loads both first-team + academy sponsors, sorted Mega→Gold→display_order. 6-second auto-rotation with manual dot navigation. Inserted on homepage between standings and Academy CTA.
-- **Pretty player URLs** (`utils/playerHelpers.js`): URLs are now `/player/<slugified-name>--<uuid>` (e.g. `/player/ανδρεας-πραστιτης--cc9e1511-07d6-40e2-...`). The `extractPlayerId` helper parses the trailing UUID from the slug; back-compat: bare UUIDs still work for old links. Applied to all 8 link sites: TeamHubPage, AcademyGroupPage (4 places), App.js (homepage roster + birthday widget), and PlayerProfilePage (lookup logic).
-- **Academy-player privacy on website**: `formatAcademyDisplayName(name)` shows full first name + first 2 letters of last name + dot ("Πετρος Νικολαου" → "Πετρος Νι."). Applied to AcademyGroupPage roster + Top Scorers/Assisters/Appearances + PlayerProfilePage (header, breadcrumb, bio paragraph, "Ονοματεπώνυμο" row). **Mobile app is intentionally not affected** (they need full names).
-
-
-### 2026-02 — Social Media Tab Discoverability + Academy Data Migration Script
-- **Dedicated Social Media admin tab**: split out of Club Profile and made into its own sidebar entry **Ρυθμίσεις → Social Media** (with globe icon). Two visually distinct sections (gold "Α' Ομάδα" / green "Ακαδημία"), brand-colored icons (FB blue, IG pink, Twitter cyan, YT red), and a save button. Banner hint added on Club Profile pointing users to the new tab.
-- **Academy data migration script** at `/app/deploy/seed_academy_data.py` + `/app/deploy/academy_data_seed.json` — exports the 17 academy opponents and 11 academy facilities entered on preview. Run on the VPS once with `docker compose exec backend python /app/deploy/seed_academy_data.py` to import them. Idempotent: skips entries whose name (case-insensitive) already exists.
-
-
-### 2026-02 — Big Batch: Πρόγραμμα top-level, Club Profile expansion, Staff multi-assign, Season Archive
-**Phase A — First Team Πρόγραμμα tab**
-- Added `Σύλλογος → Πρόγραμμα` top-level admin sidebar entry (Calendar icon).
-- Added Dashboard "Αγώνες" stat card → routes to `fixtures` tab.
-- Existing FixturesTab now accepts a `scope` prop ("first_team" | "academy" | "all"). Top-level entry uses `first_team` scope; auto-filters out academy fixtures and only shows First Team opponents/venues in the dropdowns.
-- Title dynamically changes to "Πρόγραμμα Α' Ομάδας" when scoped.
-
-**Phase B — Club Profile expansion (`Ρυθμίσεις → Πληροφορίες`)**
-ClubProfile model + admin tab now organized in 10 collapsible-card sections:
-1. Βασικα Στοιχεια (name, founders, motto, slogan, anthem URL, history, description)
-2. Έδρα & Γήπεδο — `home_venue_id` dropdown picks from facilities (auto-fills stadium name); capacity, surface, dimensions, photo URL
-3. Επικοινωνία (email/phone/website/address)
-4. Ώρες Λειτουργίας (office, training, ticket office hours)
-5. Νομικά & Τραπεζικά (VAT, registration #, bank, IBAN)
-6. Χρώματα Φανέλας (3 kits × primary+secondary, color pickers + hex)
-7. Συνδρομές & Τέλη (yearly/monthly/academy/first-team/registration fees in EUR)
-8. Επιτυχίες & Τρόπαια (championships/cups/super cups counts + free-text history)
-9. Διοίκηση (president, GM, board members)
-10. Τύπος & Μέσα (press contact name/email/phone, media kit URL)
-11. Branding (primary/secondary brand colors with picker)
-
-**Phase C — Staff (Τεχνικό Επιτελείο)**
-- Moved to `Ρυθμίσεις → Τεχνικό Επιτελείο` (UserCog icon).
-- Staff model: added `team_ids: List[str]`, `academy_group_ids: List[str]`, `email`. Backwards-compatible — keeps legacy `team_type`/`academy_group_id`.
-- New StaffTab UI: filter by All/First Team/Academy, multi-select chip toggles for Teams (gold) and Academy Groups (green), so a coach can be assigned to many teams/groups and many coaches to one group. Assignment column shows joined names.
-
-**Phase D — Season Archive workflow**
-- Backend: `Season` model gets `is_archived`, `archived_at`, snapshot fields. New collection `archived_seasons`. Endpoints:
-  - `GET /api/admin/seasons/{id}/preview` — shows what will be archived (counts + player list)
-  - `POST /api/admin/seasons/{id}/archive` — snapshots fixtures/standings/player stats, marks season archived, optionally creates new current season, resets stats for migrated players, marks non-migrated players as archived/inactive
-  - `GET /api/seasons/archive` — public list
-  - `GET /api/seasons/archive/{id}` — public detail with full snapshot
-- Admin UI: Each season card (when not archived) shows gold "Αρχειοθέτηση" button → opens modal with:
-  - Snapshot summary (fixtures count, completed, standings)
-  - "Νέα Τρέχουσα Σεζόν" optional input (auto-creates next season)
-  - Player migration checklist (checkbox grid with photo, number, name, team_type) with "Όλοι/Κανείς" quick toggles
-- Public:
-  - `/seasons` page (PastSeasonsPage) — grid of archived seasons with top scorer preview
-  - `/seasons/:archiveId` (ArchivedSeasonDetailPage) — snapshot detail with W/D/L summary, top scorers, recent results, full squad list
-  - Footer link "Παλαιότερες Σεζόν" added.
-
-
-### 2026-02 — Charges/Billing System + Twilio SMS Settings
-**Charges (Billing per Player)**
-- New model `Charge` with types: training, event, grassroots, registration, equipment, tournament, transport, other. Status: pending / paid / overdue / cancelled. Fields include amount, due_date, season, period_label, payment method.
-- New model `ChargeTemplate` (catalog for reusable charges, e.g. "Φανέλα Προπόνησης €25").
-- Backend routes (`/app/backend/routes/charges.py`):
-  - CRUD: POST/GET/PUT/DELETE `/api/admin/charges`
-  - `/api/admin/charges/summary` — totals per status
-  - `/api/admin/charges/{id}/mark-paid` and `/mark-pending`
-  - **`/api/admin/charges/bulk-monthly`** — creates 1 charge per (player × month) in a date range with Greek month labels
-  - Template endpoints + `/from-template/{id}`
-  - Public **`/api/mobile/charges/{player_id}`** for parent app (balance + pending count + history)
-- Admin UI (`/app/frontend/src/pages/admin/ChargesTab.jsx`):
-  - 4 stat cards (Εκκρεμεί / Ληγμένη / Πληρωμένα / Συνολικά)
-  - Filters: status, type, player, search clear
-  - Color-coded type badges
-  - **Νέα Χρέωση** form (single)
-  - **Μηνιαίες Συνδρομές** modal: type, amount/month, from/to month pickers, due day, group filter (Α' Ομάδα / Ακαδημία / per-academy-group), multi-select player checklist with "Επιλογή Όλων", live preview of months + totals
-  - Mark Paid modal (amount, method: cash/bank/card/online/other, notes)
-- Parent Mobile App (`ParentDashboard.jsx`):
-  - New `ParentChargesCard` component, shown on home dashboard between Quick Stats and Επόμενος Αγώνας
-  - Displays total balance, count of pending charges; click expands per-child breakdown with pending list + paid history (collapsible)
-
-**Twilio SMS OTP Settings**
-- `ClubProfile` model extended with `twilio_account_sid`, `twilio_auth_token`, `twilio_from_number`, `sms_enabled`, plus optional per-team-type from numbers (`twilio_first_team_from`, `twilio_academy_from`).
-- Admin Sidebar `Ρυθμίσεις → SMS / OTP` with new `SmsSettingsTab`:
-  - Master "Ενεργοποίηση Twilio SMS" toggle
-  - Credentials inputs (Auth Token with show/hide), link to Twilio Console
-  - Optional separate From numbers per team type
-  - **Test Send** section: enter phone → triggers real `/mobile/auth/request-otp`, shows success/error inline (incl. simulated OTP code when not yet configured)
-- `routes/mobile_auth.py`:
-  - Replaced `_send_sms` with async `_send_sms_async` that reads creds from DB (`club.twilio_*` fields) with env fallback
-  - Routes role-specific from numbers: parent → academy from; coach/player/management → first_team from
-  - `otp_debug` is now only included in response when SMS is NOT actually enabled (real production won't leak codes)
-- `twilio==9.10.9` added to backend requirements.
-
-
-### 2026-02 — Player Charges History, PDF Receipts, Bulk Fixture CSV Import
-**Player Charges Section (AdminPlayerProfile)**
-- New `PlayerChargesSection` component shown on each player's admin profile, right after Attendance Stats.
-- Shows: collapse toggle with balance summary ("€X εκκρεμή" / "Όλα πληρωμένα"), table of all charges (type, description, amount, due/paid date, status, actions).
-- Inline "Νέα Χρέωση" button + form (single charge for this player).
-- Per-row actions: Mark Paid (with method modal), Download Receipt PDF (paid only), Delete.
-
-**PDF Receipts**
-- `reportlab==4.5.0` added to requirements.
-- New backend endpoints (`routes/charges.py`):
-  - `GET /api/admin/charges/{id}/receipt.pdf` — admin auth required
-  - `GET /api/mobile/charges/{id}/receipt.pdf` — public (parent app)
-- `_build_receipt()` generates a professional A4 PDF with:
-  - Orange header band with club Greek name + stadium + city
-  - Receipt number (first 8 chars of UUID, uppercase) + paid date/time
-  - ΠΑΙΚΤΗΣ block (full name + team type label "Α' Ομάδα" / "Ακαδημία")
-  - Grey details box: Περιγραφή / Τύπος (Greek labels for all 8 types) / Περίοδος / Τρόπος Πληρωμής (Greek)
-  - Large €amount with green "✓ ΠΛΗΡΩΘΗΚΕ" stamp
-  - Footer with club name, email, phone, VAT, thank-you message
-- Registers `DejaVuSans` TTF so Greek characters render correctly (analyzed PDF confirms 100% rendering).
-- Frontend: download button on every paid charge row in PlayerChargesSection.
-
-**Bulk Fixture CSV Import**
-- New `FixturesCsvImport` modal opened from FixturesTab "Μαζική Εισαγωγή" button (next to Νέος Αγώνας).
-- Accepts comma / semicolon / tab-separated input with columns: `Ημερομηνία, Ώρα, Γηπεδούχος, Φιλοξενούμενος, Διοργάνωση, Γήπεδο, Status`.
-- Live preview table with row-level validation (highlights rows with errors in red).
-- Auto-matches opponent name → opponent_id + logo + location_url; same for venue → venue_id.
-- Inherits scope-aware filtering (first-team-only opponents/venues).
-- "Φόρτωση Δείγματος" loads a 3-row Greek sample.
-- Default Σεζόν + Διοργάνωση inputs to set per-import defaults.
-- After import: results panel with success/failure counts and per-row errors list.
-
-### Pending Backlog
-- Stripe payment links on unpaid charges (parent self-serve)
-- Open Graph tags for news/player share previews
-- Video uploads in gallery
-- AI match-report narratives
-- English language toggle
-
+## Test Credentials
+See `/app/memory/test_credentials.md`.
