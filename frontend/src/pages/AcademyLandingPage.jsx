@@ -1,7 +1,31 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import { GraduationCap, ChevronRight, Users, BookOpen, ClipboardList, Trophy } from "lucide-react";
 
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
 const AcademyLandingPage = () => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    axios.get(`${API}/academy/stats`).then(r => { if (alive) setStats(r.data); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const items = stats ? [
+    { value: String(stats.age_groups || 0), label: "Ηλικιακα Τμηματα" },
+    { value: stats.athletes >= 25 ? `${stats.athletes}+` : String(stats.athletes || 0), label: "Αθλητες" },
+    { value: stats.trainings_per_week ? `${stats.trainings_per_week}x` : "—", label: "Προπονησεις / Εβδομαδα" },
+    { value: `${stats.dedication_pct ?? 100}%`, label: "Αφοσιωση" },
+  ] : [
+    { value: "—", label: "Ηλικιακα Τμηματα" },
+    { value: "—", label: "Αθλητες" },
+    { value: "—", label: "Προπονησεις / Εβδομαδα" },
+    { value: "—", label: "Αφοσιωση" },
+  ];
+
   return (
     <div className="min-h-screen bg-black" data-testid="academy-landing-page">
       {/* Hero - left aligned matching website style */}
@@ -81,14 +105,9 @@ const AcademyLandingPage = () => {
       {/* Stats */}
       <div className="max-w-7xl mx-auto px-6"><div className="h-px bg-[#262626]" /></div>
       <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {[
-            { value: "4", label: "Ηλικιακα Τμηματα" },
-            { value: "25+", label: "Αθλητες" },
-            { value: "3x", label: "Προπονησεις / Εβδομαδα" },
-            { value: "100%", label: "Αφοσιωση" },
-          ].map((stat, i) => (
-            <div key={i}>
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8" data-testid="academy-stats">
+          {items.map((stat, i) => (
+            <div key={i} data-testid={`academy-stat-${i}`}>
               <p className="font-['Bebas_Neue'] text-5xl text-[#F5A623]">{stat.value}</p>
               <p className="text-zinc-500 text-sm mt-1">{stat.label}</p>
             </div>

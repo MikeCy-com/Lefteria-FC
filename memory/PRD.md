@@ -1,7 +1,8 @@
 # Lefteria FC — Product Requirements & Status
-
-## Latest Fix (Feb 2026)
-- **OG Announce PNG accent stripping**: `_strip_greek_accents()` helper existed in `/app/backend/routes/og.py` but was never invoked inside `_render_announce_card()`. Fixed by applying it to both the player name (`name_upper`) and the position subtitle. Verified visually: e.g., "Ανδρέας Πραστίτης" renders as "ΑΝΔΡΕΑΣ ΠΡΑΣΤΙΤΗΣ" with no tonos, and "Τερματοφύλακας" → "ΤΕΡΜΑΤΟΦΥΛΑΚΑΣ".
+## Latest Fixes (Feb 2026)
+- **Dynamic Academy stats**: New `GET /api/academy/stats` returns `age_groups`, `athletes`, `trainings_per_week` (max weekday count per academy group), `dedication_pct` (from mobile attendance, last 90d, defaults to 100). `AcademyLandingPage.jsx` consumes it. Verified: now shows 4 / 6 / 3x / 100% from real data instead of hardcoded.
+- **Staff "ΝΕΟ ΜΕΛΟΣ!" announce card**: New `/api/og/staff/{id}/announce` HTML + `/announce.png` PNG endpoints reuse the existing card renderer with role-as-subtitle. Admin StaffTab gained a Megaphone icon per row that opens a shared `AnnounceModal` (refactored from player-specific). Verified visually: name + role render accent-free.
+- **OG Announce PNG accent stripping**: `_strip_greek_accents()` was defined but never invoked. Now applied to both name and position/role.
 
 
 ## Original Problem Statement

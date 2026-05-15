@@ -203,6 +203,58 @@ async def get_academy_group_fixtures(group_id: str):
     fixtures = await db.fixtures.find({"academy_group_id": group_id}, {"_id": 0}).sort("match_date", -1).to_list(100)
     return fixtures
 
+
+# Academy public stats (used by AcademyLandingPage hero)
+@api_router.get("/academy/stats")
+async def get_academy_public_stats():
+    """Public, lightweight stats for the Academy landing page.
+    Falls back to safe defaults when no data is available yet."""
+    # Age groups count
+    age_groups = await db.academy_groups.count_documents({})
+
+    # Active academy athletes
+    athletes = await db.players.count_documents({
+        "team_type": "Academy",
+        "is_active": {"$ne": False},
+    })
+
+    # Trainings / week — distinct weekdays per group, take the typical (max) value across groups.
+    # This represents how often a typical academy team trains per week.
+    by_group = {}
+    cursor = db.training_sessions.find(
+        {"academy_group_id": {"$ne": None, "$exists": True}},
+        {"_id": 0, "academy_group_id": 1, "date": 1},
+    )
+    async for s in cursor:
+        d = s.get("date")
+        try:
+            wd = datetime.fromisoformat(str(d)[:10]).weekday()
+            by_group.setdefault(s.get("academy_group_id"), set()).add(wd)
+        except Exception:
+            continue
+    trainings_per_week = max((len(v) for v in by_group.values()), default=0)
+
+    # Dedication % — overall present rate from mobile attendance (last 90 days)
+    att_since = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    att_cursor = db.attendance.find(
+        {"created_at": {"$gte": att_since}},
+        {"_id": 0, "status": 1},
+    )
+    present = 0
+    total = 0
+    async for rec in att_cursor:
+        total += 1
+        if (rec.get("status") or "").lower() == "present":
+            present += 1
+    dedication_pct = round((present / total) * 100) if total > 0 else 100
+
+    return {
+        "age_groups": age_groups,
+        "athletes": athletes,
+        "trainings_per_week": trainings_per_week,
+        "dedication_pct": dedication_pct,
+    }
+
 @api_router.post("/admin/academy-groups/{group_id}/fixtures")
 async def create_academy_fixture(group_id: str, fixture: FixtureCreate, current_user: dict = Depends(get_current_user)):
     fixture_data = fixture.model_dump()

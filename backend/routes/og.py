@@ -204,6 +204,42 @@ def setup_og_routes(db, request_host_provider=None):
         image = _abs_image(s.get("image_url"), site)
         return HTMLResponse(_render(title, desc, image, canonical, canonical))
 
+    @router.get("/staff/{staff_id}/announce", response_class=HTMLResponse)
+    async def og_staff_announce(staff_id: str):
+        if "--" in staff_id:
+            staff_id = staff_id.rsplit("--", 1)[-1]
+        s = await db.staff.find_one({"id": staff_id}, {"_id": 0})
+        if not s:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        site = _site_url(os.environ.get("OG_HOST", "lefteriafc.cy"))
+        name = s.get("name", "Μέλος Επιτελείου")
+        role = ROLE_LABELS.get(s.get("role", ""), s.get("role", ""))
+        team_label = "LEFTERIA FC Ακαδημία" if s.get("team_type") == "Academy" else "LEFTERIA FC"
+        title = f"ΝΕΟ ΜΕΛΟΣ! {name}"
+        desc = f"Καλωσορίζουμε τον/την {name} στο τεχνικό επιτελείο της {team_label}!"
+        if role:
+            desc += f" Ρόλος: {role}."
+        slug = _slug(name)
+        canonical = f"{site}/api/og/staff/{staff_id}/announce"
+        spa_path = f"/staff/{slug}--{staff_id}" if slug else f"/staff/{staff_id}"
+        redirect_to = f"{site}{spa_path}"
+        image = f"{site}/api/og/staff/{staff_id}/announce.png"
+        return HTMLResponse(_render(title, desc, image, canonical, redirect_to))
+
+    @router.get("/staff/{staff_id}/announce.png")
+    async def og_staff_announce_png(staff_id: str):
+        if "--" in staff_id:
+            staff_id = staff_id.rsplit("--", 1)[-1]
+        s = await db.staff.find_one({"id": staff_id}, {"_id": 0})
+        if not s:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        site = _site_url(os.environ.get("OG_HOST", "lefteriafc.cy"))
+        name = s.get("name", "")
+        role = ROLE_LABELS.get(s.get("role", ""), s.get("role", ""))
+        img_url = _abs_image(s.get("image_url"), site)
+        png = _render_announce_card(name, role, None, img_url)
+        return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
+
     @router.get("/news/{news_id}", response_class=HTMLResponse)
     async def og_news(news_id: str):
         if "--" in news_id:

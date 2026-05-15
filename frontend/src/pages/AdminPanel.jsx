@@ -623,10 +623,17 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
 
 // ==================== ANNOUNCE PLAYER MODAL ====================
 const AnnouncePlayerModal = ({ player, onClose }) => {
+  return <AnnounceModal kind="player" entity={player} onClose={onClose} />;
+};
+
+// Reusable for both players & staff
+const AnnounceModal = ({ kind = "player", entity, onClose }) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const shareUrl = `${origin}/api/og/player/${player.id}/announce`;
-  const imageUrl = `${origin}/api/og/player/${player.id}/announce.png`;
-  const text = `ΝΕΟ ΜΕΛΟΣ! ${player.name} ενώνει την οικογένεια LEFTERIA FC!`;
+  const base = `${origin}/api/og/${kind}/${entity.id}`;
+  const shareUrl = `${base}/announce`;
+  const imageUrl = `${base}/announce.png`;
+  const familyLabel = kind === "staff" ? "στο τεχνικό επιτελείο της LEFTERIA FC" : "στην οικογένεια LEFTERIA FC";
+  const text = `ΝΕΟ ΜΕΛΟΣ! ${entity.name} ενώνει ${familyLabel}!`;
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -1515,6 +1522,7 @@ const AcademyGroupsTab = ({ groups, onRefresh }) => {
 const StaffTab = ({ staff, teams = [], academyGroups = [], onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
   const [editStaff, setEditStaff] = useState(null);
+  const [announceStaff, setAnnounceStaff] = useState(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("all"); // all | first_team | academy
   const emptyStaff = { name: "", role: "Head Coach", nationality: "Cyprus", team_type: "First Team", image_url: "", bio: "", phone: "", email: "", team_ids: [], academy_group_ids: [] };
@@ -1598,7 +1606,7 @@ const StaffTab = ({ staff, teams = [], academyGroups = [], onRefresh }) => {
                   {!s.phone && !s.email && "—"}
                 </td>
                 <td><span className="text-zinc-300 text-xs">{getAssignmentLabel(s)}</span></td>
-                <td><div className="flex gap-1"><button onClick={() => openEdit(s)} className="admin-icon-btn" data-testid={`edit-staff-${s.id}`}><Edit2 size={13} /></button><button onClick={() => handleDelete(s.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
+                <td><div className="flex gap-1"><button onClick={() => setAnnounceStaff(s)} className="admin-icon-btn text-[#F5A623] hover:text-[#FF8C00]" title="Ανακοίνωση Νέου Μέλους" data-testid={`announce-staff-${s.id}`}><Megaphone size={13} /></button><button onClick={() => openEdit(s)} className="admin-icon-btn" data-testid={`edit-staff-${s.id}`}><Edit2 size={13} /></button><button onClick={() => handleDelete(s.id)} className="admin-icon-btn text-red-500/60 hover:text-red-400"><Trash2 size={13} /></button></div></td>
               </tr>
             ))}
             {filteredStaff.length === 0 && <tr><td colSpan={6}><EmptyState icon={UserCog} text="Δεν υπάρχουν μέλη" /></td></tr>}
@@ -1659,6 +1667,7 @@ const StaffTab = ({ staff, teams = [], academyGroups = [], onRefresh }) => {
           <Field label="Βιογραφικό"><AdminTextarea rows={2} value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /></Field>
         </FormModal>
       )}
+      {announceStaff && <AnnounceModal kind="staff" entity={announceStaff} onClose={() => setAnnounceStaff(null)} />}
     </div>
   );
 };
