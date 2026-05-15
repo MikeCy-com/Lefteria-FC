@@ -35,6 +35,21 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
 
+// Robust "is this our team?" check — handles accents, case, and minor name variations
+// (e.g., "ΛΕΥΤΕΡΙΑ 2024" / "Λευτέρια FC" / "LEFTERIA 2024" all match)
+const normalizeTeamName = (s) => (s || "")
+  .toUpperCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^A-Z0-9ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ]/g, "");
+const OUR_TEAM_NEEDLES = ["ΛΕΥΤΕΡΙΑ", "LEFTERIA"].map(normalizeTeamName);
+const isOurTeam = (name) => {
+  if (!name) return false;
+  if (name === OUR_TEAM) return true;
+  const n = normalizeTeamName(name);
+  return OUR_TEAM_NEEDLES.some((needle) => n.includes(needle));
+};
+
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
 // ==================== AUTH CONTEXT ====================
@@ -686,7 +701,7 @@ const HomePage = () => {
               </div>
               <div className="flex items-center justify-center gap-5">
                 <div className="flex-1 text-right">
-                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <span className={`font-['Bebas_Neue'] text-xl ${isOurTeam(liveMatch.fixture.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                     {liveMatch.fixture.home_team}
                   </span>
                 </div>
@@ -696,7 +711,7 @@ const HomePage = () => {
                   </span>
                 </div>
                 <div className="flex-1">
-                  <span className={`font-['Bebas_Neue'] text-xl ${liveMatch.fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <span className={`font-['Bebas_Neue'] text-xl ${isOurTeam(liveMatch.fixture.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                     {liveMatch.fixture.away_team}
                   </span>
                 </div>
@@ -724,8 +739,8 @@ const HomePage = () => {
         <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {(() => {
-              const us = standings.find(s => s.team_name === OUR_TEAM);
-              const pos = standings.findIndex(s => s.team_name === OUR_TEAM) + 1;
+              const us = standings.find((s) => isOurTeam(s.team_name));
+              const pos = us ? standings.indexOf(us) + 1 : 0;
               return [
                 { label: "Θεση Πρωταθληματος", value: pos > 0 ? `${pos}η` : "-" },
                 { label: "Αγωνες", value: us ? us.played : "-" },
@@ -769,7 +784,7 @@ const HomePage = () => {
                     {new Date(fixture.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
                   </span>
                   <div className="flex items-center justify-center flex-1 gap-2 sm:gap-3 min-w-0">
-                    <span className={`font-medium text-xs sm:text-sm text-right flex-1 truncate ${fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-medium text-xs sm:text-sm text-right flex-1 truncate ${isOurTeam(fixture.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.home_team}
                     </span>
                     <div className="bg-[#1a1a1a] rounded px-2 sm:px-3 py-1 min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0">
@@ -779,7 +794,7 @@ const HomePage = () => {
                         <span className="text-xs text-zinc-500">VS</span>
                       )}
                     </div>
-                    <span className={`font-medium text-xs sm:text-sm text-left flex-1 truncate ${fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-medium text-xs sm:text-sm text-left flex-1 truncate ${isOurTeam(fixture.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.away_team}
                     </span>
                   </div>
@@ -922,7 +937,7 @@ const HomePage = () => {
                     {standings.map((team, idx) => (
                       <tr 
                         key={team.id} 
-                        className={team.team_name === OUR_TEAM ? 'team-highlight' : ''}
+                        className={isOurTeam(team.team_name) ? 'team-highlight' : ''}
                       >
                         <td className="font-bold">{idx + 1}</td>
                         <td className="font-semibold">
@@ -1394,11 +1409,11 @@ const FixturesPage = () => {
                 {/* Home Team */}
                 <div className="text-center md:text-right">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    fixture.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'
+                    isOurTeam(fixture.home_team) ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.home_team}
                   </h3>
-                  {fixture.home_team === OUR_TEAM && (
+                  {isOurTeam(fixture.home_team) && (
                     <span className="text-xs text-zinc-500">ΕΝΤΟΣ</span>
                   )}
                 </div>
@@ -1428,11 +1443,11 @@ const FixturesPage = () => {
                 {/* Away Team */}
                 <div className="text-center md:text-left">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    fixture.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'
+                    isOurTeam(fixture.away_team) ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.away_team}
                   </h3>
-                  {fixture.away_team === OUR_TEAM && (
+                  {isOurTeam(fixture.away_team) && (
                     <span className="text-xs text-zinc-500">ΕΚΤΟΣ</span>
                   )}
                 </div>
