@@ -116,8 +116,13 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pushState, setPushState] = useState('loading');
+  const [pushInfo, setPushInfo] = useState(null); // {title, body} for info modal
   const location = useLocation();
   const { user, cartCount } = useAuth();
+
+  // Detect iOS Safari
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -132,12 +137,47 @@ const Navigation = () => {
   }, []);
 
   const handlePushToggle = async () => {
+    // iOS Safari without PWA install — show instructions
+    if (isIOS && !isStandalone) {
+      setPushInfo({
+        title: "Ειδοποιήσεις στο iPhone",
+        body: "Για να λαμβάνεις ειδοποιήσεις στο iPhone, πρόσθεσε την εφαρμογή στην αρχική οθόνη:\n\n1. Πάτησε το κουμπί Κοινοποίηση (□↑) στο Safari\n2. Επίλεξε «Στην αρχική οθόνη»\n3. Άνοιξε την εφαρμογή από την αρχική οθόνη και ξαναπάτα το κουδουνάκι",
+      });
+      return;
+    }
+    if (pushState === 'unsupported') {
+      setPushInfo({
+        title: "Μη υποστηριζόμενος περιηγητής",
+        body: "Ο περιηγητής σου δεν υποστηρίζει ειδοποιήσεις. Δοκίμασε με Chrome, Edge, Firefox ή Safari (σε iPhone, πρώτα εγκατέστησε την εφαρμογή στην αρχική οθόνη).",
+      });
+      return;
+    }
+    if (pushState === 'denied') {
+      setPushInfo({
+        title: "Ειδοποιήσεις αποκλεισμένες",
+        body: "Έχεις απορρίψει τις ειδοποιήσεις. Για να τις ενεργοποιήσεις:\n\n• Στο κινητό: Ρυθμίσεις περιηγητή → Ιστοσελίδες → lefteriafc.cy → Ειδοποιήσεις → Να επιτρέπονται\n• Στον υπολογιστή: πάτα το εικονίδιο 🔒 ή ⓘ στη γραμμή διεύθυνσης → Ειδοποιήσεις → Να επιτρέπονται",
+      });
+      return;
+    }
     if (pushState === 'subscribed') {
       await unsubscribeFromPush();
       setPushState('unsubscribed');
+      setPushInfo({ title: "Απενεργοποιήθηκε", body: "Δεν θα λαμβάνεις πλέον ειδοποιήσεις από την LEFTERIA FC." });
     } else {
       const sub = await subscribeToPush();
-      setPushState(sub ? 'subscribed' : 'denied');
+      if (sub) {
+        setPushState('subscribed');
+        setPushInfo({
+          title: "Ενεργοποιήθηκαν!",
+          body: "Θα λαμβάνεις ειδοποιήσεις για αγώνες, αποτελέσματα και νέα — ακόμη και όταν δεν είσαι στην ιστοσελίδα.",
+        });
+      } else {
+        setPushState('denied');
+        setPushInfo({
+          title: "Αδυναμία ενεργοποίησης",
+          body: "Παρακαλούμε επίτρεψε τις ειδοποιήσεις στον περιηγητή σου και δοκίμασε ξανά.",
+        });
+      }
     }
   };
 
@@ -231,20 +271,18 @@ const Navigation = () => {
           </nav>
 
           <div className="flex items-center gap-2">
-            {/* Push Notification Bell */}
-            {pushState !== 'unsupported' && pushState !== 'loading' && (
+            {/* Push Notification Bell — always visible; click shows guidance on iOS/denied/unsupported */}
+            {pushState !== 'loading' && (
               <button
                 onClick={handlePushToggle}
-                className={`p-2 rounded-full transition-colors ${
+                className={`p-2.5 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
                   pushState === 'subscribed'
                     ? 'text-[#F5A623] hover:bg-[#F5A623]/10'
-                    : pushState === 'denied'
-                    ? 'text-red-400/50 cursor-not-allowed'
                     : 'text-zinc-400 hover:text-[#F5A623] hover:bg-white/5'
                 }`}
-                title={pushState === 'subscribed' ? 'Απενεργοποίηση ειδοποιήσεων' : pushState === 'denied' ? 'Οι ειδοποιήσεις αποκλείστηκαν' : 'Ενεργοποίηση ειδοποιήσεων'}
-                disabled={pushState === 'denied'}
+                title={pushState === 'subscribed' ? 'Απενεργοποίηση ειδοποιήσεων' : 'Ενεργοποίηση ειδοποιήσεων'}
                 data-testid="push-notification-bell"
+                aria-label="Ειδοποιήσεις"
               >
                 {pushState === 'subscribed' ? <Bell size={20} /> : <BellOff size={20} />}
               </button>
@@ -340,11 +378,49 @@ const Navigation = () => {
           </Link>
         </nav>
       </div>
+
+      {/* Push notification info modal */}
+      {pushInfo && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4"
+          onClick={() => setPushInfo(null)}
+          data-testid="push-info-modal"
+        >
+          <div
+            className="bg-[#161616] border border-[#2a2a2a] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between px-5 pt-5 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 flex items-center justify-center">
+                  <Bell size={18} className="text-[#F5A623]" />
+                </div>
+                <h3 className="font-['Bebas_Neue'] text-xl text-white tracking-wide" data-testid="push-info-title">{pushInfo.title}</h3>
+              </div>
+              <button onClick={() => setPushInfo(null)} className="text-zinc-400 hover:text-white p-1" data-testid="push-info-close">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-5 pb-5 text-zinc-300 text-sm whitespace-pre-line leading-relaxed" data-testid="push-info-body">{pushInfo.body}</div>
+            <div className="px-5 pb-5">
+              <button onClick={() => setPushInfo(null)} className="w-full py-3 rounded-md bg-[#F5A623] text-black font-bold hover:bg-[#e6981f] transition-colors" data-testid="push-info-ok">
+                Εντάξει
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
 
 // Footer
+const TikTokIcon = ({ size = 18 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.78 20.1a6.34 6.34 0 0 0 10.86-4.43V7.93a8.16 8.16 0 0 0 4.77 1.52V6a4.86 4.86 0 0 1-1.82-.27"/>
+  </svg>
+);
+
 const Footer = () => {
   const [club, setClub] = useState(null);
   useEffect(() => {
@@ -357,6 +433,7 @@ const Footer = () => {
       { Icon: Instagram, key: `${prefix}instagram` },
       { Icon: Twitter, key: `${prefix}twitter` },
       { Icon: Youtube, key: `${prefix}youtube` },
+      { Icon: TikTokIcon, key: `${prefix}tiktok` },
     ];
     const active = socials.filter(s => club?.[s.key]);
     if (active.length === 0) return null;
@@ -375,8 +452,8 @@ const Footer = () => {
     );
   };
 
-  const hasFirstTeamSocial = club && (club.first_team_facebook || club.first_team_instagram || club.first_team_twitter || club.first_team_youtube);
-  const hasAcademySocial = club && (club.academy_facebook || club.academy_instagram || club.academy_twitter || club.academy_youtube);
+  const hasFirstTeamSocial = club && (club.first_team_facebook || club.first_team_instagram || club.first_team_twitter || club.first_team_youtube || club.first_team_tiktok);
+  const hasAcademySocial = club && (club.academy_facebook || club.academy_instagram || club.academy_twitter || club.academy_youtube || club.academy_tiktok);
 
   return (
   <footer className="bg-[#0a0a0a] border-t border-[#262626]" data-testid="footer">

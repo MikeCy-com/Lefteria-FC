@@ -38,7 +38,6 @@ const TeamTabBar = ({ activeTab, setActiveTab }) => {
               }`}
               data-testid={`team-tab-${tab.id}`}
             >
-              <span className="text-[10px] tracking-[0.2em] uppercase hidden sm:block">Η Ομαδα</span>
               <span className="font-['Bebas_Neue'] text-base sm:text-lg tracking-wide">{stripGreekAccents(tab.label)}</span>
               {activeTab === tab.id && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#F5A623]" />

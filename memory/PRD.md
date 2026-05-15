@@ -59,6 +59,7 @@ Complete football club CMS + public website for **Lefteria FC**, including:
 - Greek-accent uppercase guards across public UI
 - **First Team Trials registration** (Feb 2026): admin-toggleable public form `/trials`, status workflow (new/contacted/approved/rejected), CSV export, configurable headline/subtitle/CTA. Homepage section appears only when admin opens the form.
 - **Academy enrollment CTA refresh** (Feb 2026): Homepage + Academy page CTAs now read "Ακαδημία Ποδοσφαίρου — Έντυπο Εγγραφής".
+- **UI polish** (Feb 2026): Removed "Η Ομαδα" prefix from Team Hub tab labels; added TikTok icon to footer social rows (First Team + Academy); push notification bell now always visible with guided modal explaining iOS PWA-install requirement / denied-permission recovery / browser support.
 
 ## Deployment Status — ✅ LIVE
 - **Domain**: https://lefteriafc.cy and https://www.lefteriafc.cy
