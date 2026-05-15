@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Users, Shield, Target, TrendingUp, Award } from "lucide-react";
 import axios from "axios";
 import { extractPlayerId, formatAcademyDisplayName } from "../utils/playerHelpers";
+import ShareButton from "../components/ShareButton";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -169,17 +170,25 @@ const PlayerProfilePage = () => {
 
             {/* Player Info (Center) */}
             <div className="text-center lg:text-left pb-4">
-              {/* Number + Name */}
-              <div className="flex items-start gap-3 justify-center lg:justify-start mb-4">
-                <span className="font-['Bebas_Neue'] text-6xl lg:text-7xl text-[#F5A623] leading-none">{player.number}</span>
-                <div>
-                  <h1 className="font-['Bebas_Neue'] text-3xl lg:text-4xl text-white leading-tight uppercase" data-testid="player-name">
-                    {displayName.split(' ').slice(0, -1).join(' ')}
-                  </h1>
-                  <h1 className="font-['Bebas_Neue'] text-4xl lg:text-5xl text-[#F5A623] leading-tight uppercase">
-                    {displayName.split(' ').slice(-1)}
-                  </h1>
+              {/* Number + Name + Share */}
+              <div className="flex items-start gap-3 justify-center lg:justify-between mb-4">
+                <div className="flex items-start gap-3">
+                  <span className="font-['Bebas_Neue'] text-6xl lg:text-7xl text-[#F5A623] leading-none">{player.number}</span>
+                  <div>
+                    <h1 className="font-['Bebas_Neue'] text-3xl lg:text-4xl text-white leading-tight uppercase" data-testid="player-name">
+                      {displayName.split(' ').slice(0, -1).join(' ')}
+                    </h1>
+                    <h1 className="font-['Bebas_Neue'] text-4xl lg:text-5xl text-[#F5A623] leading-tight uppercase">
+                      {displayName.split(' ').slice(-1)}
+                    </h1>
+                  </div>
                 </div>
+                <div className="hidden lg:block">
+                  <ShareButton kind="player" id={player.id} title={`${displayName} — LEFTERIA FC`} />
+                </div>
+              </div>
+              <div className="lg:hidden mb-4 flex justify-center">
+                <ShareButton kind="player" id={player.id} title={`${displayName} — LEFTERIA FC`} />
               </div>
 
               {/* Info Grid */}

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, Mail, Phone, Calendar, Flag, Award, GraduationCap, Briefcase, User } from "lucide-react";
 import { extractStaffId } from "../utils/playerHelpers";
+import ShareButton from "../components/ShareButton";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -104,7 +105,10 @@ export default function StaffProfilePage() {
 
             {/* Info */}
             <div>
-              <span className="badge badge-primary mb-3" data-testid="staff-role-badge">{roleLabel}</span>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <span className="badge badge-primary" data-testid="staff-role-badge">{roleLabel}</span>
+                <ShareButton kind="staff" id={staff.id} title={`${staff.name} — ${roleLabel}`} />
+              </div>
               <h1 className="font-['Bebas_Neue'] text-4xl md:text-6xl text-white leading-tight uppercase tracking-wide" data-testid="staff-name">
                 {staff.name}
               </h1>

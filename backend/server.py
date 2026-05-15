@@ -2754,6 +2754,7 @@ from routes.mobile_auth import router as mobile_router, setup_mobile_routes
 from routes.opponents import router as opponents_router, setup_opponents_routes
 from routes.charges import router as charges_router, setup_charges_routes
 from routes.trials import router as trials_router, setup_trials_routes
+from routes.og import router as og_router, setup_og_routes
 
 setup_financial_routes(db, get_current_user)
 setup_video_routes(db, get_current_user)
@@ -2762,6 +2763,7 @@ setup_mobile_routes(db)
 setup_opponents_routes(db, get_current_user)
 setup_charges_routes(db, get_current_user)
 setup_trials_routes(db, get_current_user)
+setup_og_routes(db)
 
 app.include_router(financial_router)
 app.include_router(video_router)
@@ -2770,6 +2772,7 @@ app.include_router(mobile_router)
 app.include_router(opponents_router)
 app.include_router(charges_router)
 app.include_router(trials_router)
+app.include_router(og_router)
 
 app.add_middleware(
     CORSMiddleware,
