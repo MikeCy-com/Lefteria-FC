@@ -16,6 +16,7 @@ import AdminCalendarTab from "./admin/CalendarTab";
 import AdminAttendanceTab from "./admin/AttendanceTab";
 import AdminWallTab from "./admin/WallTab";
 import ChargesTab from "./admin/ChargesTab";
+import TrialsTab from "./admin/TrialsTab";
 import TrainingSessionsPanel from "./admin/TrainingSessionsPanel";
 import PlayerDevelopmentPanel from "./admin/PlayerDevelopmentPanel";
 import PlayerEvaluationPanel from "./admin/PlayerEvaluationPanel";
@@ -3079,6 +3080,7 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "group", id: "club_section", label: "Συλλόγος", icon: Building2, dashboard: "club_dashboard", items: [
       { id: "teams", label: "Ομάδες", icon: Shield },
       { id: "fixtures", label: "Πρόγραμμα", icon: Calendar },
+      { id: "trials", label: "Δοκιμαστικά", icon: Trophy },
       { id: "club_opponents", label: "Αντίπαλοι", icon: Shield },
       { id: "club_venues", label: "Γήπεδα", icon: MapPin },
     ]},
@@ -3158,6 +3160,7 @@ const AdminPanel = ({ user, onLogout }) => {
       case "shop_orders": return <AdminOrdersTab />;
       case "settings_club": return <ClubProfileTab club={data.club} onRefresh={fetchAll} facilities={data.facilities} />;
       case "settings_charges": return <ChargesTab players={data.players} academyGroups={data.academyGroups} teams={data.teams} onRefresh={fetchAll} />;
+      case "trials": return <TrialsTab />;
       case "settings_sms": return <SmsSettingsTab club={data.club} onRefresh={fetchAll} />;
       case "settings_staff": return <StaffTab staff={data.staff} teams={data.teams} academyGroups={data.academyGroups} onRefresh={fetchAll} />;
       case "settings_social": return <SocialMediaTab club={data.club} onRefresh={fetchAll} />;

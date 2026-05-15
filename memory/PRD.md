@@ -45,7 +45,7 @@ Complete football club CMS + public website for **Lefteria FC**, including:
 
 ## Completed Features
 - Public website (Greek) with Home, Team, Academy, Fixtures, Standings, News, Past Seasons, Sponsors, Contact
-- Admin CMS: Players, Staff, Teams, Fixtures, Match Reports, Standings, News, Sponsors, Charges, Settings
+- Admin CMS: Players, Staff, Teams, Fixtures, Match Reports, Standings, News, Sponsors, Charges, Trials, Settings
 - Mobile PWA with OTP login (Twilio configurable; mock toggle in Admin Settings)
 - Push notifications (VAPID) — match reminders, POTM
 - Player Charges/Fees system with PDF receipts (reportlab)
@@ -57,6 +57,8 @@ Complete football club CMS + public website for **Lefteria FC**, including:
 - Player slugs (academy last-names masked)
 - Automated standings recalc from match results
 - Greek-accent uppercase guards across public UI
+- **First Team Trials registration** (Feb 2026): admin-toggleable public form `/trials`, status workflow (new/contacted/approved/rejected), CSV export, configurable headline/subtitle/CTA. Homepage section appears only when admin opens the form.
+- **Academy enrollment CTA refresh** (Feb 2026): Homepage + Academy page CTAs now read "Ακαδημία Ποδοσφαίρου — Έντυπο Εγγραφής".
 
 ## Deployment Status — ✅ LIVE
 - **Domain**: https://lefteriafc.cy and https://www.lefteriafc.cy

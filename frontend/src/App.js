@@ -15,6 +15,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import RegistrationPage from "./pages/RegistrationPage";
+import TrialsPage from "./pages/TrialsPage";
 import AcademyGroupPage from "./pages/AcademyGroupPage";
 import AcademyLandingPage from "./pages/AcademyLandingPage";
 import AcademyPhilosophyPage from "./pages/AcademyPhilosophyPage";
@@ -489,6 +490,8 @@ const HomePage = () => {
   const [potmResults, setPotmResults] = useState({ results: [], total_votes: 0, month_key: "" });
   // Birthdays
   const [birthdayPlayers, setBirthdayPlayers] = useState([]);
+  // First Team Trials
+  const [trialSettings, setTrialSettings] = useState(null);
 
   const fetchLive = async () => {
     try {
@@ -518,7 +521,7 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes, trialsSettingsRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
@@ -526,6 +529,7 @@ const HomePage = () => {
           axios.get(`${API}/settings/standings-columns`),
           axios.get(`${API}/players/birthdays`),
           axios.get(`${API}/votes/potm/results`),
+          axios.get(`${API}/trials/settings`).catch(() => ({ data: null })),
         ]);
         setFixtures(fixturesRes.data);
         setStandings(standingsRes.data);
@@ -534,6 +538,7 @@ const HomePage = () => {
         setCols(colsRes.data);
         setBirthdayPlayers(birthdayRes.data);
         setPotmResults(potmResultsRes.data);
+        setTrialSettings(trialsSettingsRes.data);
       } catch (e) {
         console.error("Error fetching data:", e);
       } finally {
@@ -914,6 +919,24 @@ const HomePage = () => {
       {/* Sponsor Spotlight */}
       <SponsorSpotlight />
 
+      {/* First Team Trials CTA — admin toggleable */}
+      {trialSettings?.open && (
+        <section className="py-16 md:py-20 px-4 md:px-6 bg-gradient-to-br from-[#F5A623]/10 via-[#0a0a0a] to-[#0a0a0a] border-y border-[#F5A623]/20" data-testid="home-trials-cta">
+          <div className="max-w-4xl mx-auto text-center">
+            <span className="badge badge-primary mb-6">Πρώτη Ομάδα</span>
+            <h2 className="font-['Bebas_Neue'] text-3xl md:text-5xl text-white mb-4" data-testid="home-trials-headline">
+              {trialSettings.headline}
+            </h2>
+            <p className="text-lg text-zinc-300 mb-8 max-w-2xl mx-auto" data-testid="home-trials-subtitle">
+              {trialSettings.subtitle}
+            </p>
+            <Link to="/trials" className="btn-primary" data-testid="home-trials-cta-btn">
+              {trialSettings.button_text} <ArrowRight size={18} />
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Academy CTA */}
       <section 
         className="py-24 px-6 relative"
@@ -926,20 +949,19 @@ const HomePage = () => {
       >
         <div className="absolute inset-0 bg-black/80"></div>
         <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <span className="badge badge-primary mb-6">Ανάπτυξη Νέων</span>
-          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
-            Ελα στην <span className="text-[#F5A623]">Ακαδημια</span>
+          <span className="badge badge-primary mb-6">Ακαδημία Ποδοσφαίρου</span>
+          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-4">
+            Εντυπο <span className="text-[#F5A623]">Εγγραφης</span>
           </h2>
           <p className="text-lg text-zinc-300 mb-8 max-w-2xl mx-auto">
-            Από U6 έως U12, η ακαδημία μας αναπτύσσει νέα ταλέντα με προπονητές και εγκαταστάσεις υψηλού επιπέδου. 
-            Ξεκίνα το ταξίδι σου για να γίνεις επαγγελματίας ποδοσφαιριστής.
+            Συμπληρώστε τη φόρμα για να εγγράψετε τον αθλητή στην ακαδημία.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/academy" className="btn-primary">
-              Εξερευνησε την Ακαδημια <ArrowRight size={18} />
+            <Link to="/academy" className="btn-secondary">
+              Εξερευνησε την Ακαδημια
             </Link>
-            <Link to="/academy/registration" className="btn-secondary">
-              Δηλωσε Ενδιαφερον
+            <Link to="/academy/registration" className="btn-primary" data-testid="home-academy-registration-btn">
+              Εγγραφη Αθλητη <ArrowRight size={18} />
             </Link>
           </div>
         </div>
@@ -1206,14 +1228,15 @@ const AcademyPage = () => {
       {/* CTA */}
       <section className="py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-6">
-            Ετοιμος να Ξεκινησεις το Ταξιδι σου;
+          <span className="badge badge-primary mb-4">Ακαδημία Ποδοσφαίρου</span>
+          <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-4">
+            Εντυπο <span className="text-[#F5A623]">Εγγραφης</span>
           </h2>
           <p className="text-zinc-300 mb-8">
-            Γίνε μέλος της Ακαδημίας LEFTERIA FC και κάνε το πρώτο βήμα για να γίνεις επαγγελματίας ποδοσφαιριστής.
+            Συμπληρώστε τη φόρμα για να εγγράψετε τον αθλητή στην ακαδημία.
           </p>
-          <Link to="/contact" className="btn-primary">
-            Δηλωσε Συμμετοχη για Δοκιμαστικα <ArrowRight size={18} />
+          <Link to="/academy/registration" className="btn-primary" data-testid="academy-registration-cta-btn">
+            Εγγραφη Αθλητη <ArrowRight size={18} />
           </Link>
         </div>
       </section>
@@ -1794,6 +1817,7 @@ function App() {
             <Route path="/academy/philosophy" element={<PublicLayout><AcademyPhilosophyPage /></PublicLayout>} />
             <Route path="/academy/groups" element={<PublicLayout><AcademyPage /></PublicLayout>} />
             <Route path="/academy/registration" element={<PublicLayout><RegistrationPage /></PublicLayout>} />
+            <Route path="/trials" element={<PublicLayout><TrialsPage /></PublicLayout>} />
             <Route path="/academy/:groupId" element={<PublicLayout><AcademyGroupPage /></PublicLayout>} />
             <Route path="/sponsors/first-team" element={<PublicLayout><SponsorsPage type="first_team" /></PublicLayout>} />
             <Route path="/sponsors/academy" element={<PublicLayout><SponsorsPage type="academy" /></PublicLayout>} />
