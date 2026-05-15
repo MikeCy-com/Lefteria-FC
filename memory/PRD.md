@@ -1,5 +1,9 @@
 # Lefteria FC — Product Requirements & Status
 
+## Latest Fix (Feb 2026)
+- **OG Announce PNG accent stripping**: `_strip_greek_accents()` helper existed in `/app/backend/routes/og.py` but was never invoked inside `_render_announce_card()`. Fixed by applying it to both the player name (`name_upper`) and the position subtitle. Verified visually: e.g., "Ανδρέας Πραστίτης" renders as "ΑΝΔΡΕΑΣ ΠΡΑΣΤΙΤΗΣ" with no tonos, and "Τερματοφύλακας" → "ΤΕΡΜΑΤΟΦΥΛΑΚΑΣ".
+
+
 ## Original Problem Statement
 Complete football club CMS + public website for **Lefteria FC**, including:
 - Centralized Team Hub, Player Profiles, Match Reports, Academy Management

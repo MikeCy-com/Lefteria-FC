@@ -321,8 +321,8 @@ def _render_announce_card(name: str, position: str, number, image_url: str | Non
     foot_font = _load_font(28)
 
     d.text((75, 90), "ΝΕΟ ΜΕΛΟΣ!", font=label_font, fill=(245, 166, 35))
-    # Player name (wrap to two lines if needed)
-    name_upper = (name or "").upper()
+    # Player name (wrap to two lines if needed) — strip Greek accents BEFORE upper-casing
+    name_upper = _strip_greek_accents((name or "").upper())
     parts = name_upper.split(" ")
     if len(parts) > 1 and len(name_upper) > 18:
         line1 = " ".join(parts[: len(parts) // 2])
@@ -339,7 +339,7 @@ def _render_announce_card(name: str, position: str, number, image_url: str | Non
     if number is not None:
         sub_bits.append(f"#{number}")
     if position:
-        sub_bits.append(position.upper())
+        sub_bits.append(_strip_greek_accents(position.upper()))
     if sub_bits:
         d.text((75, y_after), " · ".join(sub_bits), font=sub_font, fill=(200, 200, 200))
 
