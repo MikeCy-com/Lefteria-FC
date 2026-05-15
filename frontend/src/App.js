@@ -16,6 +16,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import TrialsPage from "./pages/TrialsPage";
+import StaffProfilePage from "./pages/StaffProfilePage";
 import AcademyGroupPage from "./pages/AcademyGroupPage";
 import AcademyLandingPage from "./pages/AcademyLandingPage";
 import AcademyPhilosophyPage from "./pages/AcademyPhilosophyPage";
@@ -1911,6 +1912,7 @@ function App() {
             <Route path="/academy/groups" element={<PublicLayout><AcademyPage /></PublicLayout>} />
             <Route path="/academy/registration" element={<PublicLayout><RegistrationPage /></PublicLayout>} />
             <Route path="/trials" element={<PublicLayout><TrialsPage /></PublicLayout>} />
+            <Route path="/staff/:staffId" element={<PublicLayout><StaffProfilePage /></PublicLayout>} />
             <Route path="/academy/:groupId" element={<PublicLayout><AcademyGroupPage /></PublicLayout>} />
             <Route path="/sponsors/first-team" element={<PublicLayout><SponsorsPage type="first_team" /></PublicLayout>} />
             <Route path="/sponsors/academy" element={<PublicLayout><SponsorsPage type="academy" /></PublicLayout>} />

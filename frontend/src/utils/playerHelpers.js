@@ -41,3 +41,16 @@ export const formatAcademyDisplayName = (name = "") => {
   const trimmedLast = last.slice(0, 2);
   return `${first} ${trimmedLast}.`;
 };
+
+// Staff profile URL with human-readable slug + UUID (same scheme as playerLink).
+export const staffLink = (staff) => {
+  if (!staff?.id) return "#";
+  const slug = slugifyPlayerName(staff.name);
+  return slug ? `/staff/${slug}--${staff.id}` : `/staff/${staff.id}`;
+};
+
+// Extract UUID from a staff route param (same scheme as extractPlayerId).
+export const extractStaffId = (param = "") => {
+  const idx = param.lastIndexOf("--");
+  return idx >= 0 ? param.slice(idx + 2) : param;
+};

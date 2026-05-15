@@ -5,7 +5,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Users, MapPin, Clock, Trophy, Target, Shield, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
 import axios from "axios";
-import { playerLink } from "../utils/playerHelpers";
+import { playerLink, staffLink } from "../utils/playerHelpers";
 
 const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -297,10 +297,15 @@ const OverviewTab = ({ players, fixtures, standings, staff, isOurTeam }) => {
                     "Physiotherapist": "Φυσιοθεραπευτής", "Team Manager": "Διευθυντής",
                   };
                   return (
-                    <div key={s.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                      <span className="text-white">{s.name}</span>
+                    <Link
+                      key={s.id}
+                      to={staffLink(s)}
+                      className="px-5 py-3 flex items-center justify-between text-sm hover:bg-[#F5A623]/5 transition-colors group"
+                      data-testid={`staff-link-${s.id}`}
+                    >
+                      <span className="text-white group-hover:text-[#F5A623] transition-colors">{s.name}</span>
                       <span className="text-[10px] text-[#F5A623] tracking-wider uppercase">{roleLabels[s.role] || s.role}</span>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

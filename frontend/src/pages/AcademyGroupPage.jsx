@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { stripGreekAccents } from "../utils/greekText";
 import { ChevronRight, Users, Calendar, Clock, Image as ImageIcon, MapPin, BarChart3, Trophy, Target, Shield } from "lucide-react";
 import axios from "axios";
-import { playerLink, formatAcademyDisplayName } from "../utils/playerHelpers";
+import { playerLink, staffLink, formatAcademyDisplayName } from "../utils/playerHelpers";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -21,22 +21,25 @@ const AcademyGroupPage = () => {
   const [players, setPlayers] = useState([]);
   const [fixtures, setFixtures] = useState([]);
   const [gallery, setGallery] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("roster");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [groupRes, playersRes, fixturesRes, galleryRes] = await Promise.all([
+        const [groupRes, playersRes, fixturesRes, galleryRes, staffRes] = await Promise.all([
           axios.get(`${API}/academy-groups/${groupId}`),
           axios.get(`${API}/academy-groups/${groupId}/players`),
           axios.get(`${API}/academy-groups/${groupId}/fixtures`),
           axios.get(`${API}/gallery?academy_group_id=${groupId}`),
+          axios.get(`${API}/staff`).catch(() => ({ data: [] })),
         ]);
         setGroup(groupRes.data);
         setPlayers(playersRes.data);
         setFixtures(fixturesRes.data);
         setGallery(galleryRes.data);
+        setStaff(staffRes.data);
       } catch (e) {
         console.error("Error fetching academy group data:", e);
       } finally {
@@ -139,12 +142,29 @@ const AcademyGroupPage = () => {
               )}
             </div>
             <div className="flex flex-col gap-2 text-sm text-zinc-300">
-              {group.coach_name && (
-                <div className="flex items-center gap-2">
-                  <Users size={15} className="text-[#F5A623]" />
-                  <span>Προπονητής: <strong className="text-white">{group.coach_name}</strong></span>
-                </div>
-              )}
+              {group.coach_name && (() => {
+                // Find a staff record matching this group (preferred) or by name fallback
+                const coach = staff.find((s) =>
+                  (Array.isArray(s.academy_group_ids) && s.academy_group_ids.includes(groupId)) ||
+                  s.academy_group_id === groupId
+                ) || staff.find((s) => s.name?.trim() === group.coach_name?.trim());
+                const inner = (
+                  <>
+                    <Users size={15} className="text-[#F5A623]" />
+                    <span>
+                      Προπονητής:{" "}
+                      <strong className={coach ? "text-white group-hover:text-[#F5A623] transition-colors" : "text-white"}>
+                        {group.coach_name}
+                      </strong>
+                    </span>
+                  </>
+                );
+                return coach ? (
+                  <Link to={staffLink(coach)} className="flex items-center gap-2 group" data-testid="academy-coach-link">{inner}</Link>
+                ) : (
+                  <div className="flex items-center gap-2">{inner}</div>
+                );
+              })()}
               {group.training_schedule && (
                 <div className="flex items-center gap-2">
                   <Clock size={15} className="text-[#F5A623]" />
