@@ -1048,7 +1048,7 @@ const HomePage = () => {
               Εξερευνησε την Ακαδημια <ArrowRight size={18} />
             </Link>
             <Link to="/academy/registration" className="btn-secondary" data-testid="home-academy-registration-btn">
-              Δηλωσε Ενδιαφερον
+              Εγγραφη Αθλητη
             </Link>
           </div>
         </div>
