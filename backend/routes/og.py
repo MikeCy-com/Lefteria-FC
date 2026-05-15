@@ -5,12 +5,12 @@ preview card (photo + name + role/position).
 Humans visiting these URLs get a meta-refresh redirect to the real React page.
 Crawlers stop at the HTML and read the OG tags.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response
 import html as _html
 import io
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from PIL import Image, ImageDraw, ImageFont
 import urllib.request
 
@@ -240,6 +240,41 @@ def setup_og_routes(db, request_host_provider=None):
         png = _render_announce_card(name, role, None, img_url)
         return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
+    # ===== Birthday card =====
+    @router.get("/player/{player_id}/birthday", response_class=HTMLResponse)
+    async def og_player_birthday(player_id: str):
+        if "--" in player_id:
+            player_id = player_id.rsplit("--", 1)[-1]
+        p = await db.players.find_one({"id": player_id}, {"_id": 0})
+        if not p:
+            raise HTTPException(status_code=404, detail="Player not found")
+        site = _site_url(os.environ.get("OG_HOST", "lefteriafc.cy"))
+        name = p.get("name", "Παίκτης")
+        age = _calc_age(p.get("date_of_birth", ""))
+        title = f"Χρόνια Πολλά, {name}!"
+        desc = f"Η οικογένεια LEFTERIA FC εύχεται στον/στην {name}" + (f" για τα {age}α γενέθλια!" if age else " χρόνια πολλά!")
+        slug = _slug(name)
+        canonical = f"{site}/api/og/player/{player_id}/birthday"
+        spa_path = f"/player/{slug}--{player_id}" if slug else f"/player/{player_id}"
+        redirect_to = f"{site}{spa_path}"
+        image = f"{site}/api/og/player/{player_id}/birthday.png?fmt=landscape"
+        return HTMLResponse(_render(title, desc, image, canonical, redirect_to))
+
+    @router.get("/player/{player_id}/birthday.png")
+    async def og_player_birthday_png(player_id: str, fmt: str = Query("landscape", regex="^(landscape|square|story)$")):
+        if "--" in player_id:
+            player_id = player_id.rsplit("--", 1)[-1]
+        p = await db.players.find_one({"id": player_id}, {"_id": 0})
+        if not p:
+            raise HTTPException(status_code=404, detail="Player not found")
+        site = _site_url(os.environ.get("OG_HOST", "lefteriafc.cy"))
+        name = p.get("name", "")
+        age = _calc_age(p.get("date_of_birth", ""))
+        img_url = _abs_image(p.get("image_url"), site)
+        team_type = p.get("team_type", "First Team")
+        png = _render_birthday_card(name, age, img_url, team_type, fmt)
+        return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
+
     @router.get("/news/{news_id}", response_class=HTMLResponse)
     async def og_news(news_id: str):
         if "--" in news_id:
@@ -381,6 +416,141 @@ def _render_announce_card(name: str, position: str, number, image_url: str | Non
 
     # Footer brand
     d.text((75, H - 70), "LEFTERIA FC · lefteriafc.cy", font=foot_font, fill=(120, 120, 120))
+
+    buf = io.BytesIO()
+    bg.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+
+# ============================================================
+# Birthday card image generator — supports multiple aspect ratios
+# ============================================================
+def _calc_age(dob: str) -> int | None:
+    """Calculate age in years from YYYY-MM-DD string. Returns None on failure."""
+    if not dob:
+        return None
+    try:
+        d = datetime.strptime(dob[:10], "%Y-%m-%d")
+        now = datetime.now(timezone.utc)
+        age = now.year - d.year - ((now.month, now.day) < (d.month, d.day))
+        return age if age > 0 else None
+    except Exception:
+        return None
+
+
+_BIRTHDAY_SIZES = {
+    "landscape": (1200, 630),   # Facebook / WhatsApp / Twitter feed
+    "square":    (1080, 1080),  # Instagram feed
+    "story":     (1080, 1920),  # Instagram / Facebook Story + TikTok / Reels
+}
+
+
+def _fit_photo_circle(raw: bytes, diameter: int) -> Image.Image | None:
+    try:
+        im = Image.open(io.BytesIO(raw)).convert("RGB")
+        w, h = im.size
+        side = min(w, h)
+        im = im.crop(((w - side) // 2, (h - side) // 2, (w + side) // 2, (h + side) // 2))
+        im = im.resize((diameter, diameter))
+        mask = Image.new("L", (diameter, diameter), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, diameter, diameter), fill=255)
+        im.putalpha(mask)
+        return im
+    except Exception:
+        return None
+
+
+def _draw_text_centered(d: ImageDraw.ImageDraw, text: str, font, y: int, W: int, fill):
+    bbox = d.textbbox((0, 0), text, font=font)
+    tw = bbox[2] - bbox[0]
+    d.text(((W - tw) // 2, y), text, font=font, fill=fill)
+
+
+def _render_birthday_card(name: str, age, image_url: str | None, team_type: str, fmt: str) -> bytes:
+    W, H = _BIRTHDAY_SIZES.get(fmt, _BIRTHDAY_SIZES["landscape"])
+    is_portrait = H > W
+
+    # Background — dark with vibrant warm radial accent
+    bg = Image.new("RGB", (W, H), (10, 10, 10))
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    od = ImageDraw.Draw(overlay)
+    # Big soft radial glow (top center)
+    cx, cy = W // 2, int(H * 0.28)
+    radius = int(max(W, H) * 0.55)
+    for r in range(radius, 0, -8):
+        alpha = max(0, int(70 * (1 - r / radius)))
+        od.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(245, 166, 35, alpha))
+    bg.paste(overlay, (0, 0), overlay)
+
+    d = ImageDraw.Draw(bg)
+
+    # Font sizes scale with shortest side
+    base = min(W, H)
+    f_label = _load_font(int(base * 0.045))
+    f_title = _load_font(int(base * 0.11))   # "ΧΡΟΝΙΑ ΠΟΛΛΑ!"
+    f_name  = _load_font(int(base * 0.07))
+    f_age   = _load_font(int(base * 0.055))
+    f_foot  = _load_font(int(base * 0.028))
+
+    # ============ Photo (circle) ============
+    photo_diameter = int(base * (0.45 if is_portrait else 0.55))
+    photo_cx = W // 2
+    photo_cy = int(H * (0.42 if is_portrait else 0.45))
+    if image_url:
+        raw = _fetch_image_bytes(image_url)
+        if raw:
+            ph = _fit_photo_circle(raw, photo_diameter)
+            if ph is not None:
+                # Outer ring
+                ring_pad = max(6, int(base * 0.012))
+                ring_box = (photo_cx - photo_diameter // 2 - ring_pad,
+                            photo_cy - photo_diameter // 2 - ring_pad,
+                            photo_cx + photo_diameter // 2 + ring_pad,
+                            photo_cy + photo_diameter // 2 + ring_pad)
+                d.ellipse(ring_box, outline=(245, 166, 35), width=max(4, int(base * 0.008)))
+                bg.paste(ph, (photo_cx - photo_diameter // 2, photo_cy - photo_diameter // 2), ph)
+
+    # ============ "ΧΡΟΝΙΑ ΠΟΛΛΑ!" headline ============
+    headline = "ΧΡΟΝΙΑ ΠΟΛΛΑ!"
+    head_y = int(H * (0.06 if is_portrait else 0.06))
+    _draw_text_centered(d, headline, f_title, head_y, W, (245, 166, 35))
+
+    # Small subtitle under headline
+    sub_y = head_y + int(base * 0.13)
+    if not is_portrait:
+        sub_y = head_y + int(base * 0.13)
+    sub_label = "LEFTERIA FC ΑΚΑΔΗΜΙΑ" if team_type == "Academy" else "LEFTERIA FC"
+    _draw_text_centered(d, sub_label, f_label, sub_y, W, (200, 200, 200))
+
+    # ============ Name + age below photo ============
+    name_y = photo_cy + photo_diameter // 2 + int(base * (0.06 if is_portrait else 0.05))
+    name_upper = _strip_greek_accents((name or "").upper())
+    # Wrap long names
+    if d.textbbox((0, 0), name_upper, font=f_name)[2] > W - int(base * 0.1):
+        parts = name_upper.split(" ")
+        if len(parts) > 1:
+            mid = len(parts) // 2
+            line1 = " ".join(parts[:mid])
+            line2 = " ".join(parts[mid:])
+            _draw_text_centered(d, line1, f_name, name_y, W, (255, 255, 255))
+            _draw_text_centered(d, line2, f_name, name_y + int(base * 0.09), W, (255, 255, 255))
+            name_h = int(base * 0.18)
+        else:
+            _draw_text_centered(d, name_upper, f_name, name_y, W, (255, 255, 255))
+            name_h = int(base * 0.09)
+    else:
+        _draw_text_centered(d, name_upper, f_name, name_y, W, (255, 255, 255))
+        name_h = int(base * 0.09)
+
+    if age:
+        age_y = name_y + name_h + int(base * 0.015)
+        _draw_text_centered(d, f"{age} ΕΤΩΝ", f_age, age_y, W, (245, 166, 35))
+
+    # ============ Footer brand ============
+    foot_text = "LEFTERIA FC · lefteriafc.cy"
+    foot_y = H - int(base * 0.07)
+    _draw_text_centered(d, foot_text, f_foot, foot_y, W, (140, 140, 140))
 
     buf = io.BytesIO()
     bg.save(buf, format="PNG", optimize=True)

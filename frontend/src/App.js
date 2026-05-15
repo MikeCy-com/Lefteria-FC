@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
-import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket, ShoppingCart, User, Handshake } from "lucide-react";
+import { Menu, X, Trophy, Users, Calendar, Newspaper, Mail, Shield, ChevronRight, MapPin, Clock, Home as HomeIcon, Info, GraduationCap, Settings, ChevronDown, Phone, Facebook, Twitter, Instagram, Youtube, ArrowRight, Star, Target, Heart, Lock, LogOut, Eye, EyeOff, Bell, BellOff, Ticket, ShoppingCart, User, Handshake, Share2, Download, Copy, Cake } from "lucide-react";
 import AdminPanel from "./pages/AdminPanel";
 import TeamHubPage from "./pages/TeamHubPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
@@ -573,6 +573,7 @@ const HomePage = () => {
   const [potmResults, setPotmResults] = useState({ results: [], total_votes: 0, month_key: "" });
   // Birthdays
   const [birthdayPlayers, setBirthdayPlayers] = useState([]);
+  const [birthdayCardPlayer, setBirthdayCardPlayer] = useState(null);
   // First Team Trials
   const [trialSettings, setTrialSettings] = useState(null);
   // Club profile (used to identify "our team" in standings/fixtures by name)
@@ -815,10 +816,11 @@ const HomePage = () => {
             <div className="relative overflow-hidden">
               <div className="birthday-ticker flex gap-8 items-center">
                 {[...birthdayPlayers, ...birthdayPlayers].map((p, i) => (
-                  <Link
+                  <button
+                    type="button"
                     key={`${p.id}-${i}`}
-                    to={playerLink(p)}
-                    className="flex items-center gap-3 flex-shrink-0 group"
+                    onClick={() => setBirthdayCardPlayer(p)}
+                    className="flex items-center gap-3 flex-shrink-0 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F5A623]/50 rounded-md"
                     data-testid={`birthday-player-${p.id}`}
                   >
                     <div className="w-9 h-9 rounded-full bg-[#1a1a1a] overflow-hidden border border-[#333] group-hover:border-[#F5A623] transition-colors flex-shrink-0">
@@ -832,7 +834,8 @@ const HomePage = () => {
                       <span className="text-sm text-white group-hover:text-[#F5A623] transition-colors font-medium">{p.name}</span>
                       <span className="text-xs text-zinc-500 ml-2">{p.birthday_day}/{String(new Date().getMonth() + 1).padStart(2, '0')} — {p.age} ετών</span>
                     </div>
-                  </Link>
+                    <Cake size={14} className="text-[#F5A623]/60 group-hover:text-[#F5A623] transition-colors" />
+                  </button>
                 ))}
               </div>
             </div>
@@ -1054,11 +1057,120 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      {birthdayCardPlayer && (
+        <BirthdayCardModal player={birthdayCardPlayer} onClose={() => setBirthdayCardPlayer(null)} />
+      )}
     </div>
   );
 };
 
-// About Page
+// ==================== BIRTHDAY CARD MODAL ====================
+const BirthdayCardModal = ({ player, onClose }) => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const formats = [
+    { key: "landscape", label: "Facebook / WhatsApp", aspect: "1200×630", className: "aspect-[1200/630]" },
+    { key: "square",    label: "Instagram Feed",      aspect: "1080×1080", className: "aspect-square" },
+    { key: "story",     label: "Story / TikTok",      aspect: "1080×1920", className: "aspect-[9/16] max-h-[60vh] mx-auto" },
+  ];
+  const [active, setActive] = useState("landscape");
+  const [copied, setCopied] = useState(false);
+  const shareUrl = `${origin}/api/og/player/${player.id}/birthday`;
+  const imageUrl = `${origin}/api/og/player/${player.id}/birthday.png?fmt=${active}`;
+  const text = `Χρόνια Πολλά ${player.name}! Από την οικογένεια LEFTERIA FC 🎂`;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const downloadCurrent = async () => {
+    try {
+      const res = await fetch(imageUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `birthday-${player.name.replace(/\s+/g, "-")}-${active}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch {}
+  };
+
+  const enc = encodeURIComponent(shareUrl);
+  const t = encodeURIComponent(text);
+  const whatsapp = `https://wa.me/?text=${t}%20${enc}`;
+  const facebook = `https://www.facebook.com/sharer/sharer.php?u=${enc}`;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4" onClick={onClose} data-testid="birthday-modal">
+      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl w-full max-w-2xl shadow-2xl max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#262626] sticky top-0 bg-[#0f0f0f] z-10">
+          <h3 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide flex items-center gap-2">
+            <Cake size={18} className="text-[#F5A623]" /> Καρτα Γενεθλιων — {player.name}
+          </h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white text-xl leading-none" data-testid="birthday-close" aria-label="Κλεισιμο">✕</button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Format selector */}
+          <div className="flex flex-wrap gap-2">
+            {formats.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setActive(f.key)}
+                className={`px-3 py-1.5 text-xs rounded-full border transition-all ${active === f.key ? 'bg-[#F5A623] text-black border-[#F5A623] font-semibold' : 'bg-[#0a0a0a] text-zinc-300 border-[#262626] hover:border-[#F5A623]/60'}`}
+                data-testid={`birthday-fmt-${f.key}`}
+              >
+                {f.label} · <span className="opacity-60">{f.aspect}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Preview */}
+          <div className="rounded-lg overflow-hidden border border-[#262626] bg-[#050505] flex items-center justify-center">
+            <img
+              src={imageUrl}
+              alt={`Καρτα γενεθλιων ${player.name}`}
+              className={`block ${formats.find(f => f.key === active)?.className} w-auto object-contain`}
+              data-testid="birthday-preview-img"
+            />
+          </div>
+
+          <p className="text-xs text-zinc-500 leading-relaxed">
+            Επιλεξε format αναλογα με την πλατφορμα. Για Instagram & TikTok πατα <strong className="text-zinc-300">Καταβασταση</strong> και ανεβασε την εικονα απο την εφαρμογη.
+            Για WhatsApp & Facebook ο συνδεσμος ανοιγει αυτοματα με την landscape εικονα ως preview.
+          </p>
+
+          {/* Share actions */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <button onClick={downloadCurrent} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#F5A623] text-black text-sm font-semibold hover:bg-[#FF8C00] transition-colors" data-testid="birthday-download">
+              <Download size={14} /> Καταβασταση
+            </button>
+            <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#25D366]/60 hover:text-white transition-colors" data-testid="birthday-whatsapp">
+              <Share2 size={14} /> WhatsApp
+            </a>
+            <a href={facebook} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#1877F2]/60 hover:text-white transition-colors" data-testid="birthday-facebook">
+              <Share2 size={14} /> Facebook
+            </a>
+            <button onClick={copyLink} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#F5A623]/60 hover:text-white transition-colors" data-testid="birthday-copy">
+              <Copy size={14} /> {copied ? "Αντιγραφηκε!" : "Αντιγραφη"}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-[#1f1f1f]">
+            <Link to={playerLink(player)} className="text-xs text-[#F5A623] hover:underline" data-testid="birthday-view-profile">
+              Δες το προφιλ του παικτη →
+            </Link>
+            <span className="text-[10px] text-zinc-600">{player.team_type === "Academy" ? "Ακαδημια" : "Α' Ομαδα"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const AboutPage = () => (
   <div className="pt-24 min-h-screen" data-testid="about-page">
     {/* Hero */}

@@ -1,8 +1,13 @@
 # Lefteria FC — Product Requirements & Status
 ## Latest Fixes (Feb 2026)
-- **Dynamic Academy stats**: New `GET /api/academy/stats` returns `age_groups`, `athletes`, `trainings_per_week` (max weekday count per academy group), `dedication_pct` (from mobile attendance, last 90d, defaults to 100). `AcademyLandingPage.jsx` consumes it. Verified: now shows 4 / 6 / 3x / 100% from real data instead of hardcoded.
-- **Staff "ΝΕΟ ΜΕΛΟΣ!" announce card**: New `/api/og/staff/{id}/announce` HTML + `/announce.png` PNG endpoints reuse the existing card renderer with role-as-subtitle. Admin StaffTab gained a Megaphone icon per row that opens a shared `AnnounceModal` (refactored from player-specific). Verified visually: name + role render accent-free.
-- **OG Announce PNG accent stripping**: `_strip_greek_accents()` was defined but never invoked. Now applied to both name and position/role.
+- **Birthday share cards** (NEW): Click any name in the homepage "ΧΡΟΝΙΑ ΠΟΛΛΑ!" ticker → opens `BirthdayCardModal` with 3 social-media-ready formats and Share/Download/Copy actions.
+  - Backend: `GET /api/og/player/{id}/birthday` (HTML w/ OG tags) + `GET /api/og/player/{id}/birthday.png?fmt=landscape|square|story`.
+  - Image sizes: `landscape` 1200×630 (Facebook/WhatsApp/Twitter), `square` 1080×1080 (Instagram Feed), `story` 1080×1920 (Instagram/FB Story + TikTok/Reels).
+  - Card design: dark BG, warm radial glow, circular photo with orange ring, "ΧΡΟΝΙΑ ΠΟΛΛΑ!" headline, name + age, brand footer. All Greek accents stripped.
+  - Frontend: format selector + WhatsApp/Facebook share + Download + Copy buttons.
+- **Dynamic Academy stats**: New `GET /api/academy/stats` returns age_groups, athletes, trainings_per_week (max weekday count per group), dedication_pct. Verified: shows 4/6/3x/100%.
+- **Staff "ΝΕΟ ΜΕΛΟΣ!" announce card**: New `/api/og/staff/{id}/announce(.png)`. Admin StaffTab → Megaphone icon opens shared `AnnounceModal`.
+- **OG Announce PNG accent stripping**: `_strip_greek_accents()` now applied to name & position/role.
 
 
 ## Original Problem Statement
