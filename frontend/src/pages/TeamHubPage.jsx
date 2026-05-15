@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { stripGreekAccents } from "../utils/greekText";
+import { buildIsOurTeam } from "../utils/team";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Users, MapPin, Clock, Trophy, Target, Shield, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
@@ -51,9 +52,9 @@ const TeamTabBar = ({ activeTab, setActiveTab }) => {
 };
 
 // ==================== OVERVIEW TAB ====================
-const OverviewTab = ({ players, fixtures, standings, staff }) => {
-  const lefteriaStanding = standings.find(s => s.team_name === OUR_TEAM);
-  const ourFixtures = fixtures.filter(f => f.home_team === OUR_TEAM || f.away_team === OUR_TEAM);
+const OverviewTab = ({ players, fixtures, standings, staff, isOurTeam }) => {
+  const lefteriaStanding = standings.find(s => isOurTeam(s.team_name));
+  const ourFixtures = fixtures.filter(f => isOurTeam(f.home_team) || isOurTeam(f.away_team));
   const completedFixtures = ourFixtures.filter(f => f.status === "Completed");
   const allCompletedFixtures = fixtures.filter(f => f.status === "Completed");
   const lastMatch = completedFixtures[0];
@@ -62,7 +63,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
   const gamesHistory = useMemo(() => {
     let won = 0, drawn = 0, lost = 0;
     completedFixtures.forEach(f => {
-      const isHome = f.home_team === OUR_TEAM;
+      const isHome = isOurTeam(f.home_team);
       const hs = f.home_score || 0;
       const as = f.away_score || 0;
       if (isHome) {
@@ -79,12 +80,12 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
     goalsFor: lefteriaStanding.goals_for || 0,
     goalsAgainst: lefteriaStanding.goals_against || 0,
     cleanSheets: completedFixtures.filter(f => {
-      const isHome = f.home_team === OUR_TEAM;
+      const isHome = isOurTeam(f.home_team);
       return isHome ? (f.away_score === 0) : (f.home_score === 0);
     }).length,
     avgGoals: completedFixtures.length > 0
       ? (completedFixtures.reduce((acc, f) => {
-          const isHome = f.home_team === OUR_TEAM;
+          const isHome = isOurTeam(f.home_team);
           return acc + (isHome ? (f.home_score || 0) : (f.away_score || 0));
         }, 0) / completedFixtures.length).toFixed(1)
       : "0.0",
@@ -116,7 +117,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
                 </div>
                 <div className="flex items-center justify-center gap-6 py-6">
                   <div className="text-center flex-1">
-                    <div className={`font-['Bebas_Neue'] text-2xl ${lastMatch.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <div className={`font-['Bebas_Neue'] text-2xl ${isOurTeam(lastMatch.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                       {lastMatch.home_team}
                     </div>
                   </div>
@@ -124,7 +125,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
                     <span className="font-['Bebas_Neue'] text-4xl text-white">{lastMatch.home_score} - {lastMatch.away_score}</span>
                   </div>
                   <div className="text-center flex-1">
-                    <div className={`font-['Bebas_Neue'] text-2xl ${lastMatch.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <div className={`font-['Bebas_Neue'] text-2xl ${isOurTeam(lastMatch.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                       {lastMatch.away_team}
                     </div>
                   </div>
@@ -247,9 +248,9 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
               {completedFixtures.slice(0, 4).map(f => (
                 <Link to={`/match/${f.id}`} key={f.id} className="px-5 py-3 flex items-center justify-between text-xs hover:bg-[#111] transition-colors block">
                   <span className="text-zinc-500 w-16">{new Date(f.match_date).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' })}</span>
-                  <span className={`flex-1 ${f.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.home_team}</span>
+                  <span className={`flex-1 ${isOurTeam(f.home_team) ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.home_team}</span>
                   <span className="font-['Bebas_Neue'] text-sm text-white px-2">{f.home_score}-{f.away_score}</span>
-                  <span className={`flex-1 text-right ${f.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.away_team}</span>
+                  <span className={`flex-1 text-right ${isOurTeam(f.away_team) ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.away_team}</span>
                 </Link>
               ))}
               {completedFixtures.length === 0 && <p className="px-5 py-4 text-zinc-600 text-xs">Χωρίς αποτελέσματα</p>}
@@ -272,7 +273,7 @@ const OverviewTab = ({ players, fixtures, standings, staff }) => {
                     <>
                       <div className="pt-2 border-t border-[#1e1e1e]" />
                       <div className="flex justify-between text-sm"><span className="text-zinc-500">Βαθμοί</span><span className="text-[#F5A623] font-bold text-lg">{lefteriaStanding.points}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-zinc-500">Θέση</span><span className="text-white font-medium">{standings.findIndex(s => s.team_name === OUR_TEAM) + 1}η</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-zinc-500">Θέση</span><span className="text-white font-medium">{standings.findIndex(s => isOurTeam(s.team_name)) + 1}η</span></div>
                     </>
                   )}
                 </>
@@ -385,7 +386,7 @@ const RosterTab = ({ players }) => {
 };
 
 // ==================== RESULTS TAB ====================
-const ResultsTab = ({ fixtures }) => {
+const ResultsTab = ({ fixtures, isOurTeam }) => {
   const [filter, setFilter] = useState("all");
   const filtered = filter === "all" ? fixtures : fixtures.filter(f => f.status === filter);
 
@@ -415,13 +416,13 @@ const ResultsTab = ({ fixtures }) => {
               {new Date(f.match_date).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
             </span>
             <div className="flex items-center gap-3 flex-1 justify-center">
-              <span className={`text-sm font-medium text-right flex-1 ${f.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.home_team}</span>
+              <span className={`text-sm font-medium text-right flex-1 ${isOurTeam(f.home_team) ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.home_team}</span>
               <div className="bg-[#1a1a1a] border border-[#262626] px-4 py-2 min-w-[70px] text-center">
                 <span className="font-['Bebas_Neue'] text-lg text-white">
                   {f.status === 'Completed' ? `${f.home_score} - ${f.away_score}` : 'vs'}
                 </span>
               </div>
-              <span className={`text-sm font-medium text-left flex-1 ${f.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.away_team}</span>
+              <span className={`text-sm font-medium text-left flex-1 ${isOurTeam(f.away_team) ? 'text-[#F5A623]' : 'text-zinc-300'}`}>{f.away_team}</span>
             </div>
             <span className={`text-[10px] px-2 py-0.5 rounded ml-4 ${
               f.status === 'Completed' ? 'bg-green-500/10 text-green-400' :
@@ -437,7 +438,7 @@ const ResultsTab = ({ fixtures }) => {
 };
 
 // ==================== SCHEDULE TAB ====================
-const ScheduleTab = () => {
+const ScheduleTab = ({ isOurTeam }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [fixtures, setFixtures] = useState([]);
 
@@ -502,7 +503,7 @@ const ScheduleTab = () => {
                       f.status === 'Live' ? 'bg-red-500/15 text-red-400' :
                       'bg-[#F5A623]/10 text-[#F5A623]'
                     }`}>
-                      {f.status === 'Completed' ? `${f.home_score}-${f.away_score}` : ''} {f.home_team === OUR_TEAM ? `vs ${f.away_team}` : `@ ${f.home_team}`}
+                      {f.status === 'Completed' ? `${f.home_score}-${f.away_score}` : ''} {isOurTeam(f.home_team) ? `vs ${f.away_team}` : `@ ${f.home_team}`}
                     </div>
                   ))}
                 </div>
@@ -520,9 +521,9 @@ const ScheduleTab = () => {
             <div key={f.id} className="card p-4 flex items-center justify-between text-sm">
               <span className="text-xs text-zinc-500 w-20">{new Date(f.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
               <div className="flex-1 flex items-center gap-2 justify-center">
-                <span className={f.home_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-300'}>{f.home_team}</span>
+                <span className={isOurTeam(f.home_team) ? 'text-[#F5A623]' : 'text-zinc-300'}>{f.home_team}</span>
                 <span className="text-zinc-600 text-xs">vs</span>
-                <span className={f.away_team === OUR_TEAM ? 'text-[#F5A623]' : 'text-zinc-300'}>{f.away_team}</span>
+                <span className={isOurTeam(f.away_team) ? 'text-[#F5A623]' : 'text-zinc-300'}>{f.away_team}</span>
               </div>
               {f.status === 'Completed' && <span className="font-['Bebas_Neue'] text-white">{f.home_score}-{f.away_score}</span>}
             </div>
@@ -744,22 +745,26 @@ const TeamHubPage = () => {
   const [fixtures, setFixtures] = useState([]);
   const [standings, setStandings] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isOurTeam = useMemo(() => buildIsOurTeam(club), [club]);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [playersRes, fixturesRes, standingsRes, staffRes] = await Promise.all([
+        const [playersRes, fixturesRes, standingsRes, staffRes, clubRes] = await Promise.all([
           axios.get(`${API}/players?team_type=First%20Team`),
           axios.get(`${API}/fixtures?limit=200`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/staff`),
+          axios.get(`${API}/club`).catch(() => ({ data: null })),
         ]);
         setPlayers(playersRes.data);
         // Sort fixtures: most recent first
         setFixtures(fixturesRes.data.sort((a, b) => new Date(b.match_date) - new Date(a.match_date)));
         setStandings(standingsRes.data);
         setStaff(staffRes.data);
+        setClub(clubRes.data);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
@@ -805,10 +810,10 @@ const TeamHubPage = () => {
 
       {/* Tab Content */}
       <div className="bg-[#050505] min-h-[400px]">
-        {activeTab === "overview" && <OverviewTab players={players} fixtures={fixtures} standings={standings} staff={staff} />}
+        {activeTab === "overview" && <OverviewTab players={players} fixtures={fixtures} standings={standings} staff={staff} isOurTeam={isOurTeam} />}
         {activeTab === "roster" && <RosterTab players={players} />}
-        {activeTab === "results" && <ResultsTab fixtures={fixtures} />}
-        {activeTab === "schedule" && <ScheduleTab />}
+        {activeTab === "results" && <ResultsTab fixtures={fixtures} isOurTeam={isOurTeam} />}
+        {activeTab === "schedule" && <ScheduleTab isOurTeam={isOurTeam} />}
         {activeTab === "gallery" && <GalleryTab />}
         {activeTab === "venues" && <VenuesTab />}
       </div>

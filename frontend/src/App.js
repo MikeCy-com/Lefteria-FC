@@ -30,25 +30,15 @@ import MobileApp from "./mobile/MobileApp";
 import MobileLoginPage from "./mobile/pages/MobileLoginPage";
 import { playGoalSound, sendBrowserNotification, requestNotificationPermission } from "./utils/sounds";
 import { subscribeToPush, unsubscribeFromPush, getSubscriptionState } from "./utils/pushNotifications";
+import { buildIsOurTeam, isOurTeam as defaultIsOurTeam } from "./utils/team";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
 
-// Robust "is this our team?" check — handles accents, case, and minor name variations
-// (e.g., "ΛΕΥΤΕΡΙΑ 2024" / "Λευτέρια FC" / "LEFTERIA 2024" all match)
-const normalizeTeamName = (s) => (s || "")
-  .toUpperCase()
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/[^A-Z0-9ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ]/g, "");
-const OUR_TEAM_NEEDLES = ["ΛΕΥΤΕΡΙΑ", "LEFTERIA"].map(normalizeTeamName);
-const isOurTeam = (name) => {
-  if (!name) return false;
-  if (name === OUR_TEAM) return true;
-  const n = normalizeTeamName(name);
-  return OUR_TEAM_NEEDLES.some((needle) => n.includes(needle));
-};
+// Default matcher (falls back to "ΛΕΥΤΕΡΙΑ" / "LEFTERIA" needles when no club data available).
+// HomePage and other pages that fetch /api/club should call buildIsOurTeam(club) for the dynamic version.
+const isOurTeam = defaultIsOurTeam;
 
 const CLUB_LOGO = "https://customer-assets.emergentagent.com/job_club-academy-portal/artifacts/v5ncw8ht_Leyteria%20FC%20-%201_20260404_161502_0000.png";
 
@@ -584,6 +574,9 @@ const HomePage = () => {
   const [birthdayPlayers, setBirthdayPlayers] = useState([]);
   // First Team Trials
   const [trialSettings, setTrialSettings] = useState(null);
+  // Club profile (used to identify "our team" in standings/fixtures by name)
+  const [club, setClub] = useState(null);
+  const isOurTeamDynamic = buildIsOurTeam(club);
 
   const fetchLive = async () => {
     try {
@@ -613,7 +606,7 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes, trialsSettingsRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes, trialsSettingsRes, clubRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
@@ -622,6 +615,7 @@ const HomePage = () => {
           axios.get(`${API}/players/birthdays`),
           axios.get(`${API}/votes/potm/results`),
           axios.get(`${API}/trials/settings`).catch(() => ({ data: null })),
+          axios.get(`${API}/club`).catch(() => ({ data: null })),
         ]);
         setFixtures(fixturesRes.data);
         setStandings(standingsRes.data);
@@ -631,6 +625,7 @@ const HomePage = () => {
         setBirthdayPlayers(birthdayRes.data);
         setPotmResults(potmResultsRes.data);
         setTrialSettings(trialsSettingsRes.data);
+        setClub(clubRes.data);
       } catch (e) {
         console.error("Error fetching data:", e);
       } finally {
@@ -701,7 +696,7 @@ const HomePage = () => {
               </div>
               <div className="flex items-center justify-center gap-5">
                 <div className="flex-1 text-right">
-                  <span className={`font-['Bebas_Neue'] text-xl ${isOurTeam(liveMatch.fixture.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <span className={`font-['Bebas_Neue'] text-xl ${isOurTeamDynamic(liveMatch.fixture.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                     {liveMatch.fixture.home_team}
                   </span>
                 </div>
@@ -711,7 +706,7 @@ const HomePage = () => {
                   </span>
                 </div>
                 <div className="flex-1">
-                  <span className={`font-['Bebas_Neue'] text-xl ${isOurTeam(liveMatch.fixture.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
+                  <span className={`font-['Bebas_Neue'] text-xl ${isOurTeamDynamic(liveMatch.fixture.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                     {liveMatch.fixture.away_team}
                   </span>
                 </div>
@@ -739,7 +734,7 @@ const HomePage = () => {
         <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {(() => {
-              const us = standings.find((s) => isOurTeam(s.team_name));
+              const us = standings.find((s) => isOurTeamDynamic(s.team_name));
               const pos = us ? standings.indexOf(us) + 1 : 0;
               return [
                 { label: "Θεση Πρωταθληματος", value: pos > 0 ? `${pos}η` : "-" },
@@ -784,7 +779,7 @@ const HomePage = () => {
                     {new Date(fixture.match_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
                   </span>
                   <div className="flex items-center justify-center flex-1 gap-2 sm:gap-3 min-w-0">
-                    <span className={`font-medium text-xs sm:text-sm text-right flex-1 truncate ${isOurTeam(fixture.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-medium text-xs sm:text-sm text-right flex-1 truncate ${isOurTeamDynamic(fixture.home_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.home_team}
                     </span>
                     <div className="bg-[#1a1a1a] rounded px-2 sm:px-3 py-1 min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0">
@@ -794,7 +789,7 @@ const HomePage = () => {
                         <span className="text-xs text-zinc-500">VS</span>
                       )}
                     </div>
-                    <span className={`font-medium text-xs sm:text-sm text-left flex-1 truncate ${isOurTeam(fixture.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
+                    <span className={`font-medium text-xs sm:text-sm text-left flex-1 truncate ${isOurTeamDynamic(fixture.away_team) ? 'text-[#F5A623]' : 'text-white'}`}>
                       {fixture.away_team}
                     </span>
                   </div>
@@ -937,7 +932,7 @@ const HomePage = () => {
                     {standings.map((team, idx) => (
                       <tr 
                         key={team.id} 
-                        className={isOurTeam(team.team_name) ? 'team-highlight' : ''}
+                        className={isOurTeamDynamic(team.team_name) ? 'team-highlight' : ''}
                       >
                         <td className="font-bold">{idx + 1}</td>
                         <td className="font-semibold">
@@ -1341,12 +1336,18 @@ const FixturesPage = () => {
   const [fixtures, setFixtures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [club, setClub] = useState(null);
+  const isOurTeamDynamic = buildIsOurTeam(club);
 
   useEffect(() => {
     const fetchFixtures = async () => {
       try {
-        const res = await axios.get(`${API}/fixtures?limit=50`);
+        const [res, clubRes] = await Promise.all([
+          axios.get(`${API}/fixtures?limit=50`),
+          axios.get(`${API}/club`).catch(() => ({ data: null })),
+        ]);
         setFixtures(res.data);
+        setClub(clubRes.data);
       } catch (e) {
         console.error("Error fetching fixtures:", e);
       } finally {
@@ -1409,11 +1410,11 @@ const FixturesPage = () => {
                 {/* Home Team */}
                 <div className="text-center md:text-right">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    isOurTeam(fixture.home_team) ? 'text-[#F5A623]' : 'text-white'
+                    isOurTeamDynamic(fixture.home_team) ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.home_team}
                   </h3>
-                  {isOurTeam(fixture.home_team) && (
+                  {isOurTeamDynamic(fixture.home_team) && (
                     <span className="text-xs text-zinc-500">ΕΝΤΟΣ</span>
                   )}
                 </div>
@@ -1443,11 +1444,11 @@ const FixturesPage = () => {
                 {/* Away Team */}
                 <div className="text-center md:text-left">
                   <h3 className={`font-['Bebas_Neue'] text-2xl ${
-                    isOurTeam(fixture.away_team) ? 'text-[#F5A623]' : 'text-white'
+                    isOurTeamDynamic(fixture.away_team) ? 'text-[#F5A623]' : 'text-white'
                   }`}>
                     {fixture.away_team}
                   </h3>
-                  {isOurTeam(fixture.away_team) && (
+                  {isOurTeamDynamic(fixture.away_team) && (
                     <span className="text-xs text-zinc-500">ΕΚΤΟΣ</span>
                   )}
                 </div>
