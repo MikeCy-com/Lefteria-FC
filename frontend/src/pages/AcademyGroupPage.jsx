@@ -218,9 +218,9 @@ const AcademyGroupPage = () => {
                           {positionGr[player.position] || player.position}
                         </span>
                       </div>
-                      {player.number && (
+                      {(player.number !== null && player.number !== undefined && player.number !== "") && (
                         <div className="absolute bottom-2 left-2">
-                          <span className="font-['Bebas_Neue'] text-3xl text-white/20">{player.number}</span>
+                          <span className="font-['Bebas_Neue'] text-3xl text-[#F5A623] drop-shadow-lg">#{player.number}</span>
                         </div>
                       )}
                     </div>

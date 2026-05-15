@@ -347,6 +347,7 @@ const RosterTab = ({ players }) => {
           <table className="w-full text-sm" data-testid="full-roster-table">
             <thead>
               <tr className="text-left text-[10px] text-zinc-500 uppercase tracking-wider border-b border-[#1e1e1e]">
+                <th className="p-2 sm:p-4 w-10 text-center">#</th>
                 <th className="p-2 sm:p-4">Παικτης</th>
                 <th className="p-2 sm:p-4 text-center">Θεση</th>
                 <th className="p-2 sm:p-4 text-center">Γκολ</th>
@@ -360,6 +361,7 @@ const RosterTab = ({ players }) => {
                 const stats = p.statistics || {};
                 return (
                   <tr key={p.id} className="border-b border-[#1a1a1a] hover:bg-[#111] transition-colors" data-testid={`roster-player-${p.id}`}>
+                    <td className="p-2 sm:p-4 text-center font-['Bebas_Neue'] text-[#F5A623] text-lg sm:text-xl">{p.number ?? '-'}</td>
                     <td className="p-2 sm:p-4">
                       <Link to={playerLink(p)} className="flex items-center gap-2 sm:gap-3 hover:text-[#F5A623] transition-colors">
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#1a1a1a] overflow-hidden flex-shrink-0 flex items-center justify-center">
