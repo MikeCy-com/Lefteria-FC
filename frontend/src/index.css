@@ -4,6 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+ * Greek uppercase tonos guard
+ * Modern browsers strip Greek tonos marks on `text-transform: uppercase`
+ * automatically — but ONLY when the element's language is Greek.
+ * The html[lang="el"] root sets the default. This rule reinforces it on
+ * all uppercase-rendered elements so any future badge/heading is safe,
+ * regardless of where it is in the tree.
+ * Reference: https://www.w3.org/TR/css-text-3/#text-transform-language
+ * ============================================================ */
+[style*="text-transform: uppercase"],
+[style*="text-transform:uppercase"],
+.uppercase,
+.badge,
+h1, h2, h3, h4, h5, h6 {
+  -webkit-locale: "el";
+  /* Browsers use the document language for the Greek casing rule. */
+}
+
 :root {
   --background: #050505;
   --foreground: #FFFFFF;
