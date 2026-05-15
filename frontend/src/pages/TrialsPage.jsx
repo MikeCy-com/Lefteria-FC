@@ -83,7 +83,7 @@ export default function TrialsPage() {
 
           <div className="flex items-center gap-3 mb-2">
             <Trophy className="text-[#F5A623]" size={28} />
-            <span className="badge badge-primary">Πρώτη Ομάδα</span>
+            <span className="badge badge-primary">Πρωτη Ομαδα</span>
           </div>
           <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl text-white mb-4" data-testid="trials-headline">
             {settings?.headline || "Ετοιμος να Ξεκινησεις το Ταξιδι σου;"}

@@ -1010,7 +1010,7 @@ const HomePage = () => {
       {trialSettings?.open && (
         <section className="py-16 md:py-20 px-4 md:px-6 bg-gradient-to-br from-[#F5A623]/10 via-[#0a0a0a] to-[#0a0a0a] border-y border-[#F5A623]/20" data-testid="home-trials-cta">
           <div className="max-w-4xl mx-auto text-center">
-            <span className="badge badge-primary mb-6">Πρώτη Ομάδα</span>
+            <span className="badge badge-primary mb-6">Πρωτη Ομαδα</span>
             <h2 className="font-['Bebas_Neue'] text-3xl md:text-5xl text-white mb-4" data-testid="home-trials-headline">
               {trialSettings.headline}
             </h2>
@@ -1036,19 +1036,19 @@ const HomePage = () => {
       >
         <div className="absolute inset-0 bg-black/80"></div>
         <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <span className="badge badge-primary mb-6">Ακαδημία Ποδοσφαίρου</span>
-          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-4">
-            Εντυπο <span className="text-[#F5A623]">Εγγραφης</span>
+          <span className="badge badge-primary mb-6">Αναπτυξη Νεων</span>
+          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-white mb-6">
+            Ελα στην <span className="text-[#F5A623]">Ακαδημια</span>
           </h2>
           <p className="text-lg text-zinc-300 mb-8 max-w-2xl mx-auto">
-            Συμπληρώστε τη φόρμα για να εγγράψετε τον αθλητή στην ακαδημία.
+            Από U6 έως U12, η ακαδημία μας αναπτύσσει νέα ταλέντα με προπονητές και εγκαταστάσεις υψηλού επιπέδου. Ξεκίνα το ταξίδι σου για να γίνεις επαγγελματίας ποδοσφαιριστής.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/academy" className="btn-secondary">
-              Εξερευνησε την Ακαδημια
+            <Link to="/academy" className="btn-primary" data-testid="home-academy-explore-btn">
+              Εξερευνησε την Ακαδημια <ArrowRight size={18} />
             </Link>
-            <Link to="/academy/registration" className="btn-primary" data-testid="home-academy-registration-btn">
-              Εγγραφη Αθλητη <ArrowRight size={18} />
+            <Link to="/academy/registration" className="btn-secondary" data-testid="home-academy-registration-btn">
+              Δηλωσε Ενδιαφερον
             </Link>
           </div>
         </div>
@@ -1315,7 +1315,7 @@ const AcademyPage = () => {
       {/* CTA */}
       <section className="py-10 md:py-20 px-4 md:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <span className="badge badge-primary mb-4">Ακαδημία Ποδοσφαίρου</span>
+          <span className="badge badge-primary mb-4">Ακαδημια Ποδοσφαιρου</span>
           <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-4">
             Εντυπο <span className="text-[#F5A623]">Εγγραφης</span>
           </h2>
