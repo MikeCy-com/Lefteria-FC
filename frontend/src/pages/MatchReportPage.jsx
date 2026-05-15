@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Clock, MapPin, Trophy, Flag, AlertTriangle, ArrowLeftRight, Video, Target } from "lucide-react";
 import axios from "axios";
 import { buildIsOurTeam } from "../utils/team";
+import ShareButton from "../components/ShareButton";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const OUR_TEAM = "ΛΕΥΤΕΡΙΑ 2024";
@@ -145,10 +146,11 @@ const MatchReportPage = () => {
   return (
     <div className="pt-24 min-h-screen bg-[#050505] pb-16" data-testid="match-report-page">
       {/* Back link */}
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-2">
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between">
         <Link to="/team?tab=results" className="text-zinc-500 hover:text-[#F5A623] text-sm flex items-center gap-1 transition-colors" data-testid="back-to-results">
           <ChevronRight size={14} className="rotate-180" /> Αποτελέσματα
         </Link>
+        <ShareButton kind="match" id={fixture.id} title={`${fixture.home_team} vs ${fixture.away_team}`} />
       </div>
 
       {/* Match Header */}

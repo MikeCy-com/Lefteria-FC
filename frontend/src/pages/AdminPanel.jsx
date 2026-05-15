@@ -7,7 +7,7 @@ import {
   Check, Clock, ChevronRight, ChevronDown, Settings, Image, ArrowLeftRight,
   Package, ShoppingCart, Ticket, Shield, ClipboardList, Eye, MessageSquare, Dumbbell, Target, Star,
   Euro, Video, Landmark, Upload, Handshake, Globe, Facebook, Instagram, Twitter, Youtube, Smartphone,
-  Receipt, Download
+  Receipt, Download, Megaphone, Share2, Copy
 } from "lucide-react";
 import { getSoundForEvent, playMatchWhistle, playWhistleSound } from "../utils/sounds";
 import ImageUpload from "../components/ImageUpload";
@@ -411,6 +411,7 @@ const PlayerInlinePaymentModal = ({ charge, onClose, onSaved }) => {
 const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showAnnounce, setShowAnnounce] = useState(false);
   const isAcademy = player.team_type === "Academy";
   const calcAge = (dob) => { if (!dob) return ""; try { return Math.floor((new Date() - new Date(dob)) / 31557600000); } catch { return ""; } };
   const positionGr = { Goalkeeper: "Τερματοφύλακας", Defender: "Αμυντικός", Midfielder: "Μέσος", Forward: "Επιθετικός" };
@@ -491,7 +492,8 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
             <div className="flex gap-2 flex-shrink-0">
               {!editing ? (
                 <>
-                  <button onClick={() => setEditing(true)} className="admin-btn-primary" data-testid="edit-profile-btn"><Edit2 size={14} /> Επεξεργασία</button>
+                  <button onClick={() => setShowAnnounce(true)} className="admin-btn-primary !bg-gradient-to-r !from-[#F5A623] !to-[#FF8C00]" data-testid="announce-player-btn"><Megaphone size={14} /> ΝΕΟ ΜΕΛΟΣ!</button>
+                  <button onClick={() => setEditing(true)} className="admin-btn-ghost" data-testid="edit-profile-btn"><Edit2 size={14} /> Επεξεργασία</button>
                   <button onClick={handleDelete} className="admin-btn-ghost text-red-400 border-red-500/30 hover:border-red-500/50" data-testid="delete-profile-btn"><Trash2 size={14} /></button>
                 </>
               ) : (
@@ -613,6 +615,63 @@ const AdminPlayerProfile = ({ player, academyGroups = [], onBack, onRefresh }) =
           </div>
         </div>
       )}
+
+      {showAnnounce && <AnnouncePlayerModal player={player} onClose={() => setShowAnnounce(false)} />}
+    </div>
+  );
+};
+
+// ==================== ANNOUNCE PLAYER MODAL ====================
+const AnnouncePlayerModal = ({ player, onClose }) => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const shareUrl = `${origin}/api/og/player/${player.id}/announce`;
+  const imageUrl = `${origin}/api/og/player/${player.id}/announce.png`;
+  const text = `ΝΕΟ ΜΕΛΟΣ! ${player.name} ενώνει την οικογένεια LEFTERIA FC!`;
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const enc = encodeURIComponent(shareUrl);
+  const t = encodeURIComponent(text);
+  const whatsapp = `https://wa.me/?text=${t}%20${enc}`;
+  const facebook = `https://www.facebook.com/sharer/sharer.php?u=${enc}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose} data-testid="announce-modal">
+      <div className="bg-[#161616] border border-[#2a2a2a] rounded-xl w-full max-w-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a2a]">
+          <h3 className="font-['Bebas_Neue'] text-2xl text-white tracking-wide flex items-center gap-2">
+            <Megaphone size={18} className="text-[#F5A623]" /> Ανακοίνωση Νέου Μέλους
+          </h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white" data-testid="announce-close">✕</button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="rounded-lg overflow-hidden border border-[#2a2a2a] bg-[#0a0a0a]">
+            <img src={imageUrl} alt="" className="w-full block" data-testid="announce-preview-img" />
+          </div>
+          <p className="text-xs text-zinc-500">
+            Αυτή η εικόνα εμφανίζεται αυτόματα όταν μοιραστείς τον παρακάτω σύνδεσμο σε WhatsApp, Facebook ή Messenger.
+          </p>
+          <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-md px-3 py-2 text-xs text-zinc-400 font-mono break-all" data-testid="announce-url">{shareUrl}</div>
+          <div className="grid grid-cols-3 gap-2">
+            <a href={whatsapp} target="_blank" rel="noreferrer" className="admin-btn-ghost justify-center" data-testid="announce-whatsapp">
+              <Share2 size={14} /> WhatsApp
+            </a>
+            <a href={facebook} target="_blank" rel="noreferrer" className="admin-btn-ghost justify-center" data-testid="announce-facebook">
+              <Share2 size={14} /> Facebook
+            </a>
+            <button onClick={copy} className="admin-btn-primary justify-center" data-testid="announce-copy">
+              <Copy size={14} /> {copied ? "Αντιγράφηκε!" : "Αντιγραφή"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

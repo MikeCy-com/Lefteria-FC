@@ -19,7 +19,16 @@ export default function ShareButton({ kind, id, title }) {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   // Use the OG endpoint so messengers scrape the rich card.
-  const shareUrl = id ? `${origin}/api/og/${kind}/${id}` : origin;
+  // For player announcements pass kind="player-announce" to surface the
+  // dynamically-generated "ΝΕΟ ΜΕΛΟΣ!" banner image.
+  let shareUrl;
+  if (!id) {
+    shareUrl = origin;
+  } else if (kind === "player-announce") {
+    shareUrl = `${origin}/api/og/player/${id}/announce`;
+  } else {
+    shareUrl = `${origin}/api/og/${kind}/${id}`;
+  }
   const shareTitle = title || "LEFTERIA FC";
 
   useEffect(() => {
