@@ -3,9 +3,10 @@ version: "3.8"
 # ============================================================================
 # LEFTERIA FC — Hostinger Docker Manager + Traefik deployment
 # ----------------------------------------------------------------------------
+# • Builds frontend from ../frontend (live source) and backend from ../backend
 # • Traefik (already running on Hostinger) handles all public traffic + SSL
 # • Frontend container joins the shared `traefik-proxy` network
-# • Nginx inside the frontend container proxies /api/* → backend on port 8001
+# • Nginx inside the frontend container proxies /api/* and /uploads/* → backend:8001
 # • Mongo is internal only
 #
 # Required on the VPS:
@@ -15,7 +16,7 @@ version: "3.8"
 # Set these env vars in Hostinger Docker Manager (or in `.env` next to this file):
 #   COMPOSE_PROJECT_NAME=lefteriafc
 #   DOMAIN=lefteriafc.cy
-#   DOMAIN_URL=https://lefteriafc.cy
+#   DOMAIN_URL=https://lefteriafc.cy        ← NO trailing /api, NO trailing slash
 #   JWT_SECRET=<long-random>
 #   ADMIN_USERNAME=Lefteria FC
 #   ADMIN_PASSWORD=<your-pw>
@@ -41,7 +42,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: lefteriafc-backend
     restart: always
@@ -57,6 +58,7 @@ services:
       - VAPID_CONTACT=${VAPID_CONTACT}
     volumes:
       - uploads_data:/app/uploads
+      - ./:/app/deploy:ro
     networks:
       - lefteriafc-internal
     depends_on:
@@ -65,7 +67,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
       args:
         - REACT_APP_BACKEND_URL=${DOMAIN_URL:-https://lefteriafc.cy}
@@ -78,16 +80,10 @@ services:
     depends_on:
       - backend
     labels:
-      # ---- Enable Traefik for this container ----
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-proxy"
 
-      # ============================================================
-      # HTTPS routers — one router per host (Traefik v3 safe pattern)
-      # Hostinger Traefik defaults: entrypoint=websecure, resolver=letsencrypt
-      # We do NOT set `tls=true` — only `tls.certresolver` so Let's Encrypt
-      # issues a real cert instead of a self-signed fallback.
-      # ============================================================
+      # HTTPS routers — one Host() per router (Traefik v3 safe)
       - "traefik.http.routers.lefteriafc-apex.rule=Host(`lefteriafc.cy`)"
       - "traefik.http.routers.lefteriafc-apex.entrypoints=websecure"
       - "traefik.http.routers.lefteriafc-apex.tls.certresolver=letsencrypt"
@@ -98,9 +94,7 @@ services:
       - "traefik.http.routers.lefteriafc-www.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lefteriafc-www.service=lefteriafc"
 
-      # ============================================================
-      # HTTP → HTTPS redirect routers (one per host)
-      # ============================================================
+      # HTTP → HTTPS redirect routers
       - "traefik.http.routers.lefteriafc-apex-http.rule=Host(`lefteriafc.cy`)"
       - "traefik.http.routers.lefteriafc-apex-http.entrypoints=web"
       - "traefik.http.routers.lefteriafc-apex-http.middlewares=lefteriafc-redirect"
@@ -109,11 +103,11 @@ services:
       - "traefik.http.routers.lefteriafc-www-http.entrypoints=web"
       - "traefik.http.routers.lefteriafc-www-http.middlewares=lefteriafc-redirect"
 
-      # ---- Redirect middleware (shared) ----
+      # Shared redirect middleware
       - "traefik.http.middlewares.lefteriafc-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.lefteriafc-redirect.redirectscheme.permanent=true"
 
-      # ---- Backing service: nginx inside the frontend container listens on 80 ----
+      # Backing service: nginx on :80 inside the container
       - "traefik.http.services.lefteriafc.loadbalancer.server.port=80"
 
 volumes:
@@ -121,9 +115,7 @@ volumes:
   uploads_data:
 
 networks:
-  # Shared with Hostinger's Traefik instance
   traefik-proxy:
     external: true
-  # Private network for backend ↔ mongo ↔ frontend internal proxy
   lefteriafc-internal:
     driver: bridge

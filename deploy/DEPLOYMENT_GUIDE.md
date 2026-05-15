@@ -47,6 +47,8 @@ cd /docker/lefteriafc/deploy
 docker compose --env-file .env up -d --build
 ```
 
+> **NOTE:** The compose file builds from `../backend` and `../frontend` (the live source folders in the repo). There are no longer duplicate copies under `deploy/backend` or `deploy/frontend`. Always pull the whole repo.
+
 Watch logs:
 ```bash
 docker compose logs -f
