@@ -1068,9 +1068,9 @@ const HomePage = () => {
 const BirthdayCardModal = ({ player, onClose }) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const formats = [
-    { key: "landscape", label: "Facebook / WhatsApp", aspect: "1200×630", className: "aspect-[1200/630]" },
-    { key: "square",    label: "Instagram Feed",      aspect: "1080×1080", className: "aspect-square" },
-    { key: "story",     label: "Story / TikTok",      aspect: "1080×1920", className: "aspect-[9/16] max-h-[60vh] mx-auto" },
+    { key: "landscape", label: "Facebook / WhatsApp", className: "aspect-[1200/630]" },
+    { key: "square",    label: "Instagram Feed",      className: "aspect-square" },
+    { key: "story",     label: "Story / TikTok",      className: "aspect-[9/16] max-h-[60vh] mx-auto" },
   ];
   const [active, setActive] = useState("landscape");
   const [copied, setCopied] = useState(false);
@@ -1124,7 +1124,7 @@ const BirthdayCardModal = ({ player, onClose }) => {
                 className={`px-3 py-1.5 text-xs rounded-full border transition-all ${active === f.key ? 'bg-[#F5A623] text-black border-[#F5A623] font-semibold' : 'bg-[#0a0a0a] text-zinc-300 border-[#262626] hover:border-[#F5A623]/60'}`}
                 data-testid={`birthday-fmt-${f.key}`}
               >
-                {f.label} · <span className="opacity-60">{f.aspect}</span>
+                {f.label}
               </button>
             ))}
           </div>
