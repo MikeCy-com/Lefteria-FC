@@ -1126,10 +1126,6 @@ const BirthdayCardModal = ({ player, onClose }) => {
             />
           </div>
 
-          <p className="text-xs text-zinc-500 leading-relaxed">
-            Καθε κουμπι ετοιμαζει αυτοματα το σωστο μεγεθος για την πλατφορμα. Για Instagram & TikTok η εικονα κατεβαινει στο τηλεφωνο σου — μετα ανεβασε τη απο την εφαρμογη.
-          </p>
-
           {/* Share actions — each button picks the right size & format automatically */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#25D366]/60 hover:text-white transition-colors" data-testid="birthday-whatsapp" title="WhatsApp (1200×630)">
