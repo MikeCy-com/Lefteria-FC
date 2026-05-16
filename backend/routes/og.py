@@ -351,7 +351,11 @@ def setup_og_routes(db, request_host_provider=None):
 # ============================================================
 # Dynamic announcement card image generator (1200×630 PNG)
 # ============================================================
+# Bundled font path — guarantees Greek glyph rendering regardless of host
+# environment (Docker images may not include DejaVu / Liberation by default).
+_BUNDLED_FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fonts")
 _FONT_CANDIDATES = [
+    os.path.join(_BUNDLED_FONT_DIR, "LiberationSans-Bold.ttf"),
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
