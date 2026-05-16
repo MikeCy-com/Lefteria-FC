@@ -1067,35 +1067,30 @@ const HomePage = () => {
 // ==================== BIRTHDAY CARD MODAL ====================
 const BirthdayCardModal = ({ player, onClose }) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const formats = [
-    { key: "landscape", label: "Facebook / WhatsApp", className: "aspect-[1200/630]" },
-    { key: "square",    label: "Instagram Feed",      className: "aspect-square" },
-    { key: "story",     label: "Story / TikTok",      className: "aspect-[9/16] max-h-[60vh] mx-auto" },
-  ];
-  const [active, setActive] = useState("landscape");
   const [copied, setCopied] = useState(false);
   const shareUrl = `${origin}/api/og/player/${player.id}/birthday`;
-  const imageUrl = `${origin}/api/og/player/${player.id}/birthday.png?fmt=${active}`;
+  const previewUrl = `${origin}/api/og/player/${player.id}/birthday.png?fmt=landscape`;
   const text = `Χρόνια Πολλά ${player.name}! Από την οικογένεια LEFTERIA FC 🎂`;
+
+  const downloadFmt = async (fmt) => {
+    try {
+      const url = `${origin}/api/og/player/${player.id}/birthday.png?fmt=${fmt}`;
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `birthday-${player.name.replace(/\s+/g, "-")}-${fmt}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {}
+  };
 
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {}
-  };
-
-  const downloadCurrent = async () => {
-    try {
-      const res = await fetch(imageUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `birthday-${player.name.replace(/\s+/g, "-")}-${active}.png`;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
     } catch {}
   };
 
@@ -1115,47 +1110,35 @@ const BirthdayCardModal = ({ player, onClose }) => {
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Format selector */}
-          <div className="flex flex-wrap gap-2">
-            {formats.map(f => (
-              <button
-                key={f.key}
-                onClick={() => setActive(f.key)}
-                className={`px-3 py-1.5 text-xs rounded-full border transition-all ${active === f.key ? 'bg-[#F5A623] text-black border-[#F5A623] font-semibold' : 'bg-[#0a0a0a] text-zinc-300 border-[#262626] hover:border-[#F5A623]/60'}`}
-                data-testid={`birthday-fmt-${f.key}`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Preview */}
-          <div className="rounded-lg overflow-hidden border border-[#262626] bg-[#050505] flex items-center justify-center">
+          {/* Preview (landscape) */}
+          <div className="rounded-lg overflow-hidden border border-[#262626] bg-[#050505]">
             <img
-              src={imageUrl}
+              src={previewUrl}
               alt={`Καρτα γενεθλιων ${player.name}`}
-              className={`block ${formats.find(f => f.key === active)?.className} w-auto object-contain`}
+              className="block w-full aspect-[1200/630] object-contain"
               data-testid="birthday-preview-img"
             />
           </div>
 
           <p className="text-xs text-zinc-500 leading-relaxed">
-            Επιλεξε format αναλογα με την πλατφορμα. Για Instagram & TikTok πατα <strong className="text-zinc-300">Καταβασταση</strong> και ανεβασε την εικονα απο την εφαρμογη.
-            Για WhatsApp & Facebook ο συνδεσμος ανοιγει αυτοματα με την landscape εικονα ως preview.
+            Καθε κουμπι ετοιμαζει αυτοματα το σωστο μεγεθος για την πλατφορμα. Για Instagram & TikTok η εικονα κατεβαινει στο τηλεφωνο σου — μετα ανεβασε τη απο την εφαρμογη.
           </p>
 
-          {/* Share actions */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <button onClick={downloadCurrent} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#F5A623] text-black text-sm font-semibold hover:bg-[#FF8C00] transition-colors" data-testid="birthday-download">
-              <Download size={14} /> Καταβασταση
-            </button>
-            <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#25D366]/60 hover:text-white transition-colors" data-testid="birthday-whatsapp">
+          {/* Share actions — each button picks the right size & format automatically */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#25D366]/60 hover:text-white transition-colors" data-testid="birthday-whatsapp" title="WhatsApp (1200×630)">
               <Share2 size={14} /> WhatsApp
             </a>
-            <a href={facebook} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#1877F2]/60 hover:text-white transition-colors" data-testid="birthday-facebook">
+            <a href={facebook} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#1877F2]/60 hover:text-white transition-colors" data-testid="birthday-facebook" title="Facebook (1200×630)">
               <Share2 size={14} /> Facebook
             </a>
-            <button onClick={copyLink} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#F5A623]/60 hover:text-white transition-colors" data-testid="birthday-copy">
+            <button onClick={() => downloadFmt("square")} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-[#E1306C]/60 hover:text-white transition-colors" data-testid="birthday-instagram" title="Instagram (1080×1080)">
+              <Instagram size={14} /> Instagram
+            </button>
+            <button onClick={() => downloadFmt("story")} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#1a1a1a] border border-[#262626] text-zinc-200 text-sm hover:border-white/60 hover:text-white transition-colors" data-testid="birthday-tiktok" title="TikTok / Story (1080×1920)">
+              <Download size={14} /> TikTok
+            </button>
+            <button onClick={copyLink} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#F5A623] text-black text-sm font-semibold hover:bg-[#FF8C00] transition-colors" data-testid="birthday-copy">
               <Copy size={14} /> {copied ? "Αντιγραφηκε!" : "Αντιγραφη"}
             </button>
           </div>
@@ -1171,6 +1154,8 @@ const BirthdayCardModal = ({ player, onClose }) => {
     </div>
   );
 };
+
+// About Page
 const AboutPage = () => (
   <div className="pt-24 min-h-screen" data-testid="about-page">
     {/* Hero */}
