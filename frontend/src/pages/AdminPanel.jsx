@@ -3145,10 +3145,10 @@ const AdminPanel = ({ user, onLogout }) => {
     { type: "item", id: "dashboard", label: "Πίνακας", icon: BarChart3 },
     { type: "item", id: "livescore", label: "Live Score", icon: Zap },
     { type: "divider" },
-    { type: "group", id: "club_section", label: "Συλλόγος", icon: Building2, dashboard: "club_dashboard", items: [
-      { id: "teams", label: "Ομάδες", icon: Shield },
+    { type: "group", id: "club_section", label: "Ομάδες", icon: Shield, dashboard: "club_dashboard", items: [
+      { id: "teams", label: "Διαχείριση Ομάδων", icon: Shield },
       { id: "fixtures", label: "Πρόγραμμα", icon: Calendar },
-      { id: "trials", label: "Δοκιμαστικά", icon: Trophy },
+      { id: "trials", label: "Δοκιμαστικά (Α' Ομάδα)", icon: Trophy },
       { id: "club_opponents", label: "Αντίπαλοι", icon: Shield },
       { id: "club_venues", label: "Γήπεδα", icon: MapPin },
     ]},
