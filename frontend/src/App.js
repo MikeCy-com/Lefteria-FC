@@ -608,13 +608,14 @@ const HomePage = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, potmResultsRes, trialsSettingsRes, clubRes] = await Promise.all([
+        const [fixturesRes, standingsRes, newsRes, liveRes, colsRes, birthdayRes, staffBdayRes, potmResultsRes, trialsSettingsRes, clubRes] = await Promise.all([
           axios.get(`${API}/fixtures?limit=5`),
           axios.get(`${API}/standings`),
           axios.get(`${API}/news?limit=3`),
           axios.get(`${API}/live-match`),
           axios.get(`${API}/settings/standings-columns`),
           axios.get(`${API}/players/birthdays`),
+          axios.get(`${API}/staff/birthdays`).catch(() => ({ data: [] })),
           axios.get(`${API}/votes/potm/results`),
           axios.get(`${API}/trials/settings`).catch(() => ({ data: null })),
           axios.get(`${API}/club`).catch(() => ({ data: null })),
@@ -624,7 +625,10 @@ const HomePage = () => {
         setNews(newsRes.data);
         if (liveRes.data.active) setLiveMatch(liveRes.data);
         setCols(colsRes.data);
-        setBirthdayPlayers(birthdayRes.data);
+        // Merge player + staff birthdays, sorted by day. Tag each with kind so the modal renders the right OG endpoint.
+        const players = (birthdayRes.data || []).map(p => ({ ...p, kind: "player" }));
+        const staff = (staffBdayRes.data || []).map(s => ({ ...s, kind: "staff" }));
+        setBirthdayPlayers([...players, ...staff].sort((a, b) => a.birthday_day - b.birthday_day));
         setPotmResults(potmResultsRes.data);
         setTrialSettings(trialsSettingsRes.data);
         setClub(clubRes.data);
@@ -827,7 +831,7 @@ const HomePage = () => {
                       {p.image_url ? (
                         <img src={resolveImg(p.image_url)} alt={p.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] text-[#F5A623]/40 font-bold">{p.number}</div>
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-[#F5A623]/40 font-bold">{p.kind === "staff" ? (p.name || "").charAt(0).toUpperCase() : p.number}</div>
                       )}
                     </div>
                     <div className="whitespace-nowrap">
@@ -1067,14 +1071,16 @@ const HomePage = () => {
 // ==================== BIRTHDAY CARD MODAL ====================
 const BirthdayCardModal = ({ player, onClose }) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const kind = player.kind === "staff" ? "staff" : "player";
   const [copied, setCopied] = useState(false);
-  const shareUrl = `${origin}/api/og/player/${player.id}/birthday`;
-  const previewUrl = `${origin}/api/og/player/${player.id}/birthday.png?fmt=landscape`;
+  const base = `${origin}/api/og/${kind}/${player.id}`;
+  const shareUrl = `${base}/birthday`;
+  const previewUrl = `${base}/birthday.png?fmt=landscape`;
   const text = `Χρόνια Πολλά ${player.name}! Από την οικογένεια LEFTERIA FC 🎂`;
 
   const downloadFmt = async (fmt) => {
     try {
-      const url = `${origin}/api/og/player/${player.id}/birthday.png?fmt=${fmt}`;
+      const url = `${base}/birthday.png?fmt=${fmt}`;
       const res = await fetch(url);
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -1144,10 +1150,14 @@ const BirthdayCardModal = ({ player, onClose }) => {
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-[#1f1f1f]">
-            <Link to={playerLink(player)} className="text-xs text-[#F5A623] hover:underline" data-testid="birthday-view-profile">
-              Δες το προφιλ του παικτη →
+            <Link to={kind === "staff" ? `/staff/${player.id}` : playerLink(player)} className="text-xs text-[#F5A623] hover:underline" data-testid="birthday-view-profile">
+              {kind === "staff" ? "Δες το προφιλ →" : "Δες το προφιλ του παικτη →"}
             </Link>
-            <span className="text-[10px] text-zinc-600">{player.team_type === "Academy" ? "Ακαδημια" : "Α' Ομαδα"}</span>
+            <span className="text-[10px] text-zinc-600">
+              {kind === "staff"
+                ? (player.team_type === "Academy" ? "Ακαδημια — Τ. Επιτελειο" : "Τεχνικο Επιτελειο")
+                : (player.team_type === "Academy" ? "Ακαδημια" : "Α' Ομαδα")}
+            </span>
           </div>
         </div>
       </div>

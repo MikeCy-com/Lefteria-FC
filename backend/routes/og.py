@@ -275,6 +275,41 @@ def setup_og_routes(db, request_host_provider=None):
         png = _render_birthday_card(name, age, img_url, team_type, fmt)
         return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
+    # ===== Staff birthday card =====
+    @router.get("/staff/{staff_id}/birthday", response_class=HTMLResponse)
+    async def og_staff_birthday(staff_id: str):
+        if "--" in staff_id:
+            staff_id = staff_id.rsplit("--", 1)[-1]
+        s = await db.staff.find_one({"id": staff_id}, {"_id": 0})
+        if not s:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        site = _site_url(os.environ.get("OG_HOST", "lefteriafc.cy"))
+        name = s.get("name", "Μέλος")
+        age = _calc_age(s.get("date_of_birth", ""))
+        title = f"Χρόνια Πολλά, {name}!"
+        desc = f"Η οικογένεια LEFTERIA FC εύχεται στον/στην {name}" + (f" για τα {age}α γενέθλια!" if age else " χρόνια πολλά!")
+        slug = _slug(name)
+        canonical = f"{site}/api/og/staff/{staff_id}/birthday"
+        spa_path = f"/staff/{slug}--{staff_id}" if slug else f"/staff/{staff_id}"
+        redirect_to = f"{site}{spa_path}"
+        image = f"{site}/api/og/staff/{staff_id}/birthday.png?fmt=landscape"
+        return HTMLResponse(_render(title, desc, image, canonical, redirect_to))
+
+    @router.get("/staff/{staff_id}/birthday.png")
+    async def og_staff_birthday_png(staff_id: str, fmt: str = Query("landscape", regex="^(landscape|square|story)$")):
+        if "--" in staff_id:
+            staff_id = staff_id.rsplit("--", 1)[-1]
+        s = await db.staff.find_one({"id": staff_id}, {"_id": 0})
+        if not s:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        site = _site_url(os.environ.get("OG_HOST", "lefteriafc.cy"))
+        name = s.get("name", "")
+        age = _calc_age(s.get("date_of_birth", ""))
+        img_url = _abs_image(s.get("image_url"), site)
+        team_type = s.get("team_type", "First Team")
+        png = _render_birthday_card(name, age, img_url, team_type, fmt)
+        return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
+
     @router.get("/news/{news_id}", response_class=HTMLResponse)
     async def og_news(news_id: str):
         if "--" in news_id:

@@ -170,6 +170,43 @@ async def get_birthday_players():
     birthday_players.sort(key=lambda x: x["birthday_day"])
     return birthday_players
 
+
+# Staff birthdays in current month
+@api_router.get("/staff/birthdays")
+async def get_birthday_staff():
+    now = datetime.now(timezone.utc)
+    current_month = now.month
+    all_staff = await db.staff.find(
+        {"date_of_birth": {"$ne": None}},
+        {"_id": 0}
+    ).to_list(500)
+
+    out = []
+    for s in all_staff:
+        dob = s.get("date_of_birth", "")
+        if not dob:
+            continue
+        try:
+            dob_date = datetime.strptime(dob, "%Y-%m-%d")
+            if dob_date.month != current_month:
+                continue
+            age = now.year - dob_date.year
+            out.append({
+                "id": s["id"],
+                "name": s["name"],
+                "role": s.get("role"),
+                "team_type": s.get("team_type"),
+                "image_url": s.get("image_url"),
+                "date_of_birth": dob,
+                "age": age,
+                "birthday_day": dob_date.day,
+            })
+        except ValueError:
+            continue
+
+    out.sort(key=lambda x: x["birthday_day"])
+    return out
+
 @api_router.get("/players/{player_id}", response_model=Player)
 async def get_player(player_id: str):
     player = await db.players.find_one({"id": player_id}, {"_id": 0})
