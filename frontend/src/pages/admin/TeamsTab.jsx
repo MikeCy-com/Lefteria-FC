@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Users, Calendar, Plus, Edit2, Trash2, X, ChevronRight, ChevronDown,
-  Image, UserCog, Trophy, MapPin, RefreshCw, Shield, Dumbbell, Video, Upload, Clock, Check, BarChart3
+  Image, UserCog, Trophy, MapPin, RefreshCw, Shield, Dumbbell, Video, Upload, Clock, Check, BarChart3, ClipboardList
 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import InlineAttendance from "./InlineAttendance";
@@ -210,13 +210,17 @@ const TeamsTab = ({ players, teams, fixtures, staff, standings, opponents = [], 
             { id: "team_staff", label: "Staff", icon: UserCog, count: teamStaff.length },
             { id: "standings_tab", label: "Βαθμολογία", icon: Trophy, count: standings?.length || 0 },
             { id: "gallery", label: "Γκαλερί", icon: Image, count: galleryItems.length },
+            { id: "trials_link", label: "Δοκιμαστικά", icon: ClipboardList, count: null },
           ].map(tab => (
-            <button key={tab.id} onClick={() => setDetailTab(tab.id)}
+            <button key={tab.id} onClick={() => {
+              if (tab.id === "trials_link") { onTabChange && onTabChange("trials"); return; }
+              setDetailTab(tab.id);
+            }}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
                 detailTab === tab.id ? 'border-[#F5A623] text-[#F5A623]' : 'border-transparent text-zinc-400 hover:text-white'
               }`} data-testid={`team-tab-${tab.id}`}>
               <tab.icon size={15} /> {tab.label}
-              <span className="text-xs ml-1 opacity-60">({tab.count})</span>
+              {tab.count !== null && <span className="text-xs ml-1 opacity-60">({tab.count})</span>}
             </button>
           ))}
         </div>
