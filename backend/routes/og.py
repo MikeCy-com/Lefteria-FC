@@ -121,6 +121,32 @@ def setup_og_routes(db, request_host_provider=None):
         except Exception:
             return None
 
+    async def _mega_sponsor(team_type: str) -> dict | None:
+        """Return the active 'mega' tier sponsor for the given scope.
+        team_type: 'First Team' | 'Academy'  →  sponsor_type 'first_team' | 'academy'.
+        Falls back to ANY mega sponsor (regardless of scope) if no scoped one exists,
+        so cards always show *some* mega sponsor when at least one is defined.
+        """
+        try:
+            scope = "academy" if (team_type or "").strip().lower() == "academy" else "first_team"
+            # First: try the exact team-scoped mega sponsor
+            sp = await db.sponsors.find_one(
+                {"level": "mega", "sponsor_type": scope, "logo_url": {"$nin": [None, ""]}},
+                {"_id": 0, "name": 1, "logo_url": 1, "sponsor_type": 1},
+                sort=[("display_order", 1), ("created_at", 1)],
+            )
+            if sp:
+                return sp
+            # Fallback: any mega sponsor with a logo
+            sp = await db.sponsors.find_one(
+                {"level": "mega", "logo_url": {"$nin": [None, ""]}},
+                {"_id": 0, "name": 1, "logo_url": 1, "sponsor_type": 1},
+                sort=[("display_order", 1), ("created_at", 1)],
+            )
+            return sp
+        except Exception:
+            return None
+
     @router.get("/player/{player_id}", response_class=HTMLResponse)
     async def og_player(player_id: str):
         # Strip slug if combined
@@ -187,7 +213,12 @@ def setup_og_routes(db, request_host_provider=None):
         number = p.get("number")
         img_url = _abs_image(p.get("image_url"), site)
         logo_url = await _club_logo_url()
-        png = _render_announce_card(name, pos, number, img_url, logo_url=logo_url)
+        sponsor = await _mega_sponsor(p.get("team_type", "First Team"))
+        png = _render_announce_card(
+            name, pos, number, img_url, logo_url=logo_url,
+            sponsor_logo_url=(sponsor or {}).get("logo_url"),
+            sponsor_name=(sponsor or {}).get("name"),
+        )
         return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
     @router.get("/staff/{staff_id}", response_class=HTMLResponse)
@@ -246,7 +277,12 @@ def setup_og_routes(db, request_host_provider=None):
         role = ROLE_LABELS.get(s.get("role", ""), s.get("role", ""))
         img_url = _abs_image(s.get("image_url"), site)
         logo_url = await _club_logo_url()
-        png = _render_announce_card(name, role, None, img_url, logo_url=logo_url)
+        sponsor = await _mega_sponsor(s.get("team_type", "First Team"))
+        png = _render_announce_card(
+            name, role, None, img_url, logo_url=logo_url,
+            sponsor_logo_url=(sponsor or {}).get("logo_url"),
+            sponsor_name=(sponsor or {}).get("name"),
+        )
         return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
     # ===== Birthday card =====
@@ -282,7 +318,12 @@ def setup_og_routes(db, request_host_provider=None):
         img_url = _abs_image(p.get("image_url"), site)
         team_type = p.get("team_type", "First Team")
         logo_url = await _club_logo_url()
-        png = _render_birthday_card(name, age, img_url, team_type, fmt, logo_url=logo_url)
+        sponsor = await _mega_sponsor(team_type)
+        png = _render_birthday_card(
+            name, age, img_url, team_type, fmt, logo_url=logo_url,
+            sponsor_logo_url=(sponsor or {}).get("logo_url"),
+            sponsor_name=(sponsor or {}).get("name"),
+        )
         return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
     # ===== Staff birthday card =====
@@ -318,7 +359,12 @@ def setup_og_routes(db, request_host_provider=None):
         img_url = _abs_image(s.get("image_url"), site)
         team_type = s.get("team_type", "First Team")
         logo_url = await _club_logo_url()
-        png = _render_birthday_card(name, age, img_url, team_type, fmt, logo_url=logo_url)
+        sponsor = await _mega_sponsor(team_type)
+        png = _render_birthday_card(
+            name, age, img_url, team_type, fmt, logo_url=logo_url,
+            sponsor_logo_url=(sponsor or {}).get("logo_url"),
+            sponsor_name=(sponsor or {}).get("name"),
+        )
         return Response(content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
     @router.get("/news/{news_id}", response_class=HTMLResponse)
@@ -475,6 +521,58 @@ def _paste_logo_watermark(bg: Image.Image, logo_url: str | None, size: int, pos:
     bg.paste(logo, pos, logo)
 
 
+def _paint_sponsor_badge(bg: Image.Image, d: ImageDraw.ImageDraw, sponsor_logo_url: str | None,
+                         sponsor_name: str | None, anchor: str, x: int, y: int, logo_size: int,
+                         label_font, sponsor_font) -> int:
+    """Render a "Mega Sponsor" sponsor badge with logo + name. Returns the y-coordinate
+    of the bottom of the badge so the caller can stack content below.
+
+    anchor: 'br' (bottom-right), 'bl' (bottom-left), 'tr' (top-right), 'tl' (top-left)
+    Coordinates (x, y) are interpreted as the corner of that anchor.
+    Renders nothing (returns y) if no sponsor logo is available.
+    """
+    raw = _get_logo_bytes(sponsor_logo_url)
+    if not raw:
+        return y
+    logo = _prep_logo(raw, logo_size)
+    if logo is None:
+        return y
+
+    label = "MEGA SPONSOR"
+    lbbox = d.textbbox((0, 0), label, font=label_font)
+    lw = lbbox[2] - lbbox[0]
+
+    name = _strip_greek_accents((sponsor_name or "").upper())
+    nbbox = d.textbbox((0, 0), name, font=sponsor_font) if name else (0, 0, 0, 0)
+    nw = nbbox[2] - nbbox[0]
+
+    text_w = max(lw, nw)
+    gap = 14
+    total_w = logo.size[0] + gap + text_w
+    total_h = max(logo.size[1], 56)
+
+    if anchor.endswith("r"):
+        block_x = x - total_w
+    else:
+        block_x = x
+    if anchor.startswith("b"):
+        block_y = y - total_h
+    else:
+        block_y = y
+
+    # Logo on the left of the block
+    logo_y = block_y + (total_h - logo.size[1]) // 2
+    bg.paste(logo, (block_x, logo_y), logo)
+
+    # Text on the right of the logo
+    text_x = block_x + logo.size[0] + gap
+    # MEGA SPONSOR small label
+    d.text((text_x, block_y + 2), label, font=label_font, fill=_BRAND_ORANGE)
+    if name:
+        d.text((text_x, block_y + 2 + (lbbox[3] - lbbox[1]) + 4), name, font=sponsor_font, fill=_BRAND_TEXT)
+    return block_y + total_h
+
+
 def _draw_pill(d: ImageDraw.ImageDraw, x: int, y: int, w: int, h: int, fill, radius: int | None = None):
     r = radius or (h // 2)
     d.rounded_rectangle((x, y, x + w, y + h), radius=r, fill=fill)
@@ -484,7 +582,7 @@ def _draw_accent_line(d: ImageDraw.ImageDraw, x: int, y: int, w: int, h: int = 4
     d.rectangle((x, y, x + w, y + h), fill=fill)
 
 
-def _render_announce_card(name: str, position: str, number, image_url: str | None, logo_url: str | None = None) -> bytes:
+def _render_announce_card(name: str, position: str, number, image_url: str | None, logo_url: str | None = None, sponsor_logo_url: str | None = None, sponsor_name: str | None = None) -> bytes:
     """ΝΕΟ ΜΕΛΟΣ! card — modernized: diagonal accent stripe, photo on right with
     multi-layer ring, watermark logo, accent line under name."""
     W, H = 1200, 630
@@ -576,6 +674,13 @@ def _render_announce_card(name: str, position: str, number, image_url: str | Non
     # Watermark logo top-right (corner)
     _paste_logo_watermark(bg, logo_url, 70, (W - 70 - 30, 30), opacity=210)
 
+    # Mega sponsor badge (bottom-right, under the photo)
+    sponsor_label_font = _load_font(18)
+    sponsor_name_font = _load_font(26)
+    _paint_sponsor_badge(bg, d, sponsor_logo_url, sponsor_name, anchor="br",
+                         x=W - 75, y=H - 35, logo_size=58,
+                         label_font=sponsor_label_font, sponsor_font=sponsor_name_font)
+
     # Footer
     d.text((LEFT, H - 60), "LEFTERIA FC · lefteriafc.cy", font=foot_font, fill=_BRAND_DIM)
 
@@ -629,7 +734,7 @@ def _draw_text_centered(d: ImageDraw.ImageDraw, text: str, font, y: int, W: int,
     d.text(((W - tw) // 2, y), text, font=font, fill=fill)
 
 
-def _render_birthday_card(name: str, age, image_url: str | None, team_type: str, fmt: str, logo_url: str | None = None) -> bytes:
+def _render_birthday_card(name: str, age, image_url: str | None, team_type: str, fmt: str, logo_url: str | None = None, sponsor_logo_url: str | None = None, sponsor_name: str | None = None) -> bytes:
     W, H = _BIRTHDAY_SIZES.get(fmt, _BIRTHDAY_SIZES["landscape"])
     is_portrait = H > W
 
@@ -750,6 +855,15 @@ def _render_birthday_card(name: str, age, image_url: str | None, team_type: str,
     # ============ Watermark logo (top-left) ============
     logo_size = int(base * 0.075)
     _paste_logo_watermark(bg, logo_url, logo_size, (int(base * 0.025), int(base * 0.025)), opacity=200)
+
+    # ============ Mega sponsor badge (top-right, balanced opposite the club logo) ============
+    sp_label_font = _load_font(max(13, int(base * 0.020)))
+    sp_name_font = _load_font(max(18, int(base * 0.030)))
+    sp_logo_size = int(base * 0.075)
+    _paint_sponsor_badge(bg, d, sponsor_logo_url, sponsor_name, anchor="tr",
+                         x=W - int(base * 0.025), y=int(base * 0.025),
+                         logo_size=sp_logo_size,
+                         label_font=sp_label_font, sponsor_font=sp_name_font)
 
     # ============ Footer with divider ============
     foot_y = H - int(base * 0.06)
